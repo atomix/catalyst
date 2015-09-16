@@ -38,14 +38,14 @@ public class SingleThreadContext implements Context {
   /**
    * Creates a new single thread context.
    * <p>
-   * The provided context name will be passed to {@link net.kuujo.catalyst.util.concurrent.CopycatThreadFactory} and used
+   * The provided context name will be passed to {@link CatalystThreadFactory} and used
    * when instantiating the context thread.
    *
    * @param name The context name.
    * @param serializer The context serializer.
    */
   public SingleThreadContext(String name, Serializer serializer) {
-    this(Executors.newSingleThreadScheduledExecutor(new CopycatThreadFactory(name)), serializer);
+    this(Executors.newSingleThreadScheduledExecutor(new CatalystThreadFactory(name)), serializer);
   }
 
   /**
@@ -61,20 +61,20 @@ public class SingleThreadContext implements Context {
   public SingleThreadContext(Thread thread, ScheduledExecutorService executor, Serializer serializer) {
     this.executor = executor;
     this.serializer = serializer;
-    if (!(thread instanceof CopycatThread)) {
+    if (!(thread instanceof CatalystThread)) {
       throw new IllegalStateException("not a Copycat thread");
     }
-    ((CopycatThread) thread).setContext(this);
+    ((CatalystThread) thread).setContext(this);
   }
 
   /**
    * Gets the thread from a single threaded executor service.
    */
-  protected static CopycatThread getThread(ExecutorService executor) {
-    final AtomicReference<CopycatThread> thread = new AtomicReference<>();
+  protected static CatalystThread getThread(ExecutorService executor) {
+    final AtomicReference<CatalystThread> thread = new AtomicReference<>();
     try {
       executor.submit(() -> {
-        thread.set((CopycatThread) Thread.currentThread());
+        thread.set((CatalystThread) Thread.currentThread());
       }).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IllegalStateException("failed to initialize thread state", e);

@@ -28,10 +28,10 @@ import java.lang.ref.WeakReference;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class CopycatThread extends Thread {
+public class CatalystThread extends Thread {
   private WeakReference<Context> context;
 
-  public CopycatThread(Runnable target, String name) {
+  public CatalystThread(Runnable target, String name) {
     super(target, name);
   }
 

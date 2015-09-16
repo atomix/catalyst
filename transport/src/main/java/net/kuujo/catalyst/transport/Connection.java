@@ -16,6 +16,7 @@
 package net.kuujo.catalyst.transport;
 
 import net.kuujo.catalyst.util.Listener;
+import net.kuujo.catalyst.util.concurrent.CatalystThread;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -60,7 +61,7 @@ public interface Connection {
    * <p>
    * {@link Connection} implementations must guarantee that all reply
    * {@link java.util.concurrent.CompletableFuture futures} will be completed in the same
-   * {@link net.kuujo.catalyst.util.concurrent.CopycatThread Copycat thread}.
+   * {@link CatalystThread Copycat thread}.
    *
    * @param message The message to send.
    * @param <T> The message type.

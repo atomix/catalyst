@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class CopycatThreadFactory implements ThreadFactory {
+public class CatalystThreadFactory implements ThreadFactory {
   private final AtomicInteger threadNumber = new AtomicInteger(1);
   private final String nameFormat;
 
@@ -31,13 +31,13 @@ public class CopycatThreadFactory implements ThreadFactory {
    * Creates a thread factory that names threads according to the {@code nameFormat} by supplying a
    * single argument to the format representing the thread number.
    */
-  public CopycatThreadFactory(String nameFormat) {
+  public CatalystThreadFactory(String nameFormat) {
     this.nameFormat = nameFormat;
   }
 
   @Override
   public Thread newThread(Runnable r) {
-    return new CopycatThread(r, String.format(nameFormat, threadNumber.getAndIncrement()));
+    return new CatalystThread(r, String.format(nameFormat, threadNumber.getAndIncrement()));
   }
 
 }

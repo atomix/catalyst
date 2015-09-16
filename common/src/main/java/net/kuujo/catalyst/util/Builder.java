@@ -18,9 +18,9 @@ package net.kuujo.catalyst.util;
 /**
  * Object builder.
  * <p>
- * This is a base interface for building objects in Copycat.
+ * This is a base interface for building objects in Catalyst.
  * <p>
- * Throughout Copycat, builders are used to build a variety of objects. Builders are designed to be
+ * Throughout Catalyst, builders are used to build a variety of objects. Builders are designed to be
  * {@link BuilderPool pooled} and reused in order to reduce GC pressure. When {@link #build()} or
  * {@link #close()} is called on a builder, the builder will be released back to the {@link BuilderPool}
  * that created it.

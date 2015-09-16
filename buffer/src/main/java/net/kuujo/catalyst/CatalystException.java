@@ -16,7 +16,7 @@
 package net.kuujo.catalyst;
 
 /**
- * Copycat exception.
+ * Catalyst exception.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */

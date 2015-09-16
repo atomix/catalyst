@@ -18,7 +18,7 @@ package net.kuujo.catalyst.buffer;
 import net.kuujo.catalyst.CatalystException;
 
 /**
- * Copycat IO exception.
+ * Catalyst IO exception.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */

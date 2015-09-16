@@ -20,7 +20,7 @@ import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import net.kuujo.catalyst.util.Assert;
-import net.kuujo.catalyst.util.concurrent.CopycatThreadFactory;
+import net.kuujo.catalyst.util.concurrent.CatalystThreadFactory;
 
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +49,7 @@ public class NettyTransport implements Transport {
   public NettyTransport(int threads) {
     Assert.arg(threads > 0, "threads must be positive");
 
-    ThreadFactory threadFactory = new CopycatThreadFactory("catalyst-event-loop-%d");
+    ThreadFactory threadFactory = new CatalystThreadFactory("catalyst-event-loop-%d");
     if (Epoll.isAvailable()) {
       eventLoopGroup = new EpollEventLoopGroup(threads, threadFactory);
     } else {
