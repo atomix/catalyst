@@ -71,6 +71,7 @@
     <module>serializer</module>
     <module>common</module>
     <module>transport</module>
+    <module>local</module>
   </modules>
 
   <dependencies>
