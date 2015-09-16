@@ -9,7 +9,7 @@
 
   <groupId>net.kuujo.catalyst</groupId>
   <artifactId>catalyst-parent</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0-beta1</version>
   <packaging>pom</packaging>
   <name>Catalyst</name>
   <description>Fast I/O and binary serialization framework.</description>
