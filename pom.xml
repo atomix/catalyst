@@ -68,6 +68,7 @@
 
   <modules>
     <module>buffer</module>
+    <module>serializer</module>
   </modules>
 
   <dependencies>
