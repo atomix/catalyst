@@ -72,6 +72,7 @@
     <module>common</module>
     <module>transport</module>
     <module>local</module>
+    <module>netty</module>
   </modules>
 
   <dependencies>
