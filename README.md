@@ -9,4 +9,4 @@ and related projects.
 
 [Website]: http://kuujo.github.io/copycat/user-manual/io-serialization/
 [Google group]: https://groups.google.com/forum/#!forum/copycat
-[Javadoc]: http://kuujo.github.io/catalyst/api/1.0.0/
+[Javadoc]: http://kuujo.github.io/catalyst/api/1.0.0-beta1/
