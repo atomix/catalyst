@@ -28,9 +28,9 @@ import java.util.function.Consumer;
  * This is a low-level abstraction through which clients and servers communicate with one another once connected.
  * This is more or less a lightweight interface over sockets that supports arbitrary messages.
  * <p>
- * Messages sent over a connection must be serializable by the registered {@link net.kuujo.catalyst.io.serializer.Serializer}.
+ * Messages sent over a connection must be serializable by the registered {@link net.kuujo.catalyst.serializer.Serializer}.
  * This means that messages must implement {@link java.io.Serializable}, {@link java.io.Externalizable}, or
- * {@link net.kuujo.catalyst.io.serializer.CopycatSerializable} or provide a custom {@link net.kuujo.catalyst.io.serializer.TypeSerializer}.
+ * {@link net.kuujo.catalyst.serializer.CatalystSerializable} or provide a custom {@link net.kuujo.catalyst.serializer.TypeSerializer}.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
@@ -50,9 +50,9 @@ public interface Connection {
   /**
    * Sends a message to the other side of the connection.
    * <p>
-   * The message must be serializable via the configured {@link net.kuujo.catalyst.io.serializer.Serializer} instance. This means it
-   * must implement {@link java.io.Serializable}, {@link java.io.Externalizable}, or {@link net.kuujo.catalyst.io.serializer.CopycatSerializable}
-   * or provide a custom {@link net.kuujo.catalyst.io.serializer.TypeSerializer}.
+   * The message must be serializable via the configured {@link net.kuujo.catalyst.serializer.Serializer} instance. This means it
+   * must implement {@link java.io.Serializable}, {@link java.io.Externalizable}, or {@link net.kuujo.catalyst.serializer.CatalystSerializable}
+   * or provide a custom {@link net.kuujo.catalyst.serializer.TypeSerializer}.
    * <p>
    * Note that {@link Connection}s are bi-directional. That is, messages can be send either
    * by the client or the server. All messages must have a reply, even if the reply is {@code null}. Once the reply
@@ -61,14 +61,14 @@ public interface Connection {
    * <p>
    * {@link Connection} implementations must guarantee that all reply
    * {@link java.util.concurrent.CompletableFuture futures} will be completed in the same
-   * {@link CatalystThread Copycat thread}.
+   * {@link CatalystThread Catalyst thread}.
    *
    * @param message The message to send.
    * @param <T> The message type.
    * @param <U> The reply type.
    * @return A completable future to be completed with the response.
    * @throws NullPointerException if {@code message} is null
-   * @throws IllegalStateException if not called from a Copycat thread
+   * @throws IllegalStateException if not called from a Catalyst thread
    */
   <T, U> CompletableFuture<U> send(T message);
 
@@ -80,17 +80,17 @@ public interface Connection {
    * be registered on the connection for any given type.
    * <p>
    * The message handler must return a {@link java.util.concurrent.CompletableFuture} to be completed with the message
-   * reply. The reply value must be serializable via the configured {@link net.kuujo.catalyst.io.serializer.Serializer} instance. This means it
-   * must implement {@link java.io.Serializable}, {@link java.io.Externalizable}, or {@link net.kuujo.catalyst.io.serializer.CopycatSerializable}
-   * or provide a custom {@link net.kuujo.catalyst.io.serializer.TypeSerializer}.
+   * reply. The reply value must be serializable via the configured {@link net.kuujo.catalyst.serializer.Serializer} instance. This means it
+   * must implement {@link java.io.Serializable}, {@link java.io.Externalizable}, or {@link net.kuujo.catalyst.serializer.CatalystSerializable}
+   * or provide a custom {@link net.kuujo.catalyst.serializer.TypeSerializer}.
    *
    * @param type The message type for which to listen. This can be any class that is serializable by the configured
-   * {@link net.kuujo.catalyst.io.serializer.Serializer} instance.
+   * {@link net.kuujo.catalyst.serializer.Serializer} instance.
    * @param handler The type-specific message handler.
    * @param <T> The message type.
    * @param <U> The reply type.
    * @throws NullPointerException if {@code type} is null
-   * @throws IllegalStateException if not called from a Copycat thread
+   * @throws IllegalStateException if not called from a Catalyst thread
    */
   <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler);
 

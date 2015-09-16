@@ -44,7 +44,6 @@ public class NettyTransport implements Transport {
 
   /**
    * @throws IllegalArgumentException if {@code threads} is not positive
-   * @param threads
    */
   public NettyTransport(int threads) {
     Assert.arg(threads > 0, "threads must be positive");

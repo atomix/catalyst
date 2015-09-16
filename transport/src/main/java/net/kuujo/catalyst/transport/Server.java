@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 /**
  * Transport server.
  * <p>
- * This is a low-level abstraction through which Copycat servers receive connections from clients. Users should never use
+ * This is a low-level abstraction through which Catalyst servers receive connections from clients. Users should never use
  * this API directly.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>

@@ -21,17 +21,17 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Copycat serializer.
+ * Catalyst serializer.
  * <p>
  * This class provides an interface for efficient serialization of Java objects. Serialization is performed by
  * {@link TypeSerializer} instances. Objects that can be serialized by {@link Serializer} must be registered. When objects
- * are serialized, Copycat will write the object's type as an 16-bit unsigned integer. When reading objects, the
+ * are serialized, Catalyst will write the object's type as an 16-bit unsigned integer. When reading objects, the
  * 16-bit identifier is used to construct a new object.
  * <p>
  * Serializable objects must either provide a {@link TypeSerializer}. implement {@link CatalystSerializable}, or implement
  * {@link java.io.Externalizable}. For efficiency, serializable objects may implement {@link net.kuujo.catalyst.util.ReferenceCounted}
  * or provide a {@link PooledSerializer} that reuses objects during deserialization.
- * Copycat will automatically deserialize {@link net.kuujo.catalyst.util.ReferenceCounted} types using an object pool.
+ * Catalyst will automatically deserialize {@link net.kuujo.catalyst.util.ReferenceCounted} types using an object pool.
  * <p>
  * Serialization via this class is not thread safe.
  *
@@ -51,7 +51,7 @@ public class Serializer implements Cloneable {
   /**
    * Creates a new serializer instance with a default {@link UnpooledHeapAllocator}.
    * <p>
-   * Copycat will use a {@link UnpooledHeapAllocator} to allocate buffers for serialization.
+   * Catalyst will use a {@link UnpooledHeapAllocator} to allocate buffers for serialization.
    * Users can explicitly allocate buffers with the heap allocator via {@link Serializer#allocate(long)}.
    * <p>
    * <pre>

@@ -15,7 +15,7 @@
  */
 
 /**
- * The Transport layer provides a low-level interface via which Copycat clients and servers communicate.
+ * The Transport layer provides a low-level interface via which Catalyst clients and servers communicate.
  * <p>
  * A {@link net.kuujo.catalyst.transport.Transport} is a simple provider for {@link net.kuujo.catalyst.transport.Client}
  * and {@link net.kuujo.catalyst.transport.Server} objects. The {@link net.kuujo.catalyst.transport.Client} and

@@ -207,7 +207,7 @@
               <windowtitle>Catalyst API Reference (${jv})</windowtitle>
               <reportOutputDirectory>target/docs</reportOutputDirectory>
               <destDir>api/${jv}</destDir>
-              <excludePackageNames>net.kuujo.catalyst.io.serializer.*</excludePackageNames>
+              <excludePackageNames>net.kuujo.catalyst.serializer.*</excludePackageNames>
               <additionalparam>
                 -Xdoclint:none
                 -link http://docs.oracle.com/javase/8/docs/api/

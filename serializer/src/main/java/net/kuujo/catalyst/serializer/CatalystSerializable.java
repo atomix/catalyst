@@ -25,9 +25,9 @@ import net.kuujo.catalyst.buffer.BufferOutput;
  * Classes can implement this interface as an alternative to providing a separate {@link TypeSerializer} instance. Note,
  * however, that {@link CatalystSerializable} classes must still be registered via {@link Serializer#register(Class)}.
  * <p>
- * Types that implement this interface should provide a no-argument constructor via which Copycat can allocate new
- * instances of the class. During serialization, Copycat will call {@link CatalystSerializable#writeObject(BufferOutput, Serializer)}
- * to serialize the object to a {@link Buffer}. During deserialization, Copycat will call
+ * Types that implement this interface should provide a no-argument constructor via which Catalyst can allocate new
+ * instances of the class. During serialization, Catalyst will call {@link CatalystSerializable#writeObject(BufferOutput, Serializer)}
+ * to serialize the object to a {@link Buffer}. During deserialization, Catalyst will call
  * {@link CatalystSerializable#readObject(BufferInput, Serializer)} to deserialize
  * the object from a {@link Buffer}.
  *
@@ -44,7 +44,7 @@ public interface CatalystSerializable {
    * set the buffer's {@link Buffer#mark()} and {@link Buffer#reset()}.
    * <p>
    * When writing dynamically sized attributes such as strings and collections, users should always write the attribute's
-   * count to the given buffer. Copycat makes no guarantee that the buffer provided to
+   * count to the given buffer. Catalyst makes no guarantee that the buffer provided to
    * {@link CatalystSerializable#readObject(BufferInput, Serializer)} will reflect the
    * number of bytes written to the buffer during serialization.
    *
@@ -59,7 +59,7 @@ public interface CatalystSerializable {
    * <p>
    * Implementations of this method should read object attributes from the given buffer in the same order with which they
    * were written to the buffer in {@link CatalystSerializable#writeObject(BufferOutput, Serializer)}.
-   * Copycat guarantees only that the current {@link Buffer#position()} will reflect the start
+   * Catalyst guarantees only that the current {@link Buffer#position()} will reflect the start
    * of the bytes written by {@link CatalystSerializable#writeObject(BufferOutput, Serializer)},
    * but not that the {@link Buffer#remaining()} bytes reflect the number of bytes written by
    * {@link CatalystSerializable#writeObject(BufferOutput, Serializer)}.

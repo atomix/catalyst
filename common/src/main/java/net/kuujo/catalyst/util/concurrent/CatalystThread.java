@@ -18,9 +18,9 @@ package net.kuujo.catalyst.util.concurrent;
 import java.lang.ref.WeakReference;
 
 /**
- * Copycat thread.
+ * Catalyst thread.
  * <p>
- * The Copycat thread primarily serves to store a {@link net.kuujo.catalyst.util.concurrent.Context} for the current thread.
+ * The Catalyst thread primarily serves to store a {@link net.kuujo.catalyst.util.concurrent.Context} for the current thread.
  * The context is stored in a {@link java.lang.ref.WeakReference} in order to allow the thread to be garbage collected.
  * <p>
  * There is no {@link net.kuujo.catalyst.util.concurrent.Context} associated with the thread when it is first created.

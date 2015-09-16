@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Transport client.
  * <p>
- * This is a low-level abstraction through which Copycat clients connect to {@link Server servers}.
+ * This is a low-level abstraction through which Catalyst clients connect to {@link Server servers}.
  * Users should never use this API directly.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
@@ -51,7 +51,7 @@ public interface Client {
    * @param address The address to which to connect.
    * @return A completable future to be completed once the client has been connected.
    * @throws NullPointerException if {@code address} is null
-   * @throws IllegalStateException if not called from a Copycat thread
+   * @throws IllegalStateException if not called from a Catalyst thread
    */
   CompletableFuture<Connection> connect(Address address);
 
@@ -62,7 +62,7 @@ public interface Client {
    * and any registered {@link Connection#closeListener(java.util.function.Consumer)}s will be invoked.
    *
    * @return A completable future to be called once the client is closed.
-   * @throws IllegalStateException if not called from a Copycat thread
+   * @throws IllegalStateException if not called from a Catalyst thread
    */
   CompletableFuture<Void> close();
 

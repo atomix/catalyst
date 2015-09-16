@@ -49,7 +49,7 @@ public abstract class PooledSerializer<T extends ReferenceCounted<T>> implements
    *
    * @param object The object to read.
    * @param buffer The buffer from which to read the object.
-   * @param serializer The Copycat serializer.
+   * @param serializer The Catalyst serializer.
    */
   protected abstract void read(T object, BufferInput buffer, Serializer serializer);
 

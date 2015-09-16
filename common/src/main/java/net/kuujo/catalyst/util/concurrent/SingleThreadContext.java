@@ -62,7 +62,7 @@ public class SingleThreadContext implements Context {
     this.executor = executor;
     this.serializer = serializer;
     if (!(thread instanceof CatalystThread)) {
-      throw new IllegalStateException("not a Copycat thread");
+      throw new IllegalStateException("not a Catalyst thread");
     }
     ((CatalystThread) thread).setContext(this);
   }

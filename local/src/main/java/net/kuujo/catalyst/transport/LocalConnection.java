@@ -72,7 +72,7 @@ public class LocalConnection implements Connection {
    */
   private Context getContext() {
     Context context = Context.currentContext();
-    Assert.state(context != null, "not on a Copycat thread");
+    Assert.state(context != null, "not on a Catalyst thread");
     return context;
   }
 

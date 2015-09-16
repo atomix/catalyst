@@ -75,7 +75,7 @@ public class NettyServer implements Server {
   private Context getContext() {
     Context context = Context.currentContext();
     if (context == null) {
-      throw new IllegalStateException("not on a Copycat thread");
+      throw new IllegalStateException("not on a Catalyst thread");
     }
     return context;
   }

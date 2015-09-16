@@ -21,11 +21,11 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Transport provider.
  * <p>
- * This is a low level abstraction that serves to provide Copycat clients and servers with {@link Client}
- * and {@link Server} instances. Throughout the lifetime of a {@code Transport}, Copycat may
+ * This is a low level abstraction that serves to provide Catalyst clients and servers with {@link Client}
+ * and {@link Server} instances. Throughout the lifetime of a {@code Transport}, Catalyst may
  * call on the transport to create multiple {@link Client} and {@link Server}
  * objects. Each {@code Client} and {@code Server} is identified by a {@link java.util.UUID} which is assumed to be unique
- * to that instance across the entire Copycat cluster.
+ * to that instance across the entire Catalyst cluster.
  * <p>
  * When the {@link Transport} is closed, it should close all {@link Client}
  * and {@link Server} instances created by it if they're not already closed.

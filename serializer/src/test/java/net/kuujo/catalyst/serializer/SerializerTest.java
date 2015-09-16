@@ -324,7 +324,7 @@ public class SerializerTest {
    */
   public void testSerializeMap() {
     Serializer serializer = new Serializer()
-      .register(TestCopycatSerializable.class, 100)
+      .register(TestCatalystSerializable.class, 100)
       .register(TestPojoWithSerializer.class, TestSerializer.class);
     Map<String, TestPojoWithSerializer> map = new HashMap<>();
     TestPojoWithSerializer value1 = new TestPojoWithSerializer();
@@ -333,7 +333,7 @@ public class SerializerTest {
     map.put("foo", value1);
     TestPojoWithSerializer value2 = new TestPojoWithSerializer();
     value2.primitive = 100;
-    TestCopycatSerializable serializable = new TestCopycatSerializable();
+    TestCatalystSerializable serializable = new TestCatalystSerializable();
     serializable.primitive = 200;
     serializable.string = "Hello world again!";
     value2.object = serializable;
@@ -347,9 +347,9 @@ public class SerializerTest {
     assertNull(result.get("foo").object);
     assertEquals(result.get("foo").string, "Hello world!");
     assertEquals(result.get("bar").primitive, 100);
-    assertEquals(((TestCopycatSerializable) result.get("bar").object).primitive, 200);
-    assertNull(((TestCopycatSerializable) result.get("bar").object).object);
-    assertEquals(((TestCopycatSerializable) result.get("bar").object).string, "Hello world again!");
+    assertEquals(((TestCatalystSerializable) result.get("bar").object).primitive, 200);
+    assertNull(((TestCatalystSerializable) result.get("bar").object).object);
+    assertEquals(((TestCatalystSerializable) result.get("bar").object).string, "Hello world again!");
     assertEquals(result.get("baz").primitive, -100);
     assertNull(result.get("baz").object);
     assertNull(result.get("baz").string);
@@ -374,9 +374,9 @@ public class SerializerTest {
    */
   public void testSerializeWritableWithId() {
     Serializer serializer = new Serializer()
-      .register(TestCopycatSerializable.class, 100)
+      .register(TestCatalystSerializable.class, 100)
       .register(TestPojoWithSerializer.class, TestSerializer.class);
-    TestCopycatSerializable writable = new TestCopycatSerializable();
+    TestCatalystSerializable writable = new TestCatalystSerializable();
     writable.primitive = 100;
     TestPojoWithSerializer pojo = new TestPojoWithSerializer();
     pojo.primitive = 200;
@@ -385,7 +385,7 @@ public class SerializerTest {
     writable.object = pojo;
     writable.string = "Hello world!";
     Buffer buffer = serializer.writeObject(writable).flip();
-    TestCopycatSerializable result = serializer.readObject(buffer);
+    TestCatalystSerializable result = serializer.readObject(buffer);
     assertEquals(result.primitive, 100);
     assertEquals(((TestPojoWithSerializer) result.object).primitive, 200);
     assertNull(((TestPojoWithSerializer) result.object).object);
@@ -398,9 +398,9 @@ public class SerializerTest {
    */
   public void testSerializeWritableWithoutId() {
     Serializer serializer = new Serializer()
-      .register(TestCopycatSerializable.class, 100)
+      .register(TestCatalystSerializable.class, 100)
       .register(TestPojoWithSerializer.class, TestSerializer.class);
-    TestCopycatSerializable writable = new TestCopycatSerializable();
+    TestCatalystSerializable writable = new TestCatalystSerializable();
     writable.primitive = 100;
     TestPojoWithSerializer pojo = new TestPojoWithSerializer();
     pojo.primitive = 200;
@@ -409,7 +409,7 @@ public class SerializerTest {
     writable.object = pojo;
     writable.string = "Hello world!";
     Buffer buffer = serializer.writeObject(writable).flip();
-    TestCopycatSerializable result = serializer.readObject(buffer);
+    TestCatalystSerializable result = serializer.readObject(buffer);
     assertEquals(result.primitive, 100);
     assertEquals(((TestPojoWithSerializer) result.object).primitive, 200);
     assertNull(((TestPojoWithSerializer) result.object).object);
@@ -422,11 +422,11 @@ public class SerializerTest {
    */
   public void testSerializeSerializer() {
     Serializer serializer = new Serializer()
-      .register(TestCopycatSerializable.class, 100)
+      .register(TestCatalystSerializable.class, 100)
       .register(TestPojoWithSerializer.class, TestSerializer.class);
     TestPojoWithSerializer pojo = new TestPojoWithSerializer();
     pojo.primitive = 100;
-    TestCopycatSerializable writable = new TestCopycatSerializable();
+    TestCatalystSerializable writable = new TestCatalystSerializable();
     writable.primitive = 200;
     writable.object = null;
     writable.string = "Hello world again!";
@@ -435,9 +435,9 @@ public class SerializerTest {
     Buffer buffer = serializer.writeObject(pojo).flip();
     TestPojoWithSerializer result = serializer.readObject(buffer);
     assertEquals(result.primitive, 100);
-    assertEquals(((TestCopycatSerializable) result.object).primitive, 200);
-    assertNull(((TestCopycatSerializable) result.object).object);
-    assertEquals(((TestCopycatSerializable) result.object).string, "Hello world again!");
+    assertEquals(((TestCatalystSerializable) result.object).primitive, 200);
+    assertNull(((TestCatalystSerializable) result.object).object);
+    assertEquals(((TestCatalystSerializable) result.object).string, "Hello world again!");
     assertEquals(result.string, "Hello world!");
   }
 
@@ -504,7 +504,7 @@ public class SerializerTest {
     assertEquals(serializer.<TestSerializeWithoutId>readObject(buffer).primitive, 2);
   }
 
-  public static class TestCopycatSerializable implements CatalystSerializable {
+  public static class TestCatalystSerializable implements CatalystSerializable {
     protected long primitive;
     protected Object object;
     protected String string;
