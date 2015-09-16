@@ -69,6 +69,8 @@
   <modules>
     <module>buffer</module>
     <module>serializer</module>
+    <module>common</module>
+    <module>transport</module>
   </modules>
 
   <dependencies>
