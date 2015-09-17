@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public abstract class NettyHandler extends ChannelInboundHandlerAdapter {
+abstract class NettyHandler extends ChannelInboundHandlerAdapter {
   private final Map<Channel, NettyConnection> connections;
   private final Consumer<Connection> listener;
   private final Context context;
