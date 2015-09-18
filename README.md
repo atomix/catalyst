@@ -9,4 +9,4 @@ and related projects.
 
 [Website]: http://atomix.github.io/copycat/user-manual/io-serialization/
 [Google group]: https://groups.google.com/forum/#!forum/copycat
-[Javadoc]: http://atomix.github.io/catalyst/api/1.0.0-beta1/
+[Javadoc]: http://atomix.github.io/catalyst/api/1.0.0-SNAPSHOT/
