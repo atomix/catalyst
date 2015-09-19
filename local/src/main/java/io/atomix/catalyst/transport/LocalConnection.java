@@ -67,19 +67,10 @@ public class LocalConnection implements Connection {
     return id;
   }
 
-  /**
-   * Returns the current execution context.
-   */
-  private Context getContext() {
-    Context context = Context.currentContext();
-    Assert.state(context != null, "not on a Catalyst thread");
-    return context;
-  }
-
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     Assert.notNull(request, "request");
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
     CompletableFuture<U> future = new CompletableFuture<>();
 
     Buffer requestBuffer = context.serializer().writeObject(request);
@@ -104,7 +95,7 @@ public class LocalConnection implements Connection {
    */
   @SuppressWarnings("unchecked")
   private CompletableFuture<Buffer> receive(Buffer requestBuffer) {
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
 
     Object request = context.serializer().readObject(requestBuffer);
     requestBuffer.release();
@@ -141,7 +132,7 @@ public class LocalConnection implements Connection {
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
     if (handler != null) {
-      handlers.put(type, new HandlerHolder(handler, getContext()));
+      handlers.put(type, new HandlerHolder(handler, Context.currentContextOrThrow()));
     } else {
       handlers.remove(type);
     }
@@ -162,7 +153,7 @@ public class LocalConnection implements Connection {
   public CompletableFuture<Void> close() {
     doClose();
     connection.doClose();
-    return getContext().execute(() -> null);
+    return Context.currentContextOrThrow().execute(() -> null);
   }
 
   /**

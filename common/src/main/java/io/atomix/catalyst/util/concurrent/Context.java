@@ -16,6 +16,8 @@
 package io.atomix.catalyst.util.concurrent;
 
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
+
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -52,6 +54,15 @@ public interface Context extends AutoCloseable {
   static Context currentContext() {
     Thread thread = Thread.currentThread();
     return thread instanceof CatalystThread ? ((CatalystThread) thread).getContext() : null;
+  }
+  
+  /**
+   * @throws IllegalStateException if the current thread is not a catalyst thread
+   */
+  static Context currentContextOrThrow() {
+    Context context = Context.currentContext();
+    Assert.state(context != null, "not on a Catalyst thread");
+    return context;
   }
 
   /**

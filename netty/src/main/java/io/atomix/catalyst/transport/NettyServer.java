@@ -69,17 +69,6 @@ public class NettyServer implements Server {
     return id;
   }
 
-  /**
-   * Returns the current execution context.
-   */
-  private Context getContext() {
-    Context context = Context.currentContext();
-    if (context == null) {
-      throw new IllegalStateException("not on a Catalyst thread");
-    }
-    return context;
-  }
-
   @Override
   public CompletableFuture<Void> listen(Address address, Consumer<Connection> listener) {
     Assert.notNull(address, "address");
@@ -87,7 +76,7 @@ public class NettyServer implements Server {
     if (listening)
       return CompletableFuture.completedFuture(null);
 
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
     synchronized (this) {
       if (listenFuture == null) {
         listenFuture = new CompletableFuture<>();

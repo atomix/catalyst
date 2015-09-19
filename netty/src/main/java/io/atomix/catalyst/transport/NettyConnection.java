@@ -84,15 +84,6 @@ public class NettyConnection implements Connection {
     this.timeout = context.schedule(this::timeout, Duration.ofMillis(250), Duration.ofMillis(250));
   }
 
-  /**
-   * Returns the current execution context.
-   */
-  private Context getContext() {
-    Context context = Context.currentContext();
-    Assert.state(context != null, "not on a Catalyst thread");
-    return context;
-  }
-
   @Override
   public UUID id() {
     return id;
@@ -301,7 +292,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     Assert.notNull(request, "request");
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
     ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), context);
 
     long requestId = ++this.requestId;
@@ -327,7 +318,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
-    handlers.put(hashMap.computeIfAbsent(type, this::hash32), new HandlerHolder(handler, getContext()));
+    handlers.put(hashMap.computeIfAbsent(type, this::hash32), new HandlerHolder(handler, Context.currentContextOrThrow()));
     return null;
   }
 

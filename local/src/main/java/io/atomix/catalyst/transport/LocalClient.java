@@ -53,9 +53,7 @@ public class LocalClient implements Client {
    * Returns the current execution context.
    */
   private Context getContext() {
-    Context context = Context.currentContext();
-    Assert.state(context != null, "not on a Catalyst thread");
-    return context;
+    return Context.currentContextOrThrow();
   }
 
   @Override

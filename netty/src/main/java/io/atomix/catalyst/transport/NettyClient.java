@@ -66,19 +66,10 @@ public class NettyClient implements Client {
     return id;
   }
 
-  /**
-   * Returns the current execution context.
-   */
-  private Context getContext() {
-    Context context = Context.currentContext();
-    Assert.state(context != null, "not on a Catalyst thread");
-    return context;
-  }
-
   @Override
   public CompletableFuture<Connection> connect(Address address) {
     Assert.notNull(address, "address");
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
     CompletableFuture<Connection> future = new ComposableFuture<>();
 
     LOGGER.info("Connecting to {}", address);
@@ -113,7 +104,7 @@ public class NettyClient implements Client {
 
   @Override
   public CompletableFuture<Void> close() {
-    getContext();
+    Context.currentContextOrThrow();
     int i = 0;
     CompletableFuture[] futures = new CompletableFuture[connections.size()];
     for (Connection connection : connections.values()) {

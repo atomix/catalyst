@@ -52,17 +52,6 @@ public class LocalServer implements Server {
   }
 
   /**
-   * Returns the current execution context.
-   */
-  private Context getContext() {
-    Context context = Context.currentContext();
-    if (context == null) {
-      throw new IllegalStateException("not on a Catalyst thread");
-    }
-    return context;
-  }
-
-  /**
    * Connects to the server.
    */
   CompletableFuture<Void> connect(LocalConnection connection) {
@@ -85,7 +74,7 @@ public class LocalServer implements Server {
 
     CompletableFuture<Void> future = new CompletableFuture<>();
     registry.register(address, this);
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
 
     this.address = address;
     this.listener = new ListenerHolder(listener, context);
@@ -104,7 +93,7 @@ public class LocalServer implements Server {
     address = null;
     listener = null;
 
-    Context context = getContext();
+    Context context = Context.currentContextOrThrow();
     CompletableFuture[] futures = new CompletableFuture[connections.size()];
     int i = 0;
     for (LocalConnection connection : connections) {
