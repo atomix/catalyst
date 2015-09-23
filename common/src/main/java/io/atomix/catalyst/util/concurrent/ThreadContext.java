@@ -59,7 +59,7 @@ public interface ThreadContext extends AutoCloseable {
    * @throws IllegalStateException if the current thread is not a catalyst thread
    */
   static ThreadContext currentContextOrThrow() {
-    ThreadContext context = ThreadContext.currentContext();
+    ThreadContext context = currentContext();
     Assert.state(context != null, "not on a Catalyst thread");
     return context;
   }
@@ -68,10 +68,7 @@ public interface ThreadContext extends AutoCloseable {
    * Checks that the current thread is the correct context thread.
    */
   default void checkThread() {
-    Thread thread = Thread.currentThread();
-    if (!(thread instanceof CatalystThread && ((CatalystThread) thread).getContext() == this)) {
-      throw new IllegalStateException("not running on the correct thread");
-    }
+    Assert.state(currentContext() == this, "not on a Catalyst thread");
   }
 
   /**
