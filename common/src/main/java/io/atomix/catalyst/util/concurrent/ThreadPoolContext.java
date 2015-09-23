@@ -111,13 +111,13 @@ public class ThreadPoolContext implements ThreadContext {
   }
 
   @Override
-  public Scheduled schedule(Runnable runnable, Duration delay) {
+  public Scheduled schedule(Duration delay, Runnable runnable) {
     ScheduledFuture<?> future = parent.schedule(() -> executor.execute(wrapRunnable(runnable)), delay.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
   @Override
-  public Scheduled schedule(Runnable runnable, Duration delay, Duration interval) {
+  public Scheduled schedule(Duration delay, Duration interval, Runnable runnable) {
     ScheduledFuture<?> future = parent.scheduleAtFixedRate(() -> executor.execute(wrapRunnable(runnable)), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }

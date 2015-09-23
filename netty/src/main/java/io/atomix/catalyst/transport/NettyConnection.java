@@ -15,15 +15,15 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.util.concurrent.ThreadContext;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.Listener;
 import io.atomix.catalyst.util.Listeners;
 import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Scheduled;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import net.openhft.hashing.LongHashFunction;
 
 import java.time.Duration;
@@ -81,7 +81,7 @@ public class NettyConnection implements Connection {
     this.id = id;
     this.channel = channel;
     this.context = context;
-    this.timeout = context.schedule(this::timeout, Duration.ofMillis(250), Duration.ofMillis(250));
+    this.timeout = context.schedule(Duration.ofMillis(250), Duration.ofMillis(250), this::timeout);
   }
 
   @Override

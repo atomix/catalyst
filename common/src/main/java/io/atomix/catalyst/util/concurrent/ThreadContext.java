@@ -17,7 +17,6 @@ package io.atomix.catalyst.util.concurrent;
 
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
-
 import org.slf4j.Logger;
 
 import java.time.Duration;
@@ -140,16 +139,14 @@ public interface ThreadContext extends AutoCloseable {
    * @param callback The callback to schedule.
    * @param delay The delay at which to schedule the runnable.
    */
-  Scheduled schedule(Runnable callback, Duration delay);
+  Scheduled schedule(Duration delay, Runnable callback);
 
   /**
    * Schedules a runnable at a fixed rate on the context.
    *
    * @param callback The callback to schedule.
-   * @param initialDelay The delay at which to schedule the runnable.
-   * @param interval The interval at which to run the task.
    */
-  Scheduled schedule(Runnable callback, Duration initialDelay, Duration interval);
+  Scheduled schedule(Duration initialDelay, Duration interval, Runnable callback);
 
   /**
    * Closes the context.
