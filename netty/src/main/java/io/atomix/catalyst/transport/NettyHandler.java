@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -22,7 +23,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.atomix.catalyst.util.concurrent.Context;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 
 import java.nio.charset.StandardCharsets;
@@ -38,9 +38,9 @@ import java.util.function.Consumer;
 abstract class NettyHandler extends ChannelInboundHandlerAdapter {
   private final Map<Channel, NettyConnection> connections;
   private final Consumer<Connection> listener;
-  private final Context context;
+  private final ThreadContext context;
 
-  protected NettyHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, Context context) {
+  protected NettyHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
     this.connections = connections;
     this.listener = listener;
     this.context = context;
@@ -79,8 +79,8 @@ abstract class NettyHandler extends ChannelInboundHandlerAdapter {
   /**
    * Returns the current execution context or creates one.
    */
-  private Context getOrCreateContext(Channel channel) {
-    Context context = Context.currentContext();
+  private ThreadContext getOrCreateContext(Channel channel) {
+    ThreadContext context = ThreadContext.currentContext();
     if (context != null) {
       return context;
     }

@@ -11,12 +11,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Single threaded context.
  * <p>
- * This is a basic {@link Context} implementation that uses a
+ * This is a basic {@link ThreadContext} implementation that uses a
  * {@link java.util.concurrent.ScheduledExecutorService} to schedule events on the context thread.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class SingleThreadContext implements Context {
+public class SingleThreadContext implements ThreadContext {
   private static final Logger LOGGER = LoggerFactory.getLogger(SingleThreadContext.class);
   private final ScheduledExecutorService executor;
   private final Serializer serializer;

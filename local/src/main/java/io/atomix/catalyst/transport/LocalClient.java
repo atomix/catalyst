@@ -19,7 +19,7 @@ import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.util.concurrent.Context;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Collections;
 import java.util.Set;
@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalClient implements Client {
   private final UUID id;
   private final LocalServerRegistry registry;
-  private final Context context;
+  private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public LocalClient(UUID id, LocalServerRegistry registry, Serializer serializer) {
@@ -52,14 +52,14 @@ public class LocalClient implements Client {
   /**
    * Returns the current execution context.
    */
-  private Context getContext() {
-    return Context.currentContextOrThrow();
+  private ThreadContext getContext() {
+    return ThreadContext.currentContextOrThrow();
   }
 
   @Override
   public CompletableFuture<Connection> connect(Address address) {
     Assert.notNull(address, "address");
-    Context context = getContext();
+    ThreadContext context = getContext();
     LocalServer server = registry.get(address);
     if (server == null) {
       return Futures.exceptionalFutureAsync(new TransportException("failed to connect"), context.executor());
@@ -74,7 +74,7 @@ public class LocalClient implements Client {
   public CompletableFuture<Void> close() {
     CompletableFuture<Void> future = new CompletableFuture<>();
 
-    Context context = getContext();
+    ThreadContext context = getContext();
     CompletableFuture[] futures = new CompletableFuture[connections.size()];
     int i = 0;
     for (LocalConnection connection : connections) {

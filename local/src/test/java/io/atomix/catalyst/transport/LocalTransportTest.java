@@ -18,7 +18,7 @@ package io.atomix.catalyst.transport;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import net.jodah.concurrentunit.ConcurrentTestCase;
 import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.util.concurrent.Context;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
@@ -48,7 +48,7 @@ public class LocalTransportTest extends ConcurrentTestCase {
     Server server = serverTransport.server(UUID.randomUUID());
     Client client = clientTransport.client(UUID.randomUUID());
 
-    Context context = new SingleThreadContext("test-thread-%d", new Serializer());
+    ThreadContext context = new SingleThreadContext("test-thread-%d", new Serializer());
 
     context.executor().execute(() -> {
       try {

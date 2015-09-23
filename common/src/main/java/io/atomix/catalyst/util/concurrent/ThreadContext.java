@@ -31,7 +31,7 @@ import java.util.function.Supplier;
  * The thread context is used by Catalyst to determine the correct thread on which to execute asynchronous callbacks.
  * All threads created within Catalyst must be instances of {@link CatalystThread}. Once
  * a thread has been created, the context is stored in the thread object via
- * {@link CatalystThread#setContext(Context)}. This means there is a one-to-one relationship
+ * {@link CatalystThread#setContext(ThreadContext)}. This means there is a one-to-one relationship
  * between a context and a thread. That is, a context is representative of a thread and provides an interface for firing
  * events on that thread.
  * <p>
@@ -40,18 +40,18 @@ import java.util.function.Supplier;
  * {@link CatalystThread} should use the context {@link #serializer()}.
  * <p>
  * Components of the framework that provide custom threads should use {@link CatalystThreadFactory}
- * to allocate new threads and provide a custom {@link Context} implementation.
+ * to allocate new threads and provide a custom {@link ThreadContext} implementation.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public interface Context extends AutoCloseable {
+public interface ThreadContext extends AutoCloseable {
 
   /**
    * Returns the current thread context.
    *
    * @return The current thread context or {@code null} if no context exists.
    */
-  static Context currentContext() {
+  static ThreadContext currentContext() {
     Thread thread = Thread.currentThread();
     return thread instanceof CatalystThread ? ((CatalystThread) thread).getContext() : null;
   }
@@ -59,8 +59,8 @@ public interface Context extends AutoCloseable {
   /**
    * @throws IllegalStateException if the current thread is not a catalyst thread
    */
-  static Context currentContextOrThrow() {
-    Context context = Context.currentContext();
+  static ThreadContext currentContextOrThrow() {
+    ThreadContext context = ThreadContext.currentContext();
     Assert.state(context != null, "not on a Catalyst thread");
     return context;
   }

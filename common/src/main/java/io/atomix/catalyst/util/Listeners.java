@@ -15,7 +15,7 @@
  */
 package io.atomix.catalyst.util;
 
-import io.atomix.catalyst.util.concurrent.Context;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +49,7 @@ public class Listeners<T> implements Iterable<Listener<T>> {
   public Listener<T> add(Consumer<T> listener) {
     Assert.notNull(listener, "listener");
     
-    Context context = Context.currentContext();
+    ThreadContext context = ThreadContext.currentContext();
 
     Listener<T> wrapper = new Listener<T>() {
       @Override

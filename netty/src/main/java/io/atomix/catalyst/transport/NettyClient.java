@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -28,7 +29,6 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.ComposableFuture;
-import io.atomix.catalyst.util.concurrent.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +69,7 @@ public class NettyClient implements Client {
   @Override
   public CompletableFuture<Connection> connect(Address address) {
     Assert.notNull(address, "address");
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     CompletableFuture<Connection> future = new ComposableFuture<>();
 
     LOGGER.info("Connecting to {}", address);
@@ -104,7 +104,7 @@ public class NettyClient implements Client {
 
   @Override
   public CompletableFuture<Void> close() {
-    Context.currentContextOrThrow();
+    ThreadContext.currentContextOrThrow();
     int i = 0;
     CompletableFuture[] futures = new CompletableFuture[connections.size()];
     for (Connection connection : connections.values()) {
@@ -117,7 +117,7 @@ public class NettyClient implements Client {
    * Client handler.
    */
   private class ClientHandler extends NettyHandler {
-    private ClientHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, Context context) {
+    private ClientHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
       super(connections, listener, context);
     }
 

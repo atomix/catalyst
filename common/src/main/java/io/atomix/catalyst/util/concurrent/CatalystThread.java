@@ -20,16 +20,16 @@ import java.lang.ref.WeakReference;
 /**
  * Catalyst thread.
  * <p>
- * The Catalyst thread primarily serves to store a {@link Context} for the current thread.
+ * The Catalyst thread primarily serves to store a {@link ThreadContext} for the current thread.
  * The context is stored in a {@link java.lang.ref.WeakReference} in order to allow the thread to be garbage collected.
  * <p>
- * There is no {@link Context} associated with the thread when it is first created.
- * It is the responsibility of thread creators to {@link #setContext(Context) set} the thread context when appropriate.
+ * There is no {@link ThreadContext} associated with the thread when it is first created.
+ * It is the responsibility of thread creators to {@link #setContext(ThreadContext) set} the thread context when appropriate.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class CatalystThread extends Thread {
-  private WeakReference<Context> context;
+  private WeakReference<ThreadContext> context;
 
   public CatalystThread(Runnable target, String name) {
     super(target, name);
@@ -40,16 +40,16 @@ public class CatalystThread extends Thread {
    *
    * @param context The thread context.
    */
-  public void setContext(Context context) {
+  public void setContext(ThreadContext context) {
     this.context = new WeakReference<>(context);
   }
 
   /**
    * Returns the thread context.
    *
-   * @return The thread {@link Context} or {@code null} if no context has been configured.
+   * @return The thread {@link ThreadContext} or {@code null} if no context has been configured.
    */
-  public Context getContext() {
+  public ThreadContext getContext() {
     return context != null ? context.get() : null;
   }
 

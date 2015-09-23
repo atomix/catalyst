@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -31,7 +32,6 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.concurrent.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +76,7 @@ public class NettyServer implements Server {
     if (listening)
       return CompletableFuture.completedFuture(null);
 
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     synchronized (this) {
       if (listenFuture == null) {
         listenFuture = new CompletableFuture<>();
@@ -89,7 +89,7 @@ public class NettyServer implements Server {
   /**
    * Starts listening for the given member.
    */
-  private void listen(Address address, Consumer<Connection> listener, Context context) {
+  private void listen(Address address, Consumer<Connection> listener, ThreadContext context) {
     channelGroup = new DefaultChannelGroup("catalyst-acceptor-channels", GlobalEventExecutor.INSTANCE);
 
     handler = new ServerHandler(connections, listener, context);
@@ -146,7 +146,7 @@ public class NettyServer implements Server {
   @ChannelHandler.Sharable
   private static class ServerHandler extends NettyHandler {
 
-    private ServerHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, Context context) {
+    private ServerHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
       super(connections, listener, context);
     }
 

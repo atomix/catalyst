@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -22,7 +23,6 @@ import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.Listener;
 import io.atomix.catalyst.util.Listeners;
 import io.atomix.catalyst.util.ReferenceCounted;
-import io.atomix.catalyst.util.concurrent.Context;
 import io.atomix.catalyst.util.concurrent.Scheduled;
 import net.openhft.hashing.LongHashFunction;
 
@@ -61,7 +61,7 @@ public class NettyConnection implements Connection {
 
   private final UUID id;
   private final Channel channel;
-  private final Context context;
+  private final ThreadContext context;
   private final Map<Integer, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Map<Class, Integer> hashMap = new HashMap<>();
   private final LongHashFunction hash = LongHashFunction.city_1_1();
@@ -77,7 +77,7 @@ public class NettyConnection implements Connection {
   /**
    * @throws NullPointerException if any argument is null
    */
-  public NettyConnection(UUID id, Channel channel, Context context) {
+  public NettyConnection(UUID id, Channel channel, ThreadContext context) {
     this.id = id;
     this.channel = channel;
     this.context = context;
@@ -292,7 +292,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     Assert.notNull(request, "request");
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), context);
 
     long requestId = ++this.requestId;
@@ -318,7 +318,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
-    handlers.put(hashMap.computeIfAbsent(type, this::hash32), new HandlerHolder(handler, Context.currentContextOrThrow()));
+    handlers.put(hashMap.computeIfAbsent(type, this::hash32), new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;
   }
 
@@ -376,9 +376,9 @@ public class NettyConnection implements Connection {
    */
   protected static class HandlerHolder {
     private final MessageHandler handler;
-    private final Context context;
+    private final ThreadContext context;
 
-    private HandlerHolder(MessageHandler handler, Context context) {
+    private HandlerHolder(MessageHandler handler, ThreadContext context) {
       this.handler = handler;
       this.context = context;
     }
@@ -389,9 +389,9 @@ public class NettyConnection implements Connection {
    */
   private static class ContextualFuture<T> extends CompletableFuture<T> {
     private final long time;
-    private final Context context;
+    private final ThreadContext context;
 
-    private ContextualFuture(long time, Context context) {
+    private ContextualFuture(long time, ThreadContext context) {
       this.time = time;
       this.context = context;
     }

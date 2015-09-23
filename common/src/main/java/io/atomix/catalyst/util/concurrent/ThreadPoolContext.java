@@ -29,13 +29,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Thread pool context.
  * <p>
- * This is a special {@link Context} implementation that schedules events to be executed
+ * This is a special {@link ThreadContext} implementation that schedules events to be executed
  * on a thread pool. Events executed by this context are guaranteed to be executed on order but may be executed on different
  * threads in the provided thread pool.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class ThreadPoolContext implements Context {
+public class ThreadPoolContext implements ThreadContext {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolContext.class);
   private final ScheduledExecutorService parent;
   private final Serializer serializer;

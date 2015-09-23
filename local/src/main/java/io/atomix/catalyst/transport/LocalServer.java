@@ -17,7 +17,7 @@ package io.atomix.catalyst.transport;
 
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.concurrent.Context;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 public class LocalServer implements Server {
   private final UUID id;
   private final LocalServerRegistry registry;
-  private final Context context;
+  private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile Address address;
   private volatile ListenerHolder listener;
@@ -74,7 +74,7 @@ public class LocalServer implements Server {
 
     CompletableFuture<Void> future = new CompletableFuture<>();
     registry.register(address, this);
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
 
     this.address = address;
     this.listener = new ListenerHolder(listener, context);
@@ -93,7 +93,7 @@ public class LocalServer implements Server {
     address = null;
     listener = null;
 
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     CompletableFuture[] futures = new CompletableFuture[connections.size()];
     int i = 0;
     for (LocalConnection connection : connections) {
@@ -108,9 +108,9 @@ public class LocalServer implements Server {
    */
   private static class ListenerHolder {
     private final Consumer<Connection> listener;
-    private final Context context;
+    private final ThreadContext context;
 
-    private ListenerHolder(Consumer<Connection> listener, Context context) {
+    private ListenerHolder(Consumer<Connection> listener, ThreadContext context) {
       this.listener = listener;
       this.context = context;
     }

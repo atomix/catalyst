@@ -20,7 +20,7 @@ import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.Listener;
 import io.atomix.catalyst.util.Listeners;
-import io.atomix.catalyst.util.concurrent.Context;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.atomix.catalyst.util.concurrent.Futures;
 
 import java.util.Map;
@@ -37,18 +37,18 @@ import java.util.function.Consumer;
  */
 public class LocalConnection implements Connection {
   private final UUID id;
-  private final Context context;
+  private final ThreadContext context;
   private final Set<LocalConnection> connections;
   private LocalConnection connection;
   private final Map<Class, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
 
-  public LocalConnection(UUID id, Context context) {
+  public LocalConnection(UUID id, ThreadContext context) {
     this(id, context, null);
   }
 
-  public LocalConnection(UUID id, Context context, Set<LocalConnection> connections) {
+  public LocalConnection(UUID id, ThreadContext context, Set<LocalConnection> connections) {
     this.id = id;
     this.context = context;
     this.connections = connections;
@@ -70,7 +70,7 @@ public class LocalConnection implements Connection {
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     Assert.notNull(request, "request");
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     CompletableFuture<U> future = new CompletableFuture<>();
 
     Buffer requestBuffer = context.serializer().writeObject(request);
@@ -95,7 +95,7 @@ public class LocalConnection implements Connection {
    */
   @SuppressWarnings("unchecked")
   private CompletableFuture<Buffer> receive(Buffer requestBuffer) {
-    Context context = Context.currentContextOrThrow();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
 
     Object request = context.serializer().readObject(requestBuffer);
     requestBuffer.release();
@@ -132,7 +132,7 @@ public class LocalConnection implements Connection {
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
     if (handler != null) {
-      handlers.put(type, new HandlerHolder(handler, Context.currentContextOrThrow()));
+      handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     } else {
       handlers.remove(type);
     }
@@ -153,7 +153,7 @@ public class LocalConnection implements Connection {
   public CompletableFuture<Void> close() {
     doClose();
     connection.doClose();
-    return Context.currentContextOrThrow().execute(() -> null);
+    return ThreadContext.currentContextOrThrow().execute(() -> null);
   }
 
   /**
@@ -173,9 +173,9 @@ public class LocalConnection implements Connection {
    */
   protected static class HandlerHolder {
     private final MessageHandler handler;
-    private final Context context;
+    private final ThreadContext context;
 
-    private HandlerHolder(MessageHandler handler, Context context) {
+    private HandlerHolder(MessageHandler handler, ThreadContext context) {
       this.handler = handler;
       this.context = context;
     }
