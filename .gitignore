@@ -2,8 +2,9 @@ target/
 test-output/
 .settings/
 .classpath/
-.project
+*.project
 .idea
+*.classpath
 *.iml
 .DS_Store
 pom.xml.tag
