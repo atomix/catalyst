@@ -15,9 +15,6 @@
  */
 package io.atomix.catalyst.transport;
 
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Transport provider.
  * <p>
@@ -36,41 +33,18 @@ public interface Transport {
 
   /**
    * Creates a transport client.
-   * <p>
-   * The provided {@link java.util.UUID} is a cluster-wide unique identifier for the client. The {@link Connection#id()}
-   * for all {@link Connection} objects created by the client should reflect the provided
-   * {@code id}. Additionally, {@link Connection} objects created by any
-   * {@link Server} to which the provided client connects should have the same
-   * {@link Connection#id()} .
    *
-   * @param id The client ID.
    * @return The transport client.
    * @throws NullPointerException if {@code id} is null
    */
-  Client client(UUID id);
+  Client client();
 
   /**
    * Creates a transport server.
-   * <p>
-   * The provided {@link java.util.UUID} is a cluster-wide unique identifier for the client. However, note that
-   * {@link Connection} objects created by the provided {@link Server}
-   * should be created with the {@link Connection#id()} of the connecting {@link Client} and
-   * not the provided {@link Server} itself.
    *
-   * @param id The server ID.
    * @return The transport server.
    * @throws NullPointerException if {@code id} is null
    */
-  Server server(UUID id);
-
-  /**
-   * Closes the transport.
-   * <p>
-   * When the transport is closed, all {@link Client} and {@link Server}
-   * objects provided by the {@link Transport} should be closed if not closed already.
-   *
-   * @return A completable future to be completed once the transport is closed.
-   */
-  CompletableFuture<Void> close();
+  Server server();
 
 }

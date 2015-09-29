@@ -15,7 +15,6 @@
  */
 package io.atomix.catalyst.transport;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -30,22 +29,10 @@ import java.util.function.Consumer;
 public interface Server {
 
   /**
-   * Returns the server ID.
-   * <p>
-   * The server ID is a globally unique {@link java.util.UUID} through which the server can be identified.
-   *
-   * @return The server ID.
-   */
-  UUID id();
-
-  /**
    * Listens for connections on the server.
    * <p>
    * Once the server has started listening on the provided {@code address}, {@link Consumer#accept(Object)} will be
    * called for the provided {@link Consumer} each time a new connection to the server is established.
-   * The provided connection's {@link Connection#id()} will reflect the
-   * {@link Client#id()} of the client that connected to the server and not the
-   * {@link Server#id()} of the server itself.
    * <p>
    * Once the server has bound to the provided {@link java.net.InetSocketAddress address} the returned
    * {@link java.util.concurrent.CompletableFuture} will be completed.

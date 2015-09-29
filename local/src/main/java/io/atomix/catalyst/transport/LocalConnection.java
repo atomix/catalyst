@@ -17,11 +17,11 @@ package io.atomix.catalyst.transport;
 
 import io.atomix.catalyst.buffer.Buffer;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.Listener;
 import io.atomix.catalyst.util.Listeners;
-import io.atomix.catalyst.util.concurrent.ThreadContext;
+import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalConnection implements Connection {
-  private final UUID id;
+  private final UUID id = UUID.randomUUID();
   private final ThreadContext context;
   private final Set<LocalConnection> connections;
   private LocalConnection connection;
@@ -44,12 +44,11 @@ public class LocalConnection implements Connection {
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
 
-  public LocalConnection(UUID id, ThreadContext context) {
-    this(id, context, null);
+  public LocalConnection(ThreadContext context) {
+    this(context, null);
   }
 
-  public LocalConnection(UUID id, ThreadContext context, Set<LocalConnection> connections) {
-    this.id = id;
+  public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
     this.context = context;
     this.connections = connections;
   }
@@ -60,11 +59,6 @@ public class LocalConnection implements Connection {
   public LocalConnection connect(LocalConnection connection) {
     this.connection = connection;
     return this;
-  }
-
-  @Override
-  public UUID id() {
-    return id;
   }
 
   @Override
@@ -179,6 +173,16 @@ public class LocalConnection implements Connection {
       this.handler = handler;
       this.context = context;
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object instanceof LocalConnection && ((LocalConnection) object).id.equals(id);
   }
 
 }

@@ -15,19 +15,16 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -35,7 +32,7 @@ import java.util.function.Consumer;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-abstract class NettyHandler extends ChannelInboundHandlerAdapter {
+class NettyHandler extends ChannelInboundHandlerAdapter {
   private final Map<Channel, NettyConnection> connections;
   private final Consumer<Connection> listener;
   private final ThreadContext context;
@@ -88,16 +85,18 @@ abstract class NettyHandler extends ChannelInboundHandlerAdapter {
   }
 
   @Override
+  public void channelActive(ChannelHandlerContext context) throws Exception {
+    Channel channel = context.channel();
+    NettyConnection connection = new NettyConnection(channel, getOrCreateContext(channel));
+    setConnection(channel, connection);
+    this.context.executor().execute(() -> listener.accept(connection));
+  }
+
+  @Override
   public void channelRead(final ChannelHandlerContext context, Object message) {
     ByteBuf buffer = (ByteBuf) message;
     int type = buffer.readByte();
     switch (type) {
-      case NettyConnection.CONNECT:
-        handleConnect(buffer, context);
-        break;
-      case NettyConnection.OK:
-        handleOk(buffer, context);
-        break;
       case NettyConnection.REQUEST:
         handleRequest(buffer, context);
         break;
@@ -105,37 +104,6 @@ abstract class NettyHandler extends ChannelInboundHandlerAdapter {
         handleResponse(buffer, context);
         break;
     }
-  }
-
-  /**
-   * Handles a connection identification request.
-   */
-  private void handleConnect(ByteBuf request, ChannelHandlerContext context) {
-    Channel channel = context.channel();
-    byte[] idBytes = new byte[request.readInt()];
-    request.readBytes(idBytes);
-    NettyConnection connection = new NettyConnection(UUID.fromString(new String(idBytes, StandardCharsets.UTF_8)), channel, getOrCreateContext(channel));
-
-    ByteBuf buffer = channel.alloc().buffer(5)
-      .writeByte(NettyConnection.OK)
-      .writeInt(idBytes.length)
-      .writeBytes(idBytes);
-    channel.writeAndFlush(buffer).addListener((ChannelFutureListener) channelFuture -> {
-      setConnection(channel, connection);
-      this.context.executor().execute(() -> listener.accept(connection));
-    });
-  }
-
-  /**
-   * Handles a connection completion request.
-   */
-  private void handleOk(ByteBuf request, ChannelHandlerContext context) {
-    Channel channel = context.channel();
-    byte[] idBytes = new byte[request.readInt()];
-    request.readBytes(idBytes);
-    NettyConnection connection = new NettyConnection(UUID.fromString(new String(idBytes, StandardCharsets.UTF_8)), channel, getOrCreateContext(channel));
-    setConnection(channel, connection);
-    this.context.executor().execute(() -> listener.accept(connection));
   }
 
   /**

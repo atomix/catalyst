@@ -15,17 +15,13 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.Assert;
+import io.atomix.catalyst.util.concurrent.CatalystThreadFactory;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.concurrent.CatalystThreadFactory;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -35,8 +31,6 @@ import java.util.concurrent.ThreadFactory;
  */
 public class NettyTransport implements Transport {
   private final EventLoopGroup eventLoopGroup;
-  private final Map<UUID, NettyClient> clients = new ConcurrentHashMap<>();
-  private final Map<UUID, NettyServer> servers = new ConcurrentHashMap<>();
 
   public NettyTransport() {
     this(Runtime.getRuntime().availableProcessors());
@@ -57,29 +51,13 @@ public class NettyTransport implements Transport {
   }
 
   @Override
-  public Client client(UUID id) {
-    return clients.computeIfAbsent(Assert.notNull(id, "id"), i -> new NettyClient(Assert.notNull(id, "id"), eventLoopGroup));
+  public Client client() {
+    return new NettyClient(eventLoopGroup);
   }
 
   @Override
-  public Server server(UUID id) {
-    return servers.computeIfAbsent(Assert.notNull(id, "id"), i -> new NettyServer(id, eventLoopGroup));
-  }
-
-  @Override
-  public CompletableFuture<Void> close() {
-    int i = 0;
-
-    CompletableFuture[] futures = new CompletableFuture[clients.size() + servers.size()];
-    for (Client client : clients.values()) {
-      futures[i++] = client.close();
-    }
-
-    for (Server server : servers.values()) {
-      futures[i++] = server.close();
-    }
-
-    return CompletableFuture.allOf(futures).thenRun(eventLoopGroup::shutdownGracefully);
+  public Server server() {
+    return new NettyServer(eventLoopGroup);
   }
 
 }

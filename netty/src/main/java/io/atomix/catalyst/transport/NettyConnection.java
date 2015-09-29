@@ -27,7 +27,10 @@ import io.netty.channel.ChannelFuture;
 import net.openhft.hashing.LongHashFunction;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
@@ -39,12 +42,10 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class NettyConnection implements Connection {
-  static final byte CONNECT = 0x00;
-  static final byte OK = 0x01;
-  static final byte REQUEST = 0x02;
-  static final byte RESPONSE = 0x03;
-  static final byte SUCCESS = 0x04;
-  static final byte FAILURE = 0x05;
+  static final byte REQUEST = 0x01;
+  static final byte RESPONSE = 0x02;
+  static final byte SUCCESS = 0x03;
+  static final byte FAILURE = 0x04;
   private static final long REQUEST_TIMEOUT = 500;
   private static final ThreadLocal<ByteBufInput> INPUT = new ThreadLocal<ByteBufInput>() {
     @Override
@@ -59,7 +60,6 @@ public class NettyConnection implements Connection {
     }
   };
 
-  private final UUID id;
   private final Channel channel;
   private final ThreadContext context;
   private final Map<Integer, HandlerHolder> handlers = new ConcurrentHashMap<>();
@@ -77,16 +77,10 @@ public class NettyConnection implements Connection {
   /**
    * @throws NullPointerException if any argument is null
    */
-  public NettyConnection(UUID id, Channel channel, ThreadContext context) {
-    this.id = id;
+  public NettyConnection(Channel channel, ThreadContext context) {
     this.channel = channel;
     this.context = context;
     this.timeout = context.schedule(Duration.ofMillis(250), Duration.ofMillis(250), this::timeout);
-  }
-
-  @Override
-  public UUID id() {
-    return id;
   }
 
   /**
@@ -364,11 +358,13 @@ public class NettyConnection implements Connection {
   }
 
   @Override
+  public int hashCode() {
+    return channel.hashCode();
+  }
+
+  @Override
   public boolean equals(Object object) {
-    if (object instanceof NettyConnection) {
-      return ((NettyConnection) object).id().equals(id);
-    }
-    return false;
+    return object instanceof NettyConnection && ((NettyConnection) object).channel.equals(channel);
   }
 
   /**

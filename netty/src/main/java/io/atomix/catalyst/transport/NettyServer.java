@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -31,12 +32,10 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.atomix.catalyst.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -51,7 +50,6 @@ public class NettyServer implements Server {
   private static final ByteBufAllocator ALLOCATOR = new PooledByteBufAllocator(true);
   private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
 
-  private final UUID id;
   private final EventLoopGroup eventLoopGroup;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
   private ServerHandler handler;
@@ -59,14 +57,8 @@ public class NettyServer implements Server {
   private volatile boolean listening;
   private CompletableFuture<Void> listenFuture;
 
-  public NettyServer(UUID id, EventLoopGroup eventLoopGroup) {
-    this.id = id;
+  public NettyServer(EventLoopGroup eventLoopGroup) {
     this.eventLoopGroup = eventLoopGroup;
-  }
-
-  @Override
-  public UUID id() {
-    return id;
   }
 
   @Override
@@ -145,11 +137,9 @@ public class NettyServer implements Server {
    */
   @ChannelHandler.Sharable
   private static class ServerHandler extends NettyHandler {
-
     private ServerHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
       super(connections, listener, context);
     }
-
   }
 
 }

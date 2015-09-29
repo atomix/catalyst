@@ -15,7 +15,6 @@
  */
 package io.atomix.catalyst.transport;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -29,24 +28,7 @@ import java.util.concurrent.CompletableFuture;
 public interface Client {
 
   /**
-   * Returns the client ID.
-   * <p>
-   * The client ID is a globally unique {@link java.util.UUID} that identifies connections between this
-   * {@link Client} and a remote {@link Server}.
-   * <p>
-   * When a client connects to a server, the client will establish the connection by sending the server its ID. This allows
-   * the server to identify connected clients via {@link Connection#id()}.
-   *
-   * @return The client ID.
-   */
-  UUID id();
-
-  /**
    * Connects the client to the given address.
-   * <p>
-   * Once the client connects to the given address, the {@link Connection} will be established
-   * by sharing the client's {@link #id()} with the server and the returned {@link java.util.concurrent.CompletableFuture future}
-   * will be completed. The resulting {@link Connection#id()} will equal the client {@link #id()}.
    *
    * @param address The address to which to connect.
    * @return A completable future to be completed once the client has been connected.

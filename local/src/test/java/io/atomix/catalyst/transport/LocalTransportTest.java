@@ -15,16 +15,15 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.util.concurrent.SingleThreadContext;
-import net.jodah.concurrentunit.ConcurrentTestCase;
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
+import net.jodah.concurrentunit.ConcurrentTestCase;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -45,8 +44,8 @@ public class LocalTransportTest extends ConcurrentTestCase {
 
     Transport serverTransport = new LocalTransport(registry);
 
-    Server server = serverTransport.server(UUID.randomUUID());
-    Client client = clientTransport.client(UUID.randomUUID());
+    Server server = serverTransport.server();
+    Client client = clientTransport.client();
 
     ThreadContext context = new SingleThreadContext("test-thread-%d", new Serializer());
 

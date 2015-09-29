@@ -18,10 +18,9 @@ package io.atomix.catalyst.transport;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
-import io.atomix.catalyst.util.concurrent.CatalystThread;
 import io.atomix.catalyst.util.Listener;
+import io.atomix.catalyst.util.concurrent.CatalystThread;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -38,17 +37,6 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public interface Connection {
-
-  /**
-   * Returns the connection ID.
-   * <p>
-   * The connection ID is inherited from the {@link Client} that is connected. When the connection
-   * is created, the client will send its {@link Client#id()} to the {@link Server}
-   * and the connection ID will reflect the client's ID on both the client and server side.
-   *
-   * @return The connection ID.
-   */
-  UUID id();
 
   /**
    * Sends a message to the other side of the connection.

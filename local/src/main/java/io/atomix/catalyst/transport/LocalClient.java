@@ -15,10 +15,10 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
-import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Collections;
@@ -33,20 +33,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalClient implements Client {
-  private final UUID id;
+  private final UUID id = UUID.randomUUID();
   private final LocalServerRegistry registry;
   private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-  public LocalClient(UUID id, LocalServerRegistry registry, Serializer serializer) {
-    this.id = id;
+  public LocalClient(LocalServerRegistry registry, Serializer serializer) {
     this.registry = registry;
     this.context = new SingleThreadContext("test-" + id.toString(), serializer.clone());
-  }
-
-  @Override
-  public UUID id() {
-    return id;
   }
 
   /**
@@ -65,7 +59,7 @@ public class LocalClient implements Client {
       return Futures.exceptionalFutureAsync(new TransportException("failed to connect"), context.executor());
     }
 
-    LocalConnection connection = new LocalConnection(id, this.context, connections);
+    LocalConnection connection = new LocalConnection(this.context, connections);
     connections.add(connection);
     return server.connect(connection).thenApplyAsync(v -> connection, context.executor());
   }
@@ -82,6 +76,16 @@ public class LocalClient implements Client {
     }
     CompletableFuture.allOf(futures).thenRunAsync(() -> future.complete(null), context.executor());
     return future;
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object instanceof LocalClient && ((LocalClient) object).id.equals(id);
   }
 
 }

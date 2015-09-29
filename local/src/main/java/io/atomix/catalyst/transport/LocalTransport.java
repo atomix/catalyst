@@ -15,14 +15,8 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.buffer.PooledDirectAllocator;
 import io.atomix.catalyst.serializer.Serializer;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Local transport.
@@ -32,8 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalTransport implements Transport {
   private final LocalServerRegistry registry;
   private final Serializer serializer;
-  private final Map<UUID, LocalClient> clients = new ConcurrentHashMap<>();
-  private final Map<UUID, LocalServer> servers = new ConcurrentHashMap<>();
 
   public LocalTransport(LocalServerRegistry registry) {
     this(registry, new Serializer(new PooledDirectAllocator()));
@@ -49,29 +41,13 @@ public class LocalTransport implements Transport {
   }
 
   @Override
-  public Client client(UUID id) {
-    return clients.computeIfAbsent(Assert.notNull(id, "id"), i -> new LocalClient(id, registry, serializer));
+  public Client client() {
+    return new LocalClient(registry, serializer);
   }
 
   @Override
-  public Server server(UUID id) {
-    return servers.computeIfAbsent(Assert.notNull(id, "id"), i -> new LocalServer(id, registry, serializer));
-  }
-
-  @Override
-  public CompletableFuture<Void> close() {
-    int i = 0;
-
-    CompletableFuture[] futures = new CompletableFuture[clients.size() + servers.size()];
-    for (Client client : clients.values()) {
-      futures[i++] = client.close();
-    }
-
-    for (Server server : servers.values()) {
-      futures[i++] = server.close();
-    }
-
-    return CompletableFuture.allOf(futures);
+  public Server server() {
+    return new LocalServer(registry, serializer);
   }
 
 }

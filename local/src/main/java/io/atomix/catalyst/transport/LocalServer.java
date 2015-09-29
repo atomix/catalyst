@@ -17,8 +17,8 @@ package io.atomix.catalyst.transport;
 
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
+import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Collections;
 import java.util.Set;
@@ -33,29 +33,23 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalServer implements Server {
-  private final UUID id;
+  private final UUID id = UUID.randomUUID();
   private final LocalServerRegistry registry;
   private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile Address address;
   private volatile ListenerHolder listener;
 
-  public LocalServer(UUID id, LocalServerRegistry registry, Serializer serializer) {
-    this.id = id;
+  public LocalServer(LocalServerRegistry registry, Serializer serializer) {
     this.registry = registry;
     this.context = new SingleThreadContext("test-" + id.toString(), serializer.clone());
-  }
-
-  @Override
-  public UUID id() {
-    return id;
   }
 
   /**
    * Connects to the server.
    */
   CompletableFuture<Void> connect(LocalConnection connection) {
-    LocalConnection localConnection = new LocalConnection(connection.id(), context, connections);
+    LocalConnection localConnection = new LocalConnection(context, connections);
     connection.connect(localConnection);
     localConnection.connect(connection);
     return CompletableFuture.runAsync(() -> listener.listener.accept(localConnection), listener.context.executor());
@@ -114,6 +108,16 @@ public class LocalServer implements Server {
       this.listener = listener;
       this.context = context;
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object instanceof LocalServer && ((LocalServer) object).id.equals(id);
   }
 
 }
