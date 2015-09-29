@@ -112,29 +112,14 @@ public class ThreadPoolContext implements ThreadContext {
 
   @Override
   public Scheduled schedule(Duration delay, Runnable runnable) {
-    ScheduledFuture<?> future = parent.schedule(() -> executor.execute(wrapRunnable(runnable)), delay.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = parent.schedule(() -> executor.execute(Runnables.logFailure(runnable, LOGGER)), delay.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
   @Override
   public Scheduled schedule(Duration delay, Duration interval, Runnable runnable) {
-    ScheduledFuture<?> future = parent.scheduleAtFixedRate(() -> executor.execute(wrapRunnable(runnable)), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = parent.scheduleAtFixedRate(() -> executor.execute(Runnables.logFailure(runnable, LOGGER)), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
-  }
-
-  /**
-   * Wraps a runnable in an uncaught exception handler.
-   */
-  private Runnable wrapRunnable(final Runnable runnable) {
-    return () -> {
-      try {
-        runnable.run();
-      } catch (Throwable t) {
-        LOGGER.error("An uncaught exception occurred", t);
-        t.printStackTrace();
-        throw t;
-      }
-    };
   }
 
   @Override

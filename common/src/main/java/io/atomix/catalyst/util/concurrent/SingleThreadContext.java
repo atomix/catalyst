@@ -1,12 +1,19 @@
 package io.atomix.catalyst.util.concurrent;
 
-import io.atomix.catalyst.serializer.Serializer;
+import java.time.Duration;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
+import io.atomix.catalyst.serializer.Serializer;
 
 /**
  * Single threaded context.
@@ -23,15 +30,7 @@ public class SingleThreadContext implements ThreadContext {
   private final Executor wrappedExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
-      executor.execute(() -> {
-        try {
-          command.run();
-        } catch (Throwable t) {
-          LOGGER.error("An uncaught exception occurred", t);
-          t.printStackTrace();
-          throw t;
-        }
-      });
+      executor.execute(Runnables.logFailure(command, LOGGER));
     }
   };
 
@@ -99,29 +98,14 @@ public class SingleThreadContext implements ThreadContext {
 
   @Override
   public Scheduled schedule(Duration delay, Runnable runnable) {
-    ScheduledFuture<?> future = executor.schedule(wrapRunnable(runnable), delay.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.schedule(Runnables.logFailure(runnable, LOGGER), delay.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
   @Override
   public Scheduled schedule(Duration delay, Duration interval, Runnable runnable) {
-    ScheduledFuture<?> future = executor.scheduleAtFixedRate(wrapRunnable(runnable), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.scheduleAtFixedRate(Runnables.logFailure(runnable, LOGGER), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
-  }
-
-  /**
-   * Wraps a runnable in an uncaught exception handler.
-   */
-  private Runnable wrapRunnable(final Runnable runnable) {
-    return () -> {
-      try {
-        runnable.run();
-      } catch (Throwable t) {
-        LOGGER.error("An uncaught exception occurred", t);
-        t.printStackTrace();
-        throw t;
-      }
-    };
   }
 
   @Override
