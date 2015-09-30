@@ -27,7 +27,7 @@ import java.util.Map;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class PrimitiveTypeResolver implements SerializableTypeResolver {
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static final HashMap<Class<?>, Class<? extends TypeSerializer<?>>> SERIALIZERS = new LinkedHashMap() {{
     put(byte.class, ByteSerializer.class);
     put(Byte.class, ByteSerializer.class);

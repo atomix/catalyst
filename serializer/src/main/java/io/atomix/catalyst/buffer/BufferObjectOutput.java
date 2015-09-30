@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
 public class BufferObjectOutput extends BufferDataOutput implements ObjectOutput {
   private final Serializer serializer;
 
-  public BufferObjectOutput(BufferOutput buffer, Serializer serializer) {
+  public BufferObjectOutput(BufferOutput<?> buffer, Serializer serializer) {
     super(buffer);
     if (serializer == null)
       throw new NullPointerException("serializer cannot be null");

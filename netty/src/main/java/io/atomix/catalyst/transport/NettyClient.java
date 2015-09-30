@@ -95,7 +95,7 @@ public class NettyClient implements Client {
   public CompletableFuture<Void> close() {
     ThreadContext.currentContextOrThrow();
     int i = 0;
-    CompletableFuture[] futures = new CompletableFuture[connections.size()];
+    CompletableFuture<?>[] futures = new CompletableFuture[connections.size()];
     for (Connection connection : connections.values()) {
       futures[i++] = connection.close();
     }

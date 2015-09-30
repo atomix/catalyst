@@ -125,7 +125,7 @@ public class NettyServer implements Server {
   @Override
   public CompletableFuture<Void> close() {
     int i = 0;
-    CompletableFuture[] futures = new CompletableFuture[connections.size()];
+    CompletableFuture<?>[] futures = new CompletableFuture[connections.size()];
     for (Connection connection : connections.values()) {
       futures[i++] = connection.close();
     }

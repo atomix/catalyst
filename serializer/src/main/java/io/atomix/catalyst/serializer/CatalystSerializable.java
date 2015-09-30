@@ -52,7 +52,7 @@ public interface CatalystSerializable {
    * @param serializer The serializer with which the object is being serialized.
    * @see CatalystSerializable#readObject(BufferInput, Serializer)
    */
-  void writeObject(BufferOutput buffer, Serializer serializer);
+  void writeObject(BufferOutput<?> buffer, Serializer serializer);
 
   /**
    * Reads the object from the given buffer.
@@ -68,6 +68,6 @@ public interface CatalystSerializable {
    * @param serializer The serializer with which the object is being serialized.
    * @see CatalystSerializable#writeObject(BufferOutput, Serializer)
    */
-  void readObject(BufferInput buffer, Serializer serializer);
+  void readObject(BufferInput<?> buffer, Serializer serializer);
 
 }

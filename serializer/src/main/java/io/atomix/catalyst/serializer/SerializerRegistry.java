@@ -32,9 +32,9 @@ public class SerializerRegistry implements Cloneable {
   private static final int MAX_TYPE_ID = 65535;
   private static final int RESERVED_MIN = 128;
   private static final int RESERVED_MAX = 255;
-  private Map<Class, TypeSerializerFactory> factories;
-  private Map<Class, Integer> ids;
-  private Map<Integer, Class> types;
+  private Map<Class<?>, TypeSerializerFactory> factories;
+  private Map<Class<?>, Integer> ids;
+  private Map<Integer, Class<?>> types;
   private boolean initialized;
 
   @SuppressWarnings("unchecked")
@@ -47,7 +47,7 @@ public class SerializerRegistry implements Cloneable {
   }
 
   public SerializerRegistry(Collection<SerializableTypeResolver> resolvers) {
-    this(new HashMap<Class, TypeSerializerFactory>(), new HashMap<Class, Integer>(), new HashMap<Integer, Class>());
+    this(new HashMap<Class<?>, TypeSerializerFactory>(), new HashMap<Class<?>, Integer>(), new HashMap<Integer, Class<?>>());
 
     PRIMITIVE_RESOLVER.resolve(this);
     JDK_RESOLVER.resolve(this);
@@ -55,7 +55,7 @@ public class SerializerRegistry implements Cloneable {
     resolve(resolvers);
   }
 
-  private SerializerRegistry(Map<Class, TypeSerializerFactory> factories, Map<Class, Integer> ids, Map<Integer, Class> types) {
+  private SerializerRegistry(Map<Class<?>, TypeSerializerFactory> factories, Map<Class<?>, Integer> ids, Map<Integer, Class<?>> types) {
     this.factories = factories;
     this.ids = ids;
     this.types = types;
@@ -185,6 +185,7 @@ public class SerializerRegistry implements Cloneable {
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} is already registered
    */
+  @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
     if (factories.containsKey(type))
       throw new RegistrationException("type already registered: " + type);
@@ -224,6 +225,7 @@ public class SerializerRegistry implements Cloneable {
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} is already registered
    */
+  @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer, int id) {
     if (factories.containsKey(type))
       throw new RegistrationException("type already registered: " + type);
@@ -261,11 +263,10 @@ public class SerializerRegistry implements Cloneable {
    * @param type The serializable class.
    * @return The serializer for the given class.
    */
-  @SuppressWarnings("unchecked")
   public TypeSerializerFactory lookup(Class<?> type) {
     TypeSerializerFactory factory = factories.get(type);
     if (factory == null) {
-      for (Map.Entry<Class, TypeSerializerFactory> entry : factories.entrySet()) {
+      for (Map.Entry<Class<?>, TypeSerializerFactory> entry : factories.entrySet()) {
         if (entry.getKey().isAssignableFrom(type)) {
           factory = entry.getValue();
           break;
@@ -284,14 +285,14 @@ public class SerializerRegistry implements Cloneable {
   /**
    * Returns a map of registered ids and their IDs.
    */
-  Map<Class, Integer> ids() {
+  Map<Class<?>, Integer> ids() {
     return ids;
   }
 
   /**
    * Returns a map of serialization IDs and registered ids.
    */
-  Map<Integer, Class> types() {
+  Map<Integer, Class<?>> types() {
     return types;
   }
 

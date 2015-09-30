@@ -45,8 +45,8 @@ public class Serializer implements Cloneable {
   private static final byte TYPE_CLASS = 2;
   private static final byte TYPE_SERIALIZABLE = 3;
   private SerializerRegistry registry;
-  private Map<Class, TypeSerializer> serializers = new HashMap<>();
-  private Map<String, Class> types = new HashMap<>();
+  private Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
+  private Map<String, Class<?>> types = new HashMap<>();
   private final BufferAllocator allocator;
 
   /**
@@ -169,7 +169,6 @@ public class Serializer implements Cloneable {
    * @param allocator The serializer buffer allocator.
    * @param resolvers A collection of serializable type resolvers with which to register serializable types.
    */
-  @SuppressWarnings("unchecked")
   public Serializer(BufferAllocator allocator, Collection<SerializableTypeResolver> resolvers) {
     if (allocator == null)
       throw new NullPointerException("allocator cannot be null");
@@ -409,8 +408,9 @@ public class Serializer implements Cloneable {
   /**
    * Returns the serializer for the given type.
    */
-  private TypeSerializer getSerializer(Class type) {
-    TypeSerializer serializer = serializers.get(type);
+  @SuppressWarnings("rawtypes")
+  private TypeSerializer getSerializer(Class<?> type) {
+    TypeSerializer<?> serializer = serializers.get(type);
     if (serializer == null) {
       TypeSerializerFactory factory = registry.lookup(type);
       if (factory != null) {
@@ -507,7 +507,7 @@ public class Serializer implements Cloneable {
    * @see Serializer#writeObject(Object)
    */
   public <T> Buffer writeObject(T object, Buffer buffer) {
-    writeObject(object, (BufferOutput) buffer);
+    writeObject(object, (BufferOutput<?>) buffer);
     return buffer;
   }
 
@@ -540,7 +540,7 @@ public class Serializer implements Cloneable {
    * @throws SerializationException If no serializer is registered for the object.
    * @see Serializer#writeObject(Object)
    */
-  public <T> BufferOutput writeObject(T object, BufferOutput buffer) {
+  public <T> BufferOutput<?> writeObject(T object, BufferOutput<?> buffer) {
     if (object == null) {
       return writeNull(buffer);
     }
@@ -554,7 +554,7 @@ public class Serializer implements Cloneable {
     if (registry.ids().containsKey(type)) {
       int typeId = registry.ids().get(type);
 
-      TypeSerializer serializer = getSerializer(type);
+      TypeSerializer<?> serializer = getSerializer(type);
 
       if (serializer == null) {
         if (object instanceof Serializable) {
@@ -564,7 +564,7 @@ public class Serializer implements Cloneable {
       }
       return writeById(typeId, object, buffer, serializer);
     } else {
-      TypeSerializer serializer = getSerializer(type);
+      TypeSerializer<?> serializer = getSerializer(type);
 
       if (serializer == null) {
         if (object instanceof Serializable) {
@@ -582,7 +582,7 @@ public class Serializer implements Cloneable {
    * @param buffer The buffer to which to write the null value.
    * @return The written buffer.
    */
-  private BufferOutput writeNull(BufferOutput buffer) {
+  private BufferOutput<?> writeNull(BufferOutput<?> buffer) {
     return buffer.writeByte(TYPE_NULL);
   }
 
@@ -593,7 +593,7 @@ public class Serializer implements Cloneable {
    * @param buffer The buffer to which to write the buffer.
    * @return The written buffer.
    */
-  private BufferOutput writeBuffer(Buffer object, BufferOutput buffer) {
+  private BufferOutput<?> writeBuffer(Buffer object, BufferOutput<?> buffer) {
     return buffer.writeByte(TYPE_BUFFER).write(object);
   }
 
@@ -607,8 +607,8 @@ public class Serializer implements Cloneable {
    * @param <T> The object type.
    * @return The written buffer.
    */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput writeById(int id, T writable, BufferOutput buffer, TypeSerializer serializer) {
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private <T> BufferOutput<?> writeById(int id, T writable, BufferOutput<?> buffer, TypeSerializer serializer) {
     serializer.write(writable, buffer.writeByte(TYPE_ID).writeUnsignedShort(id), this);
     return buffer;
   }
@@ -622,8 +622,8 @@ public class Serializer implements Cloneable {
    * @param <T> The object type.
    * @return The written buffer.
    */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput writeByClass(Class<?> type, T writable, BufferOutput buffer, TypeSerializer writer) {
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  private <T> BufferOutput<?> writeByClass(Class<?> type, T writable, BufferOutput<?> buffer, TypeSerializer writer) {
     writer.write(writable, buffer.writeByte(TYPE_CLASS).writeUTF8(type.getName()), this);
     return buffer;
   }
@@ -636,7 +636,7 @@ public class Serializer implements Cloneable {
    * @param <T> The object type.
    * @return The written buffer.
    */
-  private <T> BufferOutput writeSerializable(T serializable, BufferOutput buffer) {
+  private <T> BufferOutput<?> writeSerializable(T serializable, BufferOutput<?> buffer) {
     buffer.writeByte(TYPE_SERIALIZABLE);
     try (ByteArrayOutputStream os = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(os)) {
       out.writeObject(serializable);
@@ -715,9 +715,8 @@ public class Serializer implements Cloneable {
    * @return The read object.
    * @throws SerializationException If no type could be read from the provided buffer.
    */
-  @SuppressWarnings("unchecked")
   public <T> T readObject(Buffer buffer) {
-    return readObject((BufferInput) buffer);
+    return readObject((BufferInput<?>) buffer);
   }
 
   /**
@@ -753,7 +752,7 @@ public class Serializer implements Cloneable {
    * @throws SerializationException If no type could be read from the provided buffer.
    */
   @SuppressWarnings("unchecked")
-  public <T> T readObject(BufferInput buffer) {
+  public <T> T readObject(BufferInput<?> buffer) {
     int type = buffer.readByte();
     switch (type) {
       case TYPE_NULL:
@@ -777,7 +776,7 @@ public class Serializer implements Cloneable {
    * @param buffer The buffer from which to read the buffer.
    * @return The read buffer.
    */
-  private Buffer readBuffer(BufferInput buffer) {
+  private Buffer readBuffer(BufferInput<?> buffer) {
     Buffer object = allocator.allocate();
     buffer.read(object);
     return object;
@@ -791,7 +790,7 @@ public class Serializer implements Cloneable {
    * @return The read object.
    */
   @SuppressWarnings("unchecked")
-  private <T> T readById(BufferInput buffer) {
+  private <T> T readById(BufferInput<?> buffer) {
     int id = buffer.readUnsignedShort();
     Class<?> type = registry.types().get(id);
     if (type == null)
@@ -808,9 +807,9 @@ public class Serializer implements Cloneable {
    * @return The read object.
    */
   @SuppressWarnings("unchecked")
-  private <T> T readByClass(BufferInput buffer) {
+  private <T> T readByClass(BufferInput<?> buffer) {
     String name = buffer.readUTF8();
-    Class type = types.get(name);
+    Class<?> type = types.get(name);
     if (type == null) {
       try {
         type = Class.forName(name);
@@ -832,7 +831,7 @@ public class Serializer implements Cloneable {
    * @return The read object.
    */
   @SuppressWarnings("unchecked")
-  private <T> T readSerializable(BufferInput buffer) {
+  private <T> T readSerializable(BufferInput<?> buffer) {
     byte[] bytes = new byte[buffer.readUnsignedShort()];
     buffer.read(bytes);
     try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {

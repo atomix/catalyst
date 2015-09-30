@@ -28,22 +28,21 @@ import java.util.Map;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class MapSerializer implements TypeSerializer<Map> {
+public class MapSerializer implements TypeSerializer<Map<?, ?>> {
 
   @Override
-  public void write(Map object, BufferOutput buffer, Serializer serializer) {
+  public void write(Map<?, ?> object, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
-    for (Map.Entry entry : ((Map<?, ?>) object).entrySet()) {
+    for (Map.Entry<?, ?> entry : object.entrySet()) {
       serializer.writeObject(entry.getKey(), buffer);
       serializer.writeObject(entry.getValue(), buffer);
     }
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public Map read(Class<Map> type, BufferInput buffer, Serializer serializer) {
+  public Map<?, ?> read(Class<Map<?, ?>> type, BufferInput<?> buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    Map object = new HashMap<>(size);
+    Map<Object, Object> object = new HashMap<>(size);
     for (int i = 0; i < size; i++) {
       Object key = serializer.readObject(buffer);
       Object value = serializer.readObject(buffer);

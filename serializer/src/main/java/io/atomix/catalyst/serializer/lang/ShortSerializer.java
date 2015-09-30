@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class ShortSerializer implements TypeSerializer<Short> {
 
   @Override
-  public void write(Short object, BufferOutput buffer, Serializer serializer) {
+  public void write(Short object, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeShort(object);
   }
 
   @Override
-  public Short read(Class<Short> type, BufferInput buffer, Serializer serializer) {
+  public Short read(Class<Short> type, BufferInput<?> buffer, Serializer serializer) {
     return buffer.readShort();
   }
 

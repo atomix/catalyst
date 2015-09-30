@@ -30,12 +30,12 @@ import java.util.TimeZone;
 public class TimeZoneSerializer implements TypeSerializer<TimeZone> {
 
   @Override
-  public void write(TimeZone timeZone, BufferOutput buffer, Serializer serializer) {
+  public void write(TimeZone timeZone, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUTF8(timeZone.getID());
   }
 
   @Override
-  public TimeZone read(Class<TimeZone> type, BufferInput buffer, Serializer serializer) {
+  public TimeZone read(Class<TimeZone> type, BufferInput<?> buffer, Serializer serializer) {
     return TimeZone.getTimeZone(buffer.readUTF8());
   }
 

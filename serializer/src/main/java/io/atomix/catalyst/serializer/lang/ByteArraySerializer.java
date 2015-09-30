@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class ByteArraySerializer implements TypeSerializer<byte[]> {
 
   @Override
-  public void write(byte[] bytes, BufferOutput buffer, Serializer serializer) {
+  public void write(byte[] bytes, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedShort(bytes.length).write(bytes);
   }
 
   @Override
-  public byte[] read(Class<byte[]> type, BufferInput buffer, Serializer serializer) {
+  public byte[] read(Class<byte[]> type, BufferInput<?> buffer, Serializer serializer) {
     byte[] bytes = new byte[buffer.readUnsignedShort()];
     buffer.read(bytes);
     return bytes;

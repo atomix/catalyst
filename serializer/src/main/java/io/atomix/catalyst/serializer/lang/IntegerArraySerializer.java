@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class IntegerArraySerializer implements TypeSerializer<int[]> {
 
   @Override
-  public void write(int[] ints, BufferOutput buffer, Serializer serializer) {
+  public void write(int[] ints, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedShort(ints.length);
     for (int i : ints) {
       buffer.writeInt(i);
@@ -36,7 +36,7 @@ public class IntegerArraySerializer implements TypeSerializer<int[]> {
   }
 
   @Override
-  public int[] read(Class<int[]> type, BufferInput buffer, Serializer serializer) {
+  public int[] read(Class<int[]> type, BufferInput<?> buffer, Serializer serializer) {
     int[] ints = new int[buffer.readUnsignedShort()];
     for (int i = 0; i < ints.length; i++) {
       ints[i] = buffer.readInt();

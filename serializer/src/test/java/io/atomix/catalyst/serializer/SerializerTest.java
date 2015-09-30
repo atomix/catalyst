@@ -282,9 +282,9 @@ public class SerializerTest {
    */
   public void testSerializeClass() {
     Serializer serializer = new Serializer();
-    Class clazz = SerializerTest.class;
+    Class<?> clazz = SerializerTest.class;
     Buffer buffer = serializer.writeObject(clazz).flip();
-    Class result = serializer.readObject(buffer);
+    Class<?> result = serializer.readObject(buffer);
     assertEquals(clazz, result);
   }
 
@@ -295,7 +295,7 @@ public class SerializerTest {
     Serializer serializer = new Serializer();
     TestEnum test = TestEnum.THREE;
     Buffer buffer = serializer.writeObject(test).flip();
-    Enum result = serializer.readObject(buffer);
+    Enum<?> result = serializer.readObject(buffer);
     assertEquals(test, result);
   }
 
@@ -305,7 +305,7 @@ public class SerializerTest {
   public void testSerializeList() {
     Serializer serializer = new Serializer();
     Buffer buffer = serializer.writeObject(Arrays.asList(1, 2, 3)).flip();
-    List result = serializer.readObject(buffer);
+    List<?> result = serializer.readObject(buffer);
     assertEquals(result, Arrays.asList(1, 2, 3));
   }
 
@@ -315,7 +315,7 @@ public class SerializerTest {
   public void testSerializeSet() {
     Serializer serializer = new Serializer();
     Buffer buffer = serializer.writeObject(new HashSet<>(Arrays.asList(1, 2, 3))).flip();
-    Set result = serializer.readObject(buffer);
+    Set<?> result = serializer.readObject(buffer);
     assertEquals(result, new HashSet<>(Arrays.asList(1, 2, 3)));
   }
 
@@ -510,14 +510,14 @@ public class SerializerTest {
     protected String string;
 
     @Override
-    public void writeObject(BufferOutput buffer, Serializer serializer) {
+    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
       buffer.writeLong(primitive);
       serializer.writeObject(object, buffer);
       buffer.writeUTF8(string);
     }
 
     @Override
-    public void readObject(BufferInput buffer, Serializer serializer) {
+    public void readObject(BufferInput<?> buffer, Serializer serializer) {
       primitive = buffer.readLong();
       object = serializer.readObject(buffer);
       string = buffer.readUTF8();
@@ -532,14 +532,14 @@ public class SerializerTest {
 
   public static class TestSerializer implements TypeSerializer<TestPojoWithSerializer> {
     @Override
-    public void write(TestPojoWithSerializer object, BufferOutput buffer, Serializer serializer) {
+    public void write(TestPojoWithSerializer object, BufferOutput<?> buffer, Serializer serializer) {
       buffer.writeLong(object.primitive);
       serializer.writeObject(object.object, buffer);
       buffer.writeUTF8(object.string);
     }
 
     @Override
-    public TestPojoWithSerializer read(Class<TestPojoWithSerializer> type, BufferInput buffer, Serializer serializer) {
+    public TestPojoWithSerializer read(Class<TestPojoWithSerializer> type, BufferInput<?> buffer, Serializer serializer) {
       TestPojoWithSerializer object = new TestPojoWithSerializer();
       object.primitive = buffer.readLong();
       object.object = serializer.readObject(buffer);
@@ -575,12 +575,12 @@ public class SerializerTest {
     protected byte primitive;
 
     @Override
-    public void writeObject(BufferOutput buffer, Serializer serializer) {
+    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
       buffer.writeByte(primitive);
     }
 
     @Override
-    public void readObject(BufferInput buffer, Serializer serializer) {
+    public void readObject(BufferInput<?> buffer, Serializer serializer) {
       primitive = (byte) buffer.readByte();
     }
   }
@@ -590,12 +590,12 @@ public class SerializerTest {
     protected byte primitive;
 
     @Override
-    public void writeObject(BufferOutput buffer, Serializer serializer) {
+    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
       buffer.writeByte(primitive);
     }
 
     @Override
-    public void readObject(BufferInput buffer, Serializer serializer) {
+    public void readObject(BufferInput<?> buffer, Serializer serializer) {
       primitive = (byte) buffer.readByte();
     }
   }

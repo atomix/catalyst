@@ -24,7 +24,7 @@ import io.atomix.catalyst.util.ReferencePool;
  */
 public class PooledDirectAllocator extends PooledAllocator {
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public PooledDirectAllocator() {
     super((ReferencePool) new DirectBufferPool());
   }

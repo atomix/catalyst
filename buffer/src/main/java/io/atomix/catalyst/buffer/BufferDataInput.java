@@ -24,9 +24,9 @@ import java.io.IOException;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class BufferDataInput implements DataInput {
-  protected final BufferInput buffer;
+  protected final BufferInput<?> buffer;
 
-  public BufferDataInput(BufferInput buffer) {
+  public BufferDataInput(BufferInput<?> buffer) {
     if (buffer == null)
       throw new NullPointerException("buffer cannot be null");
     this.buffer = buffer;

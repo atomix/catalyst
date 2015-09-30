@@ -31,7 +31,7 @@ import java.util.*;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class JdkTypeResolver implements SerializableTypeResolver {
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private static final HashMap<Class<?>, Class<? extends TypeSerializer<?>>> SERIALIZERS = new LinkedHashMap() {{
     put(BigInteger.class, BigIntegerSerializer.class);
     put(BigDecimal.class, BigDecimalSerializer.class);

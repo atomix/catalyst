@@ -24,7 +24,7 @@ import java.io.OutputStream;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class OutputStreamBufferOutput implements BufferOutput {
+public class OutputStreamBufferOutput implements BufferOutput<BufferOutput<?>> {
   private final DataOutputStream os;
 
   public OutputStreamBufferOutput(OutputStream os) {
@@ -38,7 +38,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput write(Bytes bytes) {
+  public BufferOutput<?> write(Bytes bytes) {
     if (bytes instanceof HeapBytes) {
       try {
         os.write(((HeapBytes) bytes).array());
@@ -58,7 +58,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput write(byte[] bytes) {
+  public BufferOutput<?> write(byte[] bytes) {
     try {
       os.write(bytes);
     } catch (IOException e) {
@@ -68,7 +68,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput write(Bytes bytes, long offset, long length) {
+  public BufferOutput<?> write(Bytes bytes, long offset, long length) {
     if (bytes instanceof HeapBytes) {
       try {
         os.write(((HeapBytes) bytes).array(), (int) offset, (int) length);
@@ -88,7 +88,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput write(byte[] bytes, long offset, long length) {
+  public BufferOutput<?> write(byte[] bytes, long offset, long length) {
     try {
       os.write(bytes, (int) offset, (int) length);
     } catch (IOException e) {
@@ -98,7 +98,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput write(Buffer buffer) {
+  public BufferOutput<?> write(Buffer buffer) {
     if (buffer instanceof HeapBuffer) {
       try {
         os.write(((HeapBuffer) buffer).array());
@@ -118,7 +118,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeByte(int b) {
+  public BufferOutput<?> writeByte(int b) {
     try {
       os.writeByte(b);
     } catch (IOException e) {
@@ -128,7 +128,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeUnsignedByte(int b) {
+  public BufferOutput<?> writeUnsignedByte(int b) {
     try {
       os.writeByte(b);
     } catch (IOException e) {
@@ -138,7 +138,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeChar(char c) {
+  public BufferOutput<?> writeChar(char c) {
     try {
       os.writeChar(c);
     } catch (IOException e) {
@@ -148,7 +148,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeShort(short s) {
+  public BufferOutput<?> writeShort(short s) {
     try {
       os.writeShort(s);
     } catch (IOException e) {
@@ -158,7 +158,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeUnsignedShort(int s) {
+  public BufferOutput<?> writeUnsignedShort(int s) {
     try {
       os.writeShort(s);
     } catch (IOException e) {
@@ -168,7 +168,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeMedium(int m) {
+  public BufferOutput<?> writeMedium(int m) {
     try {
       os.writeByte((byte) (m >>> 16));
       os.writeByte((byte) (m >>> 8));
@@ -180,12 +180,12 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeUnsignedMedium(int m) {
+  public BufferOutput<?> writeUnsignedMedium(int m) {
     return writeMedium(m);
   }
 
   @Override
-  public BufferOutput writeInt(int i) {
+  public BufferOutput<?> writeInt(int i) {
     try {
       os.writeInt(i);
     } catch (IOException e) {
@@ -195,7 +195,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeUnsignedInt(long i) {
+  public BufferOutput<?> writeUnsignedInt(long i) {
     try {
       os.writeInt((int) i);
     } catch (IOException e) {
@@ -205,7 +205,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeLong(long l) {
+  public BufferOutput<?> writeLong(long l) {
     try {
       os.writeLong(l);
     } catch (IOException e) {
@@ -215,7 +215,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeFloat(float f) {
+  public BufferOutput<?> writeFloat(float f) {
     try {
       os.writeFloat(f);
     } catch (IOException e) {
@@ -225,7 +225,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeDouble(double d) {
+  public BufferOutput<?> writeDouble(double d) {
     try {
       os.writeDouble(d);
     } catch (IOException e) {
@@ -235,7 +235,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeBoolean(boolean b) {
+  public BufferOutput<?> writeBoolean(boolean b) {
     try {
       os.writeBoolean(b);
     } catch (IOException e) {
@@ -245,7 +245,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeString(String s) {
+  public BufferOutput<?> writeString(String s) {
     try {
       os.writeUTF(s);
     } catch (IOException e) {
@@ -255,7 +255,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput writeUTF8(String s) {
+  public BufferOutput<?> writeUTF8(String s) {
     try {
       os.writeUTF(s);
     } catch (IOException e) {
@@ -265,7 +265,7 @@ public class OutputStreamBufferOutput implements BufferOutput {
   }
 
   @Override
-  public BufferOutput flush() {
+  public BufferOutput<?> flush() {
     try {
       os.flush();
     } catch (IOException e) {

@@ -25,7 +25,7 @@ import io.atomix.catalyst.util.ReferencePool;
  */
 public class PooledHeapAllocator extends PooledAllocator {
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public PooledHeapAllocator() {
     super((ReferencePool) new HeapBufferPool());
   }

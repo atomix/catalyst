@@ -76,12 +76,12 @@ public class Address implements CatalystSerializable {
   }
 
   @Override
-  public void writeObject(BufferOutput buffer, Serializer serializer) {
+  public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
     serializer.writeObject(address, buffer);
   }
 
   @Override
-  public void readObject(BufferInput buffer, Serializer serializer) {
+  public void readObject(BufferInput<?> buffer, Serializer serializer) {
     address = serializer.readObject(buffer);
   }
 

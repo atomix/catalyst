@@ -119,7 +119,7 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
   /**
    * Resolves serializers.
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("rawtypes")
   private void resolveSerializers(SerializerRegistry registry) {
     for (Class<? extends TypeSerializer> serializer : load(TypeSerializer.class)) {
       Serialize serialize = serializer.getAnnotation(Serialize.class);

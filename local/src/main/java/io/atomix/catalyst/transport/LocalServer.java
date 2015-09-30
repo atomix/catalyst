@@ -88,7 +88,7 @@ public class LocalServer implements Server {
     listener = null;
 
     ThreadContext context = ThreadContext.currentContextOrThrow();
-    CompletableFuture[] futures = new CompletableFuture[connections.size()];
+    CompletableFuture<?>[] futures = new CompletableFuture[connections.size()];
     int i = 0;
     for (LocalConnection connection : connections) {
       futures[i++] = connection.close();

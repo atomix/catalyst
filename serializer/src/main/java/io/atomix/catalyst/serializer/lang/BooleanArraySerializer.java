@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class BooleanArraySerializer implements TypeSerializer<boolean[]> {
 
   @Override
-  public void write(boolean[] chars, BufferOutput buffer, Serializer serializer) {
+  public void write(boolean[] chars, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedShort(chars.length);
     for (boolean b : chars) {
       buffer.writeBoolean(b);
@@ -36,7 +36,7 @@ public class BooleanArraySerializer implements TypeSerializer<boolean[]> {
   }
 
   @Override
-  public boolean[] read(Class<boolean[]> type, BufferInput buffer, Serializer serializer) {
+  public boolean[] read(Class<boolean[]> type, BufferInput<?> buffer, Serializer serializer) {
     boolean[] booleans = new boolean[buffer.readUnsignedShort()];
     for (int i = 0; i < booleans.length; i++) {
       booleans[i] = buffer.readBoolean();

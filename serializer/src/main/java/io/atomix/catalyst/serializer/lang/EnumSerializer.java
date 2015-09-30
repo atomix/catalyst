@@ -25,15 +25,15 @@ import io.atomix.catalyst.serializer.TypeSerializer;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class EnumSerializer implements TypeSerializer<Enum> {
+public class EnumSerializer implements TypeSerializer<Enum<?>> {
 
   @Override
-  public void write(Enum object, BufferOutput buffer, Serializer serializer) {
+  public void write(Enum<?> object, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedByte(object.ordinal());
   }
 
   @Override
-  public Enum read(Class<Enum> type, BufferInput buffer, Serializer serializer) {
+  public Enum<?> read(Class<Enum<?>> type, BufferInput<?> buffer, Serializer serializer) {
     return type.getEnumConstants()[buffer.readUnsignedByte()];
   }
 

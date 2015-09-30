@@ -31,13 +31,13 @@ import java.util.TimeZone;
 public class CalendarSerializer implements TypeSerializer<Calendar> {
 
   @Override
-  public void write(Calendar calendar, BufferOutput buffer, Serializer serializer) {
+  public void write(Calendar calendar, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUTF8(calendar.getTimeZone().getID());
     buffer.writeLong(calendar.getTimeInMillis());
   }
 
   @Override
-  public Calendar read(Class<Calendar> type, BufferInput buffer, Serializer serializer) {
+  public Calendar read(Class<Calendar> type, BufferInput<?> buffer, Serializer serializer) {
     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(buffer.readUTF8()));
     calendar.setTimeInMillis(buffer.readLong());
     return calendar;

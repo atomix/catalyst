@@ -28,7 +28,7 @@ import java.io.ObjectInput;
 public class BufferObjectInput extends BufferDataInput implements ObjectInput {
   private final Serializer serializer;
 
-  public BufferObjectInput(BufferInput buffer, Serializer serializer) {
+  public BufferObjectInput(BufferInput<?> buffer, Serializer serializer) {
     super(buffer);
     if (serializer == null)
       throw new NullPointerException("serializer cannot be null");

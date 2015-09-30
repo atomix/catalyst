@@ -24,7 +24,7 @@ import java.io.InputStream;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class InputStreamBufferInput implements BufferInput {
+public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   private final DataInputStream is;
 
   public InputStreamBufferInput(InputStream is) {
@@ -52,7 +52,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput skip(long bytes) {
+  public BufferInput<?> skip(long bytes) {
     try {
       is.skip(bytes);
     } catch (IOException e) {
@@ -62,7 +62,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput read(Bytes bytes) {
+  public BufferInput<?> read(Bytes bytes) {
     if (bytes instanceof HeapBytes) {
       try {
         is.read(((HeapBytes) bytes).array());
@@ -84,7 +84,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput read(byte[] bytes) {
+  public BufferInput<?> read(byte[] bytes) {
     try {
       is.read(bytes);
     } catch (IOException e) {
@@ -94,7 +94,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput read(Bytes bytes, long offset, long length) {
+  public BufferInput<?> read(Bytes bytes, long offset, long length) {
     if (bytes instanceof HeapBytes) {
       try {
         is.read(((HeapBytes) bytes).array(), (int) offset, (int) length);
@@ -120,7 +120,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput read(byte[] bytes, long offset, long length) {
+  public BufferInput<?> read(byte[] bytes, long offset, long length) {
     try {
       is.read(bytes, (int) offset, (int) length);
     } catch (IOException e) {
@@ -130,7 +130,7 @@ public class InputStreamBufferInput implements BufferInput {
   }
 
   @Override
-  public BufferInput read(Buffer buffer) {
+  public BufferInput<?> read(Buffer buffer) {
     if (buffer instanceof HeapBuffer) {
       try {
         is.read(((HeapBuffer) buffer).array());

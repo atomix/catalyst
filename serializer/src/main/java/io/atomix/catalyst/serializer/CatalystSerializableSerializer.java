@@ -39,16 +39,16 @@ import java.util.Map;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class CatalystSerializableSerializer<T extends CatalystSerializable> implements TypeSerializer<T> {
-  private final Map<Class, ReferencePool> pools = new HashMap<>();
-  private final Map<Class, Constructor> constructorMap = new HashMap<>();
+  private final Map<Class<?>, ReferencePool<?>> pools = new HashMap<>();
+  private final Map<Class<?>, Constructor<?>> constructorMap = new HashMap<>();
 
   @Override
-  public void write(T object, BufferOutput buffer, Serializer serializer) {
+  public void write(T object, BufferOutput<?> buffer, Serializer serializer) {
     object.writeObject(buffer, serializer);
   }
 
   @Override
-  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
+  public T read(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
     if (ReferenceCounted.class.isAssignableFrom(type)) {
       return readReference(type, buffer, serializer);
     } else {
@@ -65,10 +65,10 @@ public class CatalystSerializableSerializer<T extends CatalystSerializable> impl
    * @return The reference to read.
    */
   @SuppressWarnings("unchecked")
-  private T readReference(Class<T> type, BufferInput buffer, Serializer serializer) {
-    ReferencePool pool = pools.get(type);
+  private T readReference(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
+    ReferencePool<?> pool = pools.get(type);
     if (pool == null) {
-      Constructor constructor = constructorMap.get(type);
+      Constructor<?> constructor = constructorMap.get(type);
       if (constructor == null) {
         try {
           constructor = type.getDeclaredConstructor(ReferenceManager.class);
@@ -79,7 +79,7 @@ public class CatalystSerializableSerializer<T extends CatalystSerializable> impl
         }
       }
 
-      pool = new ReferencePool(createFactory(constructor));
+      pool = new ReferencePool<>(createFactory(constructor));
       pools.put(type, pool);
     }
     T object = (T) pool.acquire();
@@ -90,7 +90,7 @@ public class CatalystSerializableSerializer<T extends CatalystSerializable> impl
   /**
    * Dynamically created a reference factory for a pooled type.
    */
-  private ReferenceFactory createFactory(final Constructor constructor) {
+  private ReferenceFactory<?> createFactory(final Constructor<?> constructor) {
     return manager -> {
       try {
         return (ReferenceCounted<?>) constructor.newInstance(manager);
@@ -109,9 +109,9 @@ public class CatalystSerializableSerializer<T extends CatalystSerializable> impl
    * @return The object.
    */
   @SuppressWarnings("unchecked")
-  private T readObject(Class<T> type, BufferInput buffer, Serializer serializer) {
+  private T readObject(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
     try {
-      Constructor constructor = constructorMap.get(type);
+      Constructor<?> constructor = constructorMap.get(type);
       if (constructor == null) {
         try {
           constructor = type.getDeclaredConstructor();

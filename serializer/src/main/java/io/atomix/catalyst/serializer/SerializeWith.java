@@ -37,6 +37,7 @@ public @interface SerializeWith {
   /**
    * The serializer with which to serialize objects of this class.
    */
+  @SuppressWarnings("rawtypes")
   Class<? extends TypeSerializer> serializer() default CatalystSerializableSerializer.class;
 
 }

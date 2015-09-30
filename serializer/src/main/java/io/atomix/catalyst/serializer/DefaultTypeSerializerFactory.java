@@ -26,8 +26,10 @@ import io.atomix.catalyst.CatalystException;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class DefaultTypeSerializerFactory implements TypeSerializerFactory {
+  @SuppressWarnings("rawtypes")
   private final Class<? extends TypeSerializer> type;
 
+  @SuppressWarnings("rawtypes")
   public DefaultTypeSerializerFactory(Class<? extends TypeSerializer> type) {
     if (type == null)
       throw new NullPointerException("type cannot be null");

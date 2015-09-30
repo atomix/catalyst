@@ -40,7 +40,7 @@ public class LocalConnection implements Connection {
   private final ThreadContext context;
   private final Set<LocalConnection> connections;
   private LocalConnection connection;
-  private final Map<Class, HandlerHolder> handlers = new ConcurrentHashMap<>();
+  private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
 
@@ -79,7 +79,7 @@ public class LocalConnection implements Connection {
     }, context.executor());
 
     if (request instanceof ReferenceCounted) {
-      ((ReferenceCounted) request).release();
+      ((ReferenceCounted<?>) request).release();
     }
     return future;
   }
@@ -96,7 +96,7 @@ public class LocalConnection implements Connection {
 
     HandlerHolder holder = handlers.get(request.getClass());
     if (holder != null) {
-      MessageHandler<Object, Object> handler = holder.handler;
+      MessageHandler<Object, Object> handler = (MessageHandler<Object, Object>) holder.handler;
       CompletableFuture<Buffer> future = new CompletableFuture<>();
 
       holder.context.executor().execute(() -> {
@@ -113,7 +113,7 @@ public class LocalConnection implements Connection {
           future.complete(responseBuffer.flip());
 
           if (response instanceof ReferenceCounted) {
-            ((ReferenceCounted) response).release();
+            ((ReferenceCounted<?>) response).release();
           }
         }, context.executor());
       });
@@ -166,10 +166,10 @@ public class LocalConnection implements Connection {
    * Holds message handler and thread context.
    */
   protected static class HandlerHolder {
-    private final MessageHandler handler;
+    private final MessageHandler<?, ?> handler;
     private final ThreadContext context;
 
-    private HandlerHolder(MessageHandler handler, ThreadContext context) {
+    private HandlerHolder(MessageHandler<?, ?> handler, ThreadContext context) {
       this.handler = handler;
       this.context = context;
     }

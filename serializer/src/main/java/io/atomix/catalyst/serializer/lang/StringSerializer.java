@@ -28,13 +28,13 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class StringSerializer implements TypeSerializer<String> {
 
   @Override
-  public void write(String object, BufferOutput buffer, Serializer serializer) {
+  public void write(String object, BufferOutput<?> buffer, Serializer serializer) {
     byte[] bytes = object.getBytes();
     buffer.writeUnsignedShort(bytes.length).write(bytes);
   }
 
   @Override
-  public String read(Class<String> type, BufferInput buffer, Serializer serializer) {
+  public String read(Class<String> type, BufferInput<?> buffer, Serializer serializer) {
     byte[] bytes = new byte[buffer.readUnsignedShort()];
     buffer.read(bytes);
     return new String(bytes);

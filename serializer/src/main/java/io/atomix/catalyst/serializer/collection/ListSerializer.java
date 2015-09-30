@@ -28,10 +28,10 @@ import java.util.List;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class ListSerializer implements TypeSerializer<List> {
+public class ListSerializer implements TypeSerializer<List<?>> {
 
   @Override
-  public void write(List object, BufferOutput buffer, Serializer serializer) {
+  public void write(List<?> object, BufferOutput<?> buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
     for (Object value : object) {
       serializer.writeObject(value, buffer);
@@ -39,10 +39,9 @@ public class ListSerializer implements TypeSerializer<List> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public List read(Class<List> type, BufferInput buffer, Serializer serializer) {
+  public List<?> read(Class<List<?>> type, BufferInput<?> buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    List object = new ArrayList<>(size);
+    List<?> object = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       object.add(serializer.readObject(buffer));
     }
