@@ -38,11 +38,14 @@ public class LocalClient implements Client {
   private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+  /**
+   * @throws NullPointerException if any argument is null
+   */
   public LocalClient(LocalServerRegistry registry, Serializer serializer) {
     Assert.notNull(registry, "registry");
     Assert.notNull(serializer, "serializer");
     this.registry = registry;
-    this.context = new SingleThreadContext("test-" + id.toString(), serializer.clone());
+    this.context = new SingleThreadContext("local-client-" + id.toString(), serializer.clone());
   }
 
   /**

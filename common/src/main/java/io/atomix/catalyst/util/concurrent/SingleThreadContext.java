@@ -40,11 +40,11 @@ public class SingleThreadContext implements ThreadContext {
    * The provided context name will be passed to {@link CatalystThreadFactory} and used
    * when instantiating the context thread.
    *
-   * @param name The context name.
+   * @param nameFormat The context nameFormat which will be formatted with a thread number.
    * @param serializer The context serializer.
    */
-  public SingleThreadContext(String name, Serializer serializer) {
-    this(Executors.newSingleThreadScheduledExecutor(new CatalystThreadFactory(name)), serializer);
+  public SingleThreadContext(String nameFormat, Serializer serializer) {
+    this(Executors.newSingleThreadScheduledExecutor(new CatalystThreadFactory(nameFormat)), serializer);
   }
 
   /**

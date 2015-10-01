@@ -47,7 +47,7 @@ public class LocalServer implements Server {
     Assert.notNull(registry, "registry");
     Assert.notNull(serializer, "serializer");
     this.registry = registry;
-    this.context = new SingleThreadContext("test-" + id.toString(), serializer.clone());
+    this.context = new SingleThreadContext("local-server-" + id.toString(), serializer.clone());
   }
 
   /**
