@@ -16,6 +16,8 @@
 package io.atomix.catalyst.util.concurrent;
 
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +64,8 @@ public class ThreadPoolContext implements ThreadContext {
    * @param serializer The context serializer.
    */
   public ThreadPoolContext(ScheduledExecutorService parent, Serializer serializer) {
-    if (parent == null)
-      throw new NullPointerException("parent cannot be null");
-    if (serializer == null)
-      throw new NullPointerException("serializer cannot be null");
-
-    this.parent = parent;
-    this.serializer = serializer;
+    this.parent = Assert.notNull(parent, "parent");
+    this.serializer = Assert.notNull(serializer, "serializer");
 
     // This code was shamelessly stolededed from Vert.x:
     // https://github.com/eclipse/vert.x/blob/master/src/main/java/io/vertx/core/impl/OrderedExecutorFactory.java
@@ -88,7 +85,6 @@ public class ThreadPoolContext implements ThreadContext {
           task.run();
         } catch (Throwable t) {
           LOGGER.error("An uncaught exception occurred", t);
-          t.printStackTrace();
           throw t;
         }
       }

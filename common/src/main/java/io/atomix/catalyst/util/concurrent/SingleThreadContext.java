@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
 
 /**
  * Single threaded context.
@@ -60,9 +61,7 @@ public class SingleThreadContext implements ThreadContext {
   public SingleThreadContext(Thread thread, ScheduledExecutorService executor, Serializer serializer) {
     this.executor = executor;
     this.serializer = serializer;
-    if (!(thread instanceof CatalystThread)) {
-      throw new IllegalStateException("not a Catalyst thread");
-    }
+    Assert.state(thread instanceof CatalystThread, "not a Catalyst thread");
     ((CatalystThread) thread).setContext(this);
   }
 
