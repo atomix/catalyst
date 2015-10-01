@@ -40,7 +40,12 @@ public class LocalServer implements Server {
   private volatile Address address;
   private volatile ListenerHolder listener;
 
+  /**
+   * @throws NullPointerException if any argument is null
+   */
   public LocalServer(LocalServerRegistry registry, Serializer serializer) {
+    Assert.notNull(registry, "registry");
+    Assert.notNull(serializer, "serializer");
     this.registry = registry;
     this.context = new SingleThreadContext("test-" + id.toString(), serializer.clone());
   }

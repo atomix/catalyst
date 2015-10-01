@@ -17,6 +17,7 @@ package io.atomix.catalyst.transport;
 
 import io.atomix.catalyst.buffer.PooledDirectAllocator;
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
 
 /**
  * Local transport.
@@ -31,11 +32,12 @@ public class LocalTransport implements Transport {
     this(registry, new Serializer(new PooledDirectAllocator()));
   }
 
+  /**
+   * @throws NullPointerException if any argument is null
+   */
   public LocalTransport(LocalServerRegistry registry, Serializer serializer) {
-    if (registry == null)
-      throw new NullPointerException("registry cannot be null");
-    if (serializer == null)
-      throw new NullPointerException("serializer cannot be null");
+    Assert.notNull(registry, "registry");
+    Assert.notNull(serializer, "serializer");
     this.registry = registry;
     this.serializer = serializer;
   }
