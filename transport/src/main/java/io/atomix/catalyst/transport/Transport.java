@@ -21,8 +21,7 @@ package io.atomix.catalyst.transport;
  * This is a low level abstraction that serves to provide Catalyst clients and servers with {@link Client}
  * and {@link Server} instances. Throughout the lifetime of a {@code Transport}, Catalyst may
  * call on the transport to create multiple {@link Client} and {@link Server}
- * objects. Each {@code Client} and {@code Server} is identified by a {@link java.util.UUID} which is assumed to be unique
- * to that instance across the entire Catalyst cluster.
+ * objects.
  * <p>
  * When the {@link Transport} is closed, it should close all {@link Client}
  * and {@link Server} instances created by it if they're not already closed.
@@ -32,18 +31,16 @@ package io.atomix.catalyst.transport;
 public interface Transport {
 
   /**
-   * Creates a transport client.
+   * Creates a new transport client.
    *
    * @return The transport client.
-   * @throws NullPointerException if {@code id} is null
    */
   Client client();
 
   /**
-   * Creates a transport server.
+   * Creates a new transport server.
    *
    * @return The transport server.
-   * @throws NullPointerException if {@code id} is null
    */
   Server server();
 
