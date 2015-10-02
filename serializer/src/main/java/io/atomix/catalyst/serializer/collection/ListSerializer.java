@@ -41,7 +41,7 @@ public class ListSerializer implements TypeSerializer<List<?>> {
   @Override
   public List<?> read(Class<List<?>> type, BufferInput<?> buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    List<?> object = new ArrayList<>(size);
+    List<Object> object = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       object.add(serializer.readObject(buffer));
     }

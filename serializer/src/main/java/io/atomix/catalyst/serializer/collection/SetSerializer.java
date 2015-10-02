@@ -41,7 +41,7 @@ public class SetSerializer implements TypeSerializer<Set<?>> {
   @Override
   public Set<?> read(Class<Set<?>> type, BufferInput<?> buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    Set<?> object = new HashSet<>(size);
+    Set<Object> object = new HashSet<>(size);
     for (int i = 0; i < size; i++) {
       object.add(serializer.readObject(buffer));
     }
