@@ -33,7 +33,7 @@ public class SwappedBuffer extends AbstractBuffer {
   }
 
   public SwappedBuffer(Buffer buffer, long offset, long initialCapacity, long maxCapacity, ReferenceManager<Buffer> referenceManager) {
-    super(buffer.bytes().order(buffer.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN), offset, initialCapacity, maxCapacity, referenceManager);
+    super(buffer.bytes().order(buffer.order() == ByteOrder.BIG_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN), offset, initialCapacity, maxCapacity, referenceManager);
     this.root = buffer instanceof SwappedBuffer ? ((SwappedBuffer) buffer).root : buffer;
     root.acquire();
   }
