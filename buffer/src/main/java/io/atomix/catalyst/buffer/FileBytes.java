@@ -407,13 +407,22 @@ public class FileBytes extends AbstractBytes {
   @Override
   public Bytes write(long position, Bytes bytes, long offset, long length) {
     checkWrite(position, length);
-    try {
-      seekToOffset(position);
-      for (long i = 0; i < length; i++) {
-        randomAccessFile.writeByte(bytes.readByte(offset + i));
+    if (bytes instanceof HeapBytes) {
+      try {
+        seekToOffset(position);
+        randomAccessFile.write(((HeapBytes) bytes).array(), (int) offset, (int) length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } else {
+      try {
+        seekToOffset(position);
+        for (long i = 0; i < length; i++) {
+          randomAccessFile.writeByte(bytes.readByte(offset + i));
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return this;
   }
