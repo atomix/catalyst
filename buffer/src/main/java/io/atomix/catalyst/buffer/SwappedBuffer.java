@@ -63,12 +63,6 @@ public class SwappedBuffer extends AbstractBuffer {
   }
 
   @Override
-  public Buffer compact() {
-    root.compact();
-    return this;
-  }
-
-  @Override
   protected void compact(long from, long to, long length) {
     if (root instanceof AbstractBuffer) {
       ((AbstractBuffer) root).compact(from, to, length);

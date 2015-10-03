@@ -45,7 +45,7 @@ public class SwappedBytes extends WrappedBytes {
 
   @Override
   public int readUnsignedShort(long offset) {
-    return Integer.reverseBytes(bytes.readUnsignedShort(offset));
+    return Short.reverseBytes(bytes.readShort(offset)) & 0xFFFF;
   }
 
   @Override
@@ -65,7 +65,7 @@ public class SwappedBytes extends WrappedBytes {
 
   @Override
   public long readUnsignedInt(long offset) {
-    return Long.reverseBytes(bytes.readUnsignedInt(offset));
+    return Integer.reverseBytes(bytes.readInt(offset)) & 0xFFFFFFFFL;
   }
 
   @Override
@@ -97,7 +97,7 @@ public class SwappedBytes extends WrappedBytes {
 
   @Override
   public Bytes writeUnsignedShort(long offset, int s) {
-    bytes.writeUnsignedShort(offset, Integer.reverseBytes(s));
+    bytes.writeUnsignedShort(offset, Short.reverseBytes((short) s));
     return this;
   }
 
@@ -121,7 +121,7 @@ public class SwappedBytes extends WrappedBytes {
 
   @Override
   public Bytes writeUnsignedInt(long offset, long i) {
-    bytes.writeUnsignedInt(offset, Long.reverseBytes(i));
+    bytes.writeUnsignedInt(offset, Integer.reverseBytes((int) i));
     return this;
   }
 
