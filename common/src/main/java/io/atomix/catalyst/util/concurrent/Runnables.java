@@ -2,6 +2,8 @@ package io.atomix.catalyst.util.concurrent;
 
 import org.slf4j.Logger;
 
+import java.util.concurrent.RejectedExecutionException;
+
 /**
  * Runnable utilities.
  */
@@ -17,7 +19,9 @@ final class Runnables {
       try {
         runnable.run();
       } catch (Throwable t) {
-        logger.error("An uncaught exception occurred", t);
+        if (!(t instanceof RejectedExecutionException)) {
+          logger.error("An uncaught exception occurred", t);
+        }
         throw t;
       }
     };
