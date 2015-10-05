@@ -4,9 +4,9 @@
 
 ### [Website][Website] • [Google Group][Google group] • [Javadoc][Javadoc]
 
-Catalyst is an I/O and serialization framework designed for use in [Copycat](http://github.com/atomix/copycat)
+Catalyst is an I/O and serialization framework designed for use in [Atomix](http://atomix.io/atomix), [Copycat](http://atomix.io/copycat)
 and related projects.
 
-[Website]: http://atomix.io/user-manual/io-serialization/
+[Website]: http://atomix.io/catalyst/
 [Google group]: https://groups.google.com/forum/#!forum/copycat
 [Javadoc]: http://atomix.io/catalyst/api/latest/
