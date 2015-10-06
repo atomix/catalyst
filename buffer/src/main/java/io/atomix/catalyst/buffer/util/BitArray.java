@@ -18,8 +18,6 @@ package io.atomix.catalyst.buffer.util;
 import io.atomix.catalyst.buffer.HeapBytes;
 import io.atomix.catalyst.buffer.MappedBytes;
 
-import java.io.IOException;
-
 /**
  * Direct memory bit set.
  * <p>
@@ -140,7 +138,7 @@ public class BitArray implements AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     bytes.close();
   }
 
