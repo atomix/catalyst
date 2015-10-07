@@ -54,7 +54,7 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     Enumeration<URL> urls;
     try {
-      urls = cl.getResources(String.format("META-INF%sservices%s%s", File.separator, File.separator, clazz.getName()));
+      urls = cl.getResources(String.format("META-INF/services/%s", clazz.getName()));
     } catch (IOException e) {
       throw new CatalystException(e);
     }
