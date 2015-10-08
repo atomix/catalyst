@@ -129,7 +129,14 @@ public class NettyServer implements Server {
     for (Connection connection : connections.values()) {
       futures[i++] = connection.close();
     }
-    return CompletableFuture.allOf(futures);
+
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture.allOf(futures).whenComplete((result, error) -> {
+      channelGroup.close().addListener(channelFuture -> {
+        future.complete(null);
+      });
+    });
+    return future;
   }
 
   /**
