@@ -241,8 +241,9 @@ public class NettyConnection implements Connection {
   void handleException(Throwable t) {
     if (failure == null) {
       failure = t;
-      for (CompletableFuture responseFuture : responseFutures.values()) {
-        responseFuture.completeExceptionally(t);
+
+      for (ContextualFuture<?> responseFuture : responseFutures.values()) {
+        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(t));
       }
       responseFutures.clear();
 
@@ -259,8 +260,8 @@ public class NettyConnection implements Connection {
     if (!closed) {
       closed = true;
 
-      for (ContextualFuture future : responseFutures.values()) {
-        future.completeExceptionally(new IllegalStateException("connection closed"));
+      for (ContextualFuture<?> responseFuture : responseFutures.values()) {
+        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new IllegalStateException("connection closed")));
       }
       responseFutures.clear();
 
