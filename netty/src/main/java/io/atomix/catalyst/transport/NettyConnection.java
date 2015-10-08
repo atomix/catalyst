@@ -101,6 +101,8 @@ public class NettyConnection implements Connection {
     if (handler != null) {
       Object request = readRequest(buffer);
       handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
+    } else {
+      handleRequestFailure(requestId, new IllegalStateException("unknown address " + address));
     }
   }
 
@@ -256,6 +258,12 @@ public class NettyConnection implements Connection {
   void handleClosed() {
     if (!closed) {
       closed = true;
+
+      for (ContextualFuture future : responseFutures.values()) {
+        future.completeExceptionally(new IllegalStateException("connection closed"));
+      }
+      responseFutures.clear();
+
       for (Listener<Connection> listener : closeListeners) {
         listener.accept(this);
       }
