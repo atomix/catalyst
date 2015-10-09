@@ -13,7 +13,7 @@
   <packaging>pom</packaging>
   <name>Catalyst</name>
   <description>Fast I/O and binary serialization framework.</description>
-  <url>http://github.com/kuujo/catalyst</url>
+  <url>http://github.com/atomix/catalyst</url>
   <inceptionYear>2013</inceptionYear>
 
   <properties>
