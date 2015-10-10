@@ -61,7 +61,7 @@ public class Listeners<T> implements Iterable<Listener<T>> {
    * @param event The event to apply.
    * @return A completable future to be completed once all listeners have been completed.
    */
-  public CompletableFuture<Void> apply(T event) {
+  public CompletableFuture<Void> accept(T event) {
     List<CompletableFuture<Void>> futures = new ArrayList<>(listeners.size());
     for (ListenerHolder listener : listeners) {
       if (listener.context != null) {
