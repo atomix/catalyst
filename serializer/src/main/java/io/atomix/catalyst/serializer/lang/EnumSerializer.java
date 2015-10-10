@@ -34,7 +34,8 @@ public class EnumSerializer implements TypeSerializer<Enum<?>> {
 
   @Override
   public Enum<?> read(Class<Enum<?>> type, BufferInput<?> buffer, Serializer serializer) {
-    return type.getEnumConstants()[buffer.readUnsignedByte()];
+    Enum<?>[] constants = type.getEnumConstants();
+    return constants == null ? null : constants[buffer.readUnsignedByte()];
   }
 
 }

@@ -52,6 +52,9 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
   @SuppressWarnings("unchecked")
   private <T> List<Class<? extends T>> load(Class<T> clazz) {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    if (cl == null) {
+      cl = ClassLoader.getSystemClassLoader();
+    }
     Enumeration<URL> urls;
     try {
       urls = cl.getResources(String.format("META-INF/services/%s", clazz.getName()));

@@ -406,15 +406,16 @@ public class Serializer implements Cloneable {
   }
 
   /**
-   * Returns the serializer for the given type.
+   * Returns the serializer for the given type else {@code null} if no serializer or factory are registered for the 
+   * {@code type}.
    */
-  @SuppressWarnings("rawtypes")
-  private TypeSerializer getSerializer(Class<?> type) {
-    TypeSerializer<?> serializer = serializers.get(type);
+  @SuppressWarnings("unchecked")
+  private <T> TypeSerializer<T> getSerializer(Class<T> type) {
+    TypeSerializer<T> serializer = (TypeSerializer<T>) serializers.get(type);
     if (serializer == null) {
       TypeSerializerFactory factory = registry.lookup(type);
       if (factory != null) {
-        serializer = factory.createSerializer(type);
+        serializer = (TypeSerializer<T>) factory.createSerializer(type);
         serializers.put(type, serializer);
       }
     }
@@ -792,11 +793,11 @@ public class Serializer implements Cloneable {
   @SuppressWarnings("unchecked")
   private <T> T readById(BufferInput<?> buffer) {
     int id = buffer.readUnsignedShort();
-    Class<?> type = registry.types().get(id);
-    if (type == null)
+    Class<T> type = (Class<T>) registry.types().get(id);
+    TypeSerializer<T> serializer = getSerializer(type);
+    if (type == null || serializer == null)
       throw new SerializationException("cannot deserialize: unknown type");
-
-    return (T) getSerializer(type).read(type, buffer, this);
+    return serializer.read(type, buffer, this);
   }
 
   /**
@@ -809,10 +810,10 @@ public class Serializer implements Cloneable {
   @SuppressWarnings("unchecked")
   private <T> T readByClass(BufferInput<?> buffer) {
     String name = buffer.readUTF8();
-    Class<?> type = types.get(name);
+    Class<T> type = (Class<T>) types.get(name);
     if (type == null) {
       try {
-        type = Class.forName(name);
+        type = (Class<T>) Class.forName(name);
         if (type == null)
           throw new SerializationException("cannot deserialize: unknown type");
         types.put(name, type);
@@ -820,7 +821,11 @@ public class Serializer implements Cloneable {
         throw new SerializationException("object class not found: " + name, e);
       }
     }
-    return (T) getSerializer(type).read(type, buffer, this);
+    
+    TypeSerializer<T> serializer = getSerializer(type);
+    if (serializer == null)
+      throw new SerializationException("cannot deserialize: unknown type");
+    return serializer.read(type, buffer, this);
   }
 
   /**

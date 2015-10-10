@@ -258,7 +258,7 @@ public class SerializerRegistry implements Cloneable {
   }
 
   /**
-   * Looks up the serializer for the given class.
+   * Looks up the serializer for the given class else {@code null} if no serializer is registered for the {@code type}.
    *
    * @param type The serializable class.
    * @return The serializer for the given class.
