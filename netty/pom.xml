@@ -27,7 +27,6 @@
 
   <properties>
     <netty.version>4.0.21.Final</netty.version>
-    <hash.version>0.2</hash.version>
   </properties>
 
   <dependencies>
@@ -50,11 +49,6 @@
       <groupId>io.netty</groupId>
       <artifactId>netty-transport-native-epoll</artifactId>
       <version>${netty.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.openhft</groupId>
-      <artifactId>zero-allocation-hashing</artifactId>
-      <version>${hash.version}</version>
     </dependency>
   </dependencies>
 

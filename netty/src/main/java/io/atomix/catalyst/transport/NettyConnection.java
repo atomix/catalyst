@@ -15,19 +15,14 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.Listener;
-import io.atomix.catalyst.util.Listeners;
-import io.atomix.catalyst.util.ReferenceCounted;
+import io.atomix.catalyst.util.*;
 import io.atomix.catalyst.util.concurrent.Scheduled;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import net.openhft.hashing.LongHashFunction;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -63,8 +58,6 @@ public class NettyConnection implements Connection {
   private final Channel channel;
   private final ThreadContext context;
   private final Map<Integer, HandlerHolder> handlers = new ConcurrentHashMap<>();
-  private final Map<Class, Integer> hashMap = new HashMap<>();
-  private final LongHashFunction hash = LongHashFunction.city_1_1();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
   private volatile long requestId;
@@ -87,8 +80,7 @@ public class NettyConnection implements Connection {
    * Hashes the given string to a 32-bit hash.
    */
   private int hash32(Class type) {
-    long hash = this.hash.hashChars(type.getName());
-    return (int)(hash ^ (hash >>> 32));
+    return Hash.hash(type.getName());
   }
 
   /**
@@ -305,7 +297,7 @@ public class NettyConnection implements Connection {
       ByteBuf buffer = this.channel.alloc().buffer(13);
       buffer.writeByte(REQUEST)
         .writeLong(requestId)
-        .writeInt(hashMap.computeIfAbsent(request.getClass(), this::hash32));
+        .writeInt(hash32(request.getClass()));
 
       writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
         if (channelFuture.isSuccess()) {
@@ -321,7 +313,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
-    handlers.put(hashMap.computeIfAbsent(type, this::hash32), new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
+    handlers.put(hash32(type), new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;
   }
 
