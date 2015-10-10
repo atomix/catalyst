@@ -17,8 +17,10 @@ package io.atomix.catalyst.util;
 
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -28,7 +30,7 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class Listeners<T> implements Iterable<Listener<T>> {
-  private final List<Listener<T>> listeners = new CopyOnWriteArrayList<>();
+  private final List<ListenerHolder> listeners = new CopyOnWriteArrayList<>();
 
   /**
    * Returns the number of registered listeners.
@@ -48,32 +50,60 @@ public class Listeners<T> implements Iterable<Listener<T>> {
    */
   public Listener<T> add(Consumer<T> listener) {
     Assert.notNull(listener, "listener");
-    
-    ThreadContext context = ThreadContext.currentContext();
+    ListenerHolder holder = new ListenerHolder(listener, ThreadContext.currentContext());
+    listeners.add(holder);
+    return holder;
+  }
 
-    Listener<T> wrapper = new Listener<T>() {
-      @Override
-      public void accept(T event) {
-        if (context != null) {
-          context.executor().execute(() -> listener.accept(event));
-        } else {
-          listener.accept(event);
-        }
+  /**
+   * Applies an event to all listeners.
+   *
+   * @param event The event to apply.
+   * @return A completable future to be completed once all listeners have been completed.
+   */
+  public CompletableFuture<Void> apply(T event) {
+    List<CompletableFuture<Void>> futures = new ArrayList<>(listeners.size());
+    for (ListenerHolder listener : listeners) {
+      if (listener.context != null) {
+        futures.add(listener.context.execute(() -> listener.listener.accept(event)));
+      } else {
+        listener.listener.accept(event);
       }
-
-      @Override
-      public void close() {
-        listeners.remove(this);
-      }
-    };
-
-    listeners.add(wrapper);
-    return wrapper;
+    }
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public Iterator<Listener<T>> iterator() {
-    return listeners.iterator();
+    return (Iterator) listeners.iterator();
+  }
+
+  /**
+   * Listener holder.
+   */
+  private class ListenerHolder implements Listener<T> {
+    private final Consumer<T> listener;
+    private final ThreadContext context;
+
+    private ListenerHolder(Consumer<T> listener, ThreadContext context) {
+      this.listener = listener;
+      this.context = context;
+    }
+
+    @Override
+    public void accept(T event) {
+      if (context != null) {
+        context.executor().execute(() -> listener.accept(event));
+      } else {
+        listener.accept(event);
+      }
+    }
+
+    @Override
+    public void close() {
+      listeners.remove(this);
+    }
   }
 
 }
