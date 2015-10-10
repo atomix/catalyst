@@ -20,7 +20,7 @@ if [ "$TRAVIS_REPO_SLUG" == "atomix/$PROJECT" ] && \
   git config --global user.name "travis-ci"
   git rm -rf $PROJECT/api/latest 
   mkdir -p $PROJECT/api/latest
-  mv ${TARGET}/site/apidocs/api/latest $PROJECT/api
+  mv ${TARGET}/site/apidocs/ $PROJECT/api/latest
   git add -A -f $PROJECT/api/latest
   git commit -m "Travis generated Javadoc for $PROJECT build $TRAVIS_BUILD_NUMBER"
   git push -fq origin > /dev/null
