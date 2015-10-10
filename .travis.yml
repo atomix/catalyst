@@ -10,7 +10,22 @@ notifications:
 branches:
   only:
     - master
+    - coverity_scan
 
 after_success:
   - bin/ci-push-javadoc.sh
   - bin/ci-deploy-snapshot.sh
+
+env:
+  global:
+   - secure: "iDM7G1KReKyIY48OxbTvo0tKJjVT5KpgMst9zPzJlgfz4mNO9FbNIGAKHp9vG8wer5pvCJwxlPXLGhato6nVtYAQaDwlGKltr1cEpHcGzGp2d2NPAr8MotNvXha2Ooxuf3HwBUMz75AHnCoy6BSIztN0ZyRmswxb4+XsiOvlke5SpCjxMP9v6T3TKlTY9xN8qFRELzBujaNBXThnH245wzfp2kpkINWqeoP5rhNvzjuwO/xMuPuTbACG8BnimC16Nvej9CVFWo4rTspfq6A+fByAwtgv1Om0Lz3gk8OX6gefCGXSJoT2wER+OpLOVvQ87cDhfmVuaVCmkj9FwX4sydpqHssKTr28GI3EsgGt5042amSXdQLtzqJSl60Zs2UrmpgTApuW+d8UYmSTEHNiHq/JSEl8VzB75stqHCUKqUS/zUuo5yVmWi6d4i1675Hf4TlBWRMqstb8BJEcEhqjFZs4W9va4nGTCgb6amfyyfSATEc3e068s60apEokIdUlqQ/4STM0y3GD/IWoTYg6CT5E+CK+Kir9iSnsrpCypNjDjhf+Enaz7GmgmyxslMQu47/P5eZ/ary38gHpZ1BYtmUS31Scqoq9uGjp7Re8s72i6XIayVu43dzxHD8FtmxEF7bcze9u+7ouAbmwRFywzIkqWFfAyX/nrn8kY8qSZr8="
+
+addons:
+  coverity_scan:
+    project:
+      name: "atomix/catalyst"
+      description: "Build submitted via Travis CI"
+    notification_email: jhalterman@gmail.com
+    build_command_prepend: "mvn clean"
+    build_command:  "mvn -DskipTests=true compile"
+    branch_pattern: coverity_scan
