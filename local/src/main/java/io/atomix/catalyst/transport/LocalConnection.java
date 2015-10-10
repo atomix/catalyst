@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 /**
@@ -69,13 +70,17 @@ public class LocalConnection implements Connection {
 
     Buffer requestBuffer = context.serializer().writeObject(request);
     connection.<U>receive(requestBuffer.flip()).whenCompleteAsync((responseBuffer, error) -> {
-      int status = responseBuffer.readByte();
-      if (status == 1) {
-        future.complete(context.serializer().readObject(responseBuffer));
+      if (error == null) {
+        int status = responseBuffer.readByte();
+        if (status == 1) {
+          future.complete(context.serializer().readObject(responseBuffer));
+        } else {
+          future.completeExceptionally(context.serializer().readObject(responseBuffer));
+        }
+        responseBuffer.release();
       } else {
-        future.completeExceptionally(context.serializer().readObject(responseBuffer));
+        future.completeExceptionally(error);
       }
-      responseBuffer.release();
     }, context.executor());
 
     if (request instanceof ReferenceCounted) {
@@ -99,25 +104,29 @@ public class LocalConnection implements Connection {
       MessageHandler<Object, Object> handler = (MessageHandler<Object, Object>) holder.handler;
       CompletableFuture<Buffer> future = new CompletableFuture<>();
 
-      holder.context.executor().execute(() -> {
-        handler.handle(request).whenCompleteAsync((response, error) -> {
-          Buffer responseBuffer = context.serializer().allocate();
-          if (error == null) {
-            responseBuffer.writeByte(1);
-            context.serializer().writeObject(response, responseBuffer);
-          } else {
-            responseBuffer.writeByte(0);
-            context.serializer().writeObject(error, responseBuffer);
-          }
+      try {
+        holder.context.executor().execute(() -> {
+          handler.handle(request).whenCompleteAsync((response, error) -> {
+            Buffer responseBuffer = context.serializer().allocate();
+            if (error == null) {
+              responseBuffer.writeByte(1);
+              context.serializer().writeObject(response, responseBuffer);
+            } else {
+              responseBuffer.writeByte(0);
+              context.serializer().writeObject(error, responseBuffer);
+            }
 
-          future.complete(responseBuffer.flip());
+            future.complete(responseBuffer.flip());
 
-          if (response instanceof ReferenceCounted) {
-            ((ReferenceCounted<?>) response).release();
-          }
-        }, context.executor());
-      });
-      return future;
+            if (response instanceof ReferenceCounted) {
+              ((ReferenceCounted<?>) response).release();
+            }
+          }, context.executor());
+        });
+        return future;
+      } catch (RejectedExecutionException e) {
+        return Futures.exceptionalFuture(new IllegalStateException("connection closed", e));
+      }
     }
     return Futures.exceptionalFuture(new TransportException("no handler registered"));
   }
