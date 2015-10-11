@@ -287,7 +287,7 @@ public class NettyConnection implements Connection {
 
     context.executor().execute(() -> {
 
-      ByteBuf buffer = this.channel.alloc().buffer(13);
+      ByteBuf buffer = this.channel.alloc().buffer(9);
       buffer.writeByte(REQUEST)
         .writeLong(requestId);
 
