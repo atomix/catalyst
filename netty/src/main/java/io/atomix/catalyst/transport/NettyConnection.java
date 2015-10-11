@@ -15,7 +15,10 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.util.*;
+import io.atomix.catalyst.util.Assert;
+import io.atomix.catalyst.util.Listener;
+import io.atomix.catalyst.util.Listeners;
+import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Scheduled;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.buffer.ByteBuf;
@@ -57,7 +60,7 @@ public class NettyConnection implements Connection {
 
   private final Channel channel;
   private final ThreadContext context;
-  private final Map<Integer, HandlerHolder> handlers = new ConcurrentHashMap<>();
+  private final Map<Class, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
   private volatile long requestId;
@@ -77,24 +80,16 @@ public class NettyConnection implements Connection {
   }
 
   /**
-   * Hashes the given string to a 32-bit hash.
-   */
-  private int hash32(Class type) {
-    return Hash.hash(type.getName());
-  }
-
-  /**
    * Handles a request.
    */
   void handleRequest(ByteBuf buffer) {
     long requestId = buffer.readLong();
-    int address = buffer.readInt();
-    HandlerHolder handler = handlers.get(address);
+    Object request = readRequest(buffer);
+    HandlerHolder handler = handlers.get(request.getClass());
     if (handler != null) {
-      Object request = readRequest(buffer);
       handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
     } else {
-      handleRequestFailure(requestId, new IllegalStateException("unknown address " + address));
+      handleRequestFailure(requestId, new IllegalStateException("unknown message type: " + request.getClass()));
     }
   }
 
@@ -275,9 +270,7 @@ public class NettyConnection implements Connection {
       ContextualFuture future = iterator.next().getValue();
       if (future.time + REQUEST_TIMEOUT < time) {
         iterator.remove();
-        future.context.executor().execute(() -> {
-          future.completeExceptionally(new TimeoutException("request timed out"));
-        });
+        future.context.executor().execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
       } else {
         break;
       }
@@ -296,8 +289,7 @@ public class NettyConnection implements Connection {
 
       ByteBuf buffer = this.channel.alloc().buffer(13);
       buffer.writeByte(REQUEST)
-        .writeLong(requestId)
-        .writeInt(hash32(request.getClass()));
+        .writeLong(requestId);
 
       writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
         if (channelFuture.isSuccess()) {
@@ -313,7 +305,7 @@ public class NettyConnection implements Connection {
   @Override
   public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
     Assert.notNull(type, "type");
-    handlers.put(hash32(type), new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
+    handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;
   }
 
