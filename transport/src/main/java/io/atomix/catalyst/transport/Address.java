@@ -15,12 +15,12 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.serializer.CatalystSerializable;
-import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
+import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.SerializeWith;
 import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
 
 import java.net.InetSocketAddress;
 
@@ -93,7 +93,7 @@ public class Address implements CatalystSerializable {
   @Override
   public int hashCode() {
     int hashCode = 23;
-    hashCode = 37 * hashCode + address.toString().hashCode();
+    hashCode = 37 * hashCode + address.hashCode();
     return hashCode;
   }
 
