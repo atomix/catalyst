@@ -19,48 +19,10 @@ package io.atomix.catalyst.util;
  * Object builder.
  * <p>
  * This is a base interface for building objects in Catalyst.
- * <p>
- * Throughout Catalyst, builders are used to build a variety of objects. Builders are designed to be
- * {@link BuilderPool pooled} and reused in order to reduce GC pressure. When {@link #build()} or
- * {@link #close()} is called on a builder, the builder will be released back to the {@link BuilderPool}
- * that created it.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public abstract class Builder<T> implements AutoCloseable {
-  protected final BuilderPool pool;
-
-  protected Builder() {
-    this(null);
-  }
-
-  protected Builder(BuilderPool pool) {
-    this.pool = pool;
-  }
-
-  /**
-   * Resets the builder.
-   * <p>
-   * Builders should override this method to reset internal builder state for builders pooled via
-   * {@link BuilderPool}. Each time a new builder is {@link BuilderPool#acquire() acquired} from a
-   * pool, this method will be called to reset the internal builder state.
-   */
-  protected void reset() {
-
-  }
-
-  /**
-   * Resets the builder.
-   * <p>
-   * Builders should override this method to reset internal builder state for builders pooled via
-   * {@link BuilderPool}. Each time a new builder is {@link BuilderPool#acquire(Object) acquired} from a
-   * pool, this method will be called to reset the internal builder state.
-   * 
-   * @throws NullPointerException if {@code object} is null
-   */
-  protected void reset(T object) {
-
-  }
+public abstract class Builder<T> {
 
   /**
    * Builds the object.
@@ -71,13 +33,5 @@ public abstract class Builder<T> implements AutoCloseable {
    * @return The built object.
    */
   public abstract T build();
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public void close() {
-    if (pool != null) {
-      pool.release(this);
-    }
-  }
 
 }
