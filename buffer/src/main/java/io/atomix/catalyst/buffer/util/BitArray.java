@@ -134,7 +134,7 @@ public class BitArray implements AutoCloseable {
    * @return The copied bit set.
    */
   public BitArray copy() {
-    return new BitArray(bytes.copy(), count);
+    return new BitArray(bytes.copy(), count, size);
   }
 
   @Override
