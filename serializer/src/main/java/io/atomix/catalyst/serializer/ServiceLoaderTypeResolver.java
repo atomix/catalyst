@@ -17,7 +17,10 @@ package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.CatalystException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -100,16 +103,12 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
           if (serializeType.id() != -1) {
             try {
               registry.register(serializeType.type(), factory.newInstance(), serializeType.id());
-            } catch (RegistrationException e) {
-              // Serializer already registered.
             } catch (InstantiationException | IllegalAccessException e) {
               throw new CatalystException("failed to instantiate serializer factory: " + factory, e);
             }
           } else {
             try {
               registry.register(serializeType.type(), factory.newInstance());
-            } catch (RegistrationException e) {
-              // Serializer already registered.
             } catch (InstantiationException | IllegalAccessException e) {
               throw new CatalystException("failed to instantiate serializer factory: " + factory, e);
             }
@@ -129,17 +128,9 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
       if (serialize != null) {
         for (Serialize.Type serializeType : serialize.value()) {
           if (serializeType.id() != -1) {
-            try {
-              registry.register(serializeType.type(), serializer, serializeType.id());
-            } catch (RegistrationException e) {
-              // Serializer already registered.
-            }
+            registry.register(serializeType.type(), serializer, serializeType.id());
           } else {
-            try {
-              registry.register(serializeType.type(), serializer);
-            } catch (RegistrationException e) {
-              // Serializer already registered.
-            }
+            registry.register(serializeType.type(), serializer);
           }
         }
       }
@@ -154,36 +145,16 @@ public class ServiceLoaderTypeResolver implements SerializableTypeResolver {
       SerializeWith serializeWith = serializable.getAnnotation(SerializeWith.class);
       if (serializeWith != null) {
         if (serializeWith.serializer() != null && serializeWith.id() != -1) {
-          try {
-            registry.register(serializable, serializeWith.serializer(), serializeWith.id());
-          } catch (RegistrationException e) {
-            // Serializer already registered.
-          }
+          registry.register(serializable, serializeWith.serializer(), serializeWith.id());
         } else if (serializeWith.serializer() != null) {
-          try {
-            registry.register(serializable, serializeWith.serializer());
-          } catch (RegistrationException e) {
-            // Serializer already registered.
-          }
+          registry.register(serializable, serializeWith.serializer());
         } else if (serializeWith.id() != -1) {
-          try {
-            registry.register(serializable, serializeWith.id());
-          } catch (RegistrationException e) {
-            // Serializer already registered.
-          }
+          registry.register(serializable, serializeWith.id());
         } else {
-          try {
-            registry.register(serializable);
-          } catch (RegistrationException e) {
-            // Serializer already registered.
-          }
+          registry.register(serializable);
         }
       } else {
-        try {
-          registry.register(serializable);
-        } catch (RegistrationException e) {
-          // Serializer already registered.
-        }
+        registry.register(serializable);
       }
     }
   }

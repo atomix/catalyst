@@ -17,6 +17,7 @@ package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.CatalystException;
 import io.atomix.catalyst.serializer.util.ExternalizableSerializer;
+import io.atomix.catalyst.util.Hash;
 
 import java.io.Externalizable;
 import java.util.*;
@@ -29,13 +30,9 @@ import java.util.*;
 public class SerializerRegistry implements Cloneable {
   private static final SerializableTypeResolver PRIMITIVE_RESOLVER = new PrimitiveTypeResolver();
   private static final SerializableTypeResolver JDK_RESOLVER = new JdkTypeResolver();
-  private static final int MAX_TYPE_ID = 65535;
-  private static final int RESERVED_MIN = 128;
-  private static final int RESERVED_MAX = 255;
   private Map<Class<?>, TypeSerializerFactory> factories;
   private Map<Class<?>, Integer> ids;
   private Map<Integer, Class<?>> types;
-  private boolean initialized;
 
   @SuppressWarnings("unchecked")
   public SerializerRegistry() {
@@ -47,11 +44,10 @@ public class SerializerRegistry implements Cloneable {
   }
 
   public SerializerRegistry(Collection<SerializableTypeResolver> resolvers) {
-    this(new HashMap<Class<?>, TypeSerializerFactory>(), new HashMap<Class<?>, Integer>(), new HashMap<Integer, Class<?>>());
+    this(new HashMap<>(), new HashMap<>(), new HashMap<>());
 
     PRIMITIVE_RESOLVER.resolve(this);
     JDK_RESOLVER.resolve(this);
-    initialized = true;
     resolve(resolvers);
   }
 
@@ -103,19 +99,22 @@ public class SerializerRegistry implements Cloneable {
   }
 
   /**
-   * Validates a serializable type ID.
-   *
-   * @param id The serializable type ID.
+   * Returns the type ID for the given class.
    */
-  private void validate(int id) {
-    if (id < 0) {
-      throw new IllegalArgumentException("serializable type ID must be positive");
-    }
-    if (id > MAX_TYPE_ID) {
-      throw new IllegalArgumentException("serializable type ID must be less than " + (MAX_TYPE_ID + 1));
-    }
-    if (initialized && id >= RESERVED_MIN && id <= RESERVED_MAX) {
-      throw new IllegalArgumentException("serializable type IDs 128-255 are reserved");
+  private int findTypeId(Class<?> type) {
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+
+    SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
+
+    if (serializeWith != null) {
+      int id = serializeWith.id();
+      if (id == -1) {
+        return Hash.hash32(type.getName());
+      }
+      return id;
+    } else {
+      return Hash.hash32(type.getName());
     }
   }
 
@@ -127,25 +126,9 @@ public class SerializerRegistry implements Cloneable {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
-
-    SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
-    if (serializeWith != null) {
-      if (serializeWith.id() != -1) {
-        validate(serializeWith.id());
-        ids.put(type, serializeWith.id());
-        types.put(serializeWith.id(), type);
-      }
-      factories.put(type, new DefaultTypeSerializerFactory(serializeWith.serializer() != null ? serializeWith.serializer() : CatalystSerializableSerializer.class));
-    } else if (CatalystSerializable.class.isAssignableFrom(type)) {
-      factories.put(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class));
-    } else if (Externalizable.class.isAssignableFrom(type)) {
-      factories.put(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class));
-    } else {
-      throw new CatalystException("failed to register serializable type: " + type);
-    }
-    return this;
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+    return register(type, findTypeId(type));
   }
 
   /**
@@ -157,24 +140,19 @@ public class SerializerRegistry implements Cloneable {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type, int id) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
-
-    validate(id);
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
 
     SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
     if (serializeWith != null && serializeWith.serializer() != null) {
-      factories.put(type, new DefaultTypeSerializerFactory(serializeWith.serializer()));
+      return register(type, new DefaultTypeSerializerFactory(serializeWith.serializer()), id);
     } else if (CatalystSerializable.class.isAssignableFrom(type)) {
-      factories.put(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class));
+      return register(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class), id);
     } else if (Externalizable.class.isAssignableFrom(type)) {
-      factories.put(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class));
+      return register(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class), id);
     } else {
       throw new CatalystException("failed to register serializable type: " + type);
     }
-    ids.put(type, id);
-    types.put(id, type);
-    return this;
   }
 
   /**
@@ -187,11 +165,7 @@ public class SerializerRegistry implements Cloneable {
    */
   @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
-
-    factories.put(type, new DefaultTypeSerializerFactory(serializer));
-    return this;
+    return register(type, new DefaultTypeSerializerFactory(serializer), findTypeId(type));
   }
 
   /**
@@ -203,17 +177,7 @@ public class SerializerRegistry implements Cloneable {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
-
-    SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
-    if (serializeWith != null && serializeWith.id() != -1) {
-      validate(serializeWith.id());
-      ids.put(type, serializeWith.id());
-      types.put(serializeWith.id(), type);
-    }
-    factories.put(type, factory);
-    return this;
+    return register(type, factory, findTypeId(type));
   }
 
   /**
@@ -227,14 +191,7 @@ public class SerializerRegistry implements Cloneable {
    */
   @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer, int id) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
-
-    validate(id);
-    factories.put(type, new DefaultTypeSerializerFactory(serializer));
-    types.put(id, type);
-    ids.put(type, id);
-    return this;
+    return register(type, new DefaultTypeSerializerFactory(serializer), id);
   }
 
   /**
@@ -247,10 +204,16 @@ public class SerializerRegistry implements Cloneable {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, int id) {
-    if (factories.containsKey(type))
-      throw new RegistrationException("type already registered: " + type);
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
 
-    validate(id);
+    if (ids.containsKey(type)) {
+      if (ids.get(type) != id) {
+        throw new RegistrationException("type registered with a different id: " + type);
+      }
+      return this;
+    }
+
     factories.put(type, factory);
     types.put(id, type);
     ids.put(type, id);
