@@ -201,15 +201,21 @@ public class SerializerRegistry implements Cloneable {
    * @param factory The serializer factory.
    * @param id The serialization ID.
    * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} is already registered
+   * @throws RegistrationException If the given {@code type} or {@code id} is already registered
    */
   public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, int id) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
 
+    // If the type ID has already been registered, throw an exception.
+    if (types.containsKey(id) && types.get(id) != type) {
+      throw new RegistrationException("serializable type ID already registered: " + id);
+    }
+
+    // If the type has already been registered, throw an exception if the IDs don't match.
     if (ids.containsKey(type)) {
       if (ids.get(type) != id) {
-        throw new RegistrationException("type registered with a different id: " + type);
+        throw new RegistrationException("type registered with a different ID: " + type);
       }
       return this;
     }
