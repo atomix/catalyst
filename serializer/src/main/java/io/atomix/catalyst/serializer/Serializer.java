@@ -39,13 +39,17 @@ import java.util.*;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class Serializer implements Cloneable {
+  private static final int MAX_ID_8 = 255;
   private static final int MAX_ID_16 = 65535;
+  private static final int MAX_ID_24 = 16777215;
   private static final byte TYPE_NULL = 0x00;
   private static final byte TYPE_BUFFER = 0x01;
-  private static final byte TYPE_ID_16 = 0x02;
-  private static final byte TYPE_ID_32 = 0x03;
-  private static final byte TYPE_CLASS = 0x04;
-  private static final byte TYPE_SERIALIZABLE = 0x05;
+  private static final byte TYPE_ID_8 = 0x02;
+  private static final byte TYPE_ID_16 = 0x03;
+  private static final byte TYPE_ID_24 = 0x04;
+  private static final byte TYPE_ID_32 = 0x05;
+  private static final byte TYPE_CLASS = 0x07;
+  private static final byte TYPE_SERIALIZABLE = 0x08;
   private SerializerRegistry registry;
   private Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
   private Map<String, Class<?>> types = new HashMap<>();
@@ -554,9 +558,8 @@ public class Serializer implements Cloneable {
 
     Class<?> type = object.getClass();
 
-    if (registry.ids().containsKey(type)) {
-      int typeId = registry.ids().get(type);
-
+    Integer typeId = registry.ids().get(type);
+    if (typeId != null) {
       TypeSerializer<?> serializer = getSerializer(type);
 
       if (serializer == null) {
@@ -566,8 +569,14 @@ public class Serializer implements Cloneable {
         throw new SerializationException("cannot serialize unregistered type: " + type);
       }
 
-      if (typeId >= 0 && typeId <= MAX_ID_16) {
-        return writeById16(typeId, object, buffer, serializer);
+      if (typeId >= 0) {
+        if (typeId <= MAX_ID_8) {
+          return writeById8(typeId, object, buffer, serializer);
+        } else if (typeId <= MAX_ID_16) {
+          return writeById16(typeId, object, buffer, serializer);
+        } else if (typeId <= MAX_ID_24) {
+          return writeById24(typeId, object, buffer, serializer);
+        }
       }
       return writeById32(typeId, object, buffer, serializer);
     } else {
@@ -615,8 +624,40 @@ public class Serializer implements Cloneable {
    * @return The written buffer.
    */
   @SuppressWarnings("unchecked")
+  private <T> BufferOutput<?> writeById8(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
+    serializer.write(object, buffer.writeByte(TYPE_ID_8).writeUnsignedByte(id), this);
+    return buffer;
+  }
+
+  /**
+   * Writes a writable object to the given buffer.
+   *
+   * @param id The writable ID.
+   * @param object The object to write to the buffer.
+   * @param buffer The buffer to which to write the object.
+   * @param serializer The serializer with which to serialize the object.
+   * @param <T> The object type.
+   * @return The written buffer.
+   */
+  @SuppressWarnings("unchecked")
   private <T> BufferOutput<?> writeById16(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
     serializer.write(object, buffer.writeByte(TYPE_ID_16).writeUnsignedShort(id), this);
+    return buffer;
+  }
+
+  /**
+   * Writes a writable object to the given buffer.
+   *
+   * @param id The writable ID.
+   * @param object The object to write to the buffer.
+   * @param buffer The buffer to which to write the object.
+   * @param serializer The serializer with which to serialize the object.
+   * @param <T> The object type.
+   * @return The written buffer.
+   */
+  @SuppressWarnings("unchecked")
+  private <T> BufferOutput<?> writeById24(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
+    serializer.write(object, buffer.writeByte(TYPE_ID_24).writeUnsignedMedium(id), this);
     return buffer;
   }
 
@@ -783,8 +824,12 @@ public class Serializer implements Cloneable {
         return null;
       case TYPE_BUFFER:
         return (T) readBuffer(buffer);
+      case TYPE_ID_8:
+        return readById8(buffer);
       case TYPE_ID_16:
         return readById16(buffer);
+      case TYPE_ID_24:
+        return readById24(buffer);
       case TYPE_ID_32:
         return readById32(buffer);
       case TYPE_CLASS:
@@ -816,6 +861,23 @@ public class Serializer implements Cloneable {
    * @return The read object.
    */
   @SuppressWarnings("unchecked")
+  private <T> T readById8(BufferInput<?> buffer) {
+    int id = buffer.readUnsignedByte();
+    Class<T> type = (Class<T>) registry.types().get(id);
+    TypeSerializer<T> serializer = getSerializer(type);
+    if (type == null || serializer == null)
+      throw new SerializationException("cannot deserialize: unknown type");
+    return serializer.read(type, buffer, this);
+  }
+
+  /**
+   * Reads a serializable object.
+   *
+   * @param buffer The buffer from which to read the object.
+   * @param <T> The object type.
+   * @return The read object.
+   */
+  @SuppressWarnings("unchecked")
   private <T> T readById16(BufferInput<?> buffer) {
     int id = buffer.readUnsignedShort();
     Class<T> type = (Class<T>) registry.types().get(id);
@@ -825,6 +887,23 @@ public class Serializer implements Cloneable {
     return serializer.read(type, buffer, this);
   }
 
+
+  /**
+   * Reads a serializable object.
+   *
+   * @param buffer The buffer from which to read the object.
+   * @param <T> The object type.
+   * @return The read object.
+   */
+  @SuppressWarnings("unchecked")
+  private <T> T readById24(BufferInput<?> buffer) {
+    int id = buffer.readUnsignedMedium();
+    Class<T> type = (Class<T>) registry.types().get(id);
+    TypeSerializer<T> serializer = getSerializer(type);
+    if (type == null || serializer == null)
+      throw new SerializationException("cannot deserialize: unknown type");
+    return serializer.read(type, buffer, this);
+  }
   /**
    * Reads a serializable object.
    *
