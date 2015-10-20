@@ -12,7 +12,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.atomix</groupId>
+      <groupId>io.atomix.catalyst</groupId>
       <artifactId>catalyst-serializer</artifactId>
       <version>${project.version}</version>
     </dependency>
