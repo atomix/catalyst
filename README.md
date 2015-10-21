@@ -1,6 +1,7 @@
 # Catalyst
 
-[![Build Status](https://travis-ci.org/atomix/catalyst.png)](https://travis-ci.org/atomix/catalyst)
+[![Build Status](https://travis-ci.org/atomix/catalyst.svg)](https://travis-ci.org/atomix/catalyst)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.atomix.catalyst/catalyst-parent/badge.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.atomix.catalyst%22) 
 
 ### [Website][Website] • [Google Group][Google group] • [Javadoc][Javadoc] • [Atomix][Atomix] • [Copycat][Copycat]
 
