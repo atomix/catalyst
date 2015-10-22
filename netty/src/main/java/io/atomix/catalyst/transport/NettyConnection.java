@@ -91,6 +91,7 @@ public class NettyConnection implements Connection {
     } else {
       handleRequestFailure(requestId, new IllegalStateException("unknown message type: " + request.getClass()));
     }
+    buffer.release();
   }
 
   /**
