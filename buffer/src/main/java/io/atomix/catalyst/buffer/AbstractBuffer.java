@@ -363,7 +363,7 @@ public abstract class AbstractBuffer implements Buffer {
       if (offset + length > capacity) {
         if (capacity < maxCapacity) {
           if (this.offset + offset + length <= bytes.size()) {
-            capacity = bytes.size();
+            capacity = bytes.size() - this.offset;
           } else {
             capacity(calculateCapacity(offset + length));
           }

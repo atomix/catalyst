@@ -15,14 +15,12 @@
  */
 package io.atomix.catalyst.buffer;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.AfterTest;
 
 import java.io.File;
 import java.nio.file.Files;
 
-import org.testng.annotations.AfterTest;
+import static org.testng.Assert.*;
 
 /**
  * File buffer test.
