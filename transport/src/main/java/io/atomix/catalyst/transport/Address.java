@@ -99,7 +99,7 @@ public class Address implements CatalystSerializable {
 
   @Override
   public String toString() {
-    return String.format("%s[%s]", getClass().getSimpleName(), address);
+    return address.toString();
   }
 
 }
