@@ -25,6 +25,7 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
@@ -89,7 +90,9 @@ class NettyHandler extends ChannelInboundHandlerAdapter {
     Channel channel = context.channel();
     NettyConnection connection = new NettyConnection(channel, getOrCreateContext(channel));
     setConnection(channel, connection);
-    this.context.executor().execute(() -> listener.accept(connection));
+    // synchronously notify listeners in order to ensure message handlers
+    // are registered before messages are handled.
+    CompletableFuture.runAsync(() -> listener.accept(connection), this.context.executor()).join();
   }
 
   @Override
