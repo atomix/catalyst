@@ -300,6 +300,17 @@ public class SerializerTest {
   }
 
   /**
+   * Tests serializing an enum.
+   */
+  public void testSerializeEnumInterface() {
+    Serializer serializer = new Serializer();
+    TestEnumInterface test = TestEnumImplements.THREE;
+    Buffer buffer = serializer.writeObject(test).flip();
+    Enum<?> result = serializer.readObject(buffer);
+    assertEquals(test, result);
+  }
+
+  /**
    * Tests serializing a list.
    */
   public void testSerializeList() {
@@ -604,6 +615,30 @@ public class SerializerTest {
     ONE,
     TWO,
     THREE
+  }
+
+  public interface TestEnumInterface {
+    void test();
+  }
+
+  public enum TestEnumImplements implements TestEnumInterface {
+    ONE {
+      @Override
+      public void test() {
+      }
+    },
+    TWO {
+      @Override
+      public void test() {
+
+      }
+    },
+    THREE {
+      @Override
+      public void test() {
+
+      }
+    }
   }
 
 }

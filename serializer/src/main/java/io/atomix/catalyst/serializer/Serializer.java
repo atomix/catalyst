@@ -558,6 +558,11 @@ public class Serializer implements Cloneable {
 
     Class<?> type = object.getClass();
 
+    // Enums that implement interfaces or methods are generated as inner classes. For this reason,
+    // we need to get the enclosing class if it's an enum.
+    if (type.getEnclosingClass() != null && type.getEnclosingClass().isEnum())
+      type = type.getEnclosingClass();
+
     Integer typeId = registry.ids().get(type);
     if (typeId != null) {
       TypeSerializer<?> serializer = getSerializer(type);
