@@ -551,4 +551,15 @@ public abstract class BufferTest {
     assertEquals(buffer.readLong(), 1234);
   }
 
+  public void testCapacity0Read() {
+    Buffer buffer = createBuffer(0, 1024);
+    assertEquals(buffer.readLong(), 0);
+  }
+
+  public void testCapacity0Write() {
+    Buffer buffer = createBuffer(0, 1024);
+    buffer.writeLong(10);
+    assertEquals(buffer.readLong(0), 10);
+  }
+
 }
