@@ -15,10 +15,8 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.Futures;
-import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Collections;
@@ -35,17 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LocalClient implements Client {
   private final UUID id = UUID.randomUUID();
   private final LocalServerRegistry registry;
-  private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   /**
    * @throws NullPointerException if any argument is null
    */
-  public LocalClient(LocalServerRegistry registry, Serializer serializer) {
-    Assert.notNull(registry, "registry");
-    Assert.notNull(serializer, "serializer");
-    this.registry = registry;
-    this.context = new SingleThreadContext("local-client-" + id.toString(), serializer.clone());
+  public LocalClient(LocalServerRegistry registry) {
+    this.registry = Assert.notNull(registry, "registry");
   }
 
   /**
@@ -64,7 +58,7 @@ public class LocalClient implements Client {
       return Futures.exceptionalFutureAsync(new TransportException("failed to connect"), context.executor());
     }
 
-    LocalConnection connection = new LocalConnection(this.context, connections);
+    LocalConnection connection = new LocalConnection(context, connections);
     connections.add(connection);
     return server.connect(connection).thenApplyAsync(v -> connection, context.executor());
   }

@@ -15,9 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
 import java.util.Collections;
@@ -35,7 +33,6 @@ import java.util.function.Consumer;
 public class LocalServer implements Server {
   private final UUID id = UUID.randomUUID();
   private final LocalServerRegistry registry;
-  private final ThreadContext context;
   private final Set<LocalConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile Address address;
   private volatile ListenerHolder listener;
@@ -43,18 +40,15 @@ public class LocalServer implements Server {
   /**
    * @throws NullPointerException if any argument is null
    */
-  public LocalServer(LocalServerRegistry registry, Serializer serializer) {
-    Assert.notNull(registry, "registry");
-    Assert.notNull(serializer, "serializer");
-    this.registry = registry;
-    this.context = new SingleThreadContext("local-server-" + id.toString(), serializer.clone());
+  public LocalServer(LocalServerRegistry registry) {
+    this.registry = Assert.notNull(registry, "registry");
   }
 
   /**
    * Connects to the server.
    */
   CompletableFuture<Void> connect(LocalConnection connection) {
-    LocalConnection localConnection = new LocalConnection(context, connections);
+    LocalConnection localConnection = new LocalConnection(listener.context, connections);
     connection.connect(localConnection);
     localConnection.connect(connection);
     return CompletableFuture.runAsync(() -> listener.listener.accept(localConnection), listener.context.executor());
