@@ -24,12 +24,18 @@ public class DirectMemoryAllocator implements MemoryAllocator<NativeMemory> {
 
   @Override
   public DirectMemory allocate(long size) {
-    return new DirectMemory(DirectMemory.UNSAFE.allocateMemory(size), size, this);
+    DirectMemory memory = new DirectMemory(DirectMemory.UNSAFE.allocateMemory(size), size, this);
+    DirectMemory.UNSAFE.setMemory(memory.address(), size, (byte) 0);
+    return memory;
   }
 
   @Override
   public DirectMemory reallocate(NativeMemory memory, long size) {
-    return new DirectMemory(DirectMemory.UNSAFE.reallocateMemory(memory.address(), size), size, this);
+    DirectMemory newMemory = new DirectMemory(DirectMemory.UNSAFE.reallocateMemory(memory.address(), size), size, this);
+    if (newMemory.size() > memory.size()) {
+      DirectMemory.UNSAFE.setMemory(newMemory.address(), newMemory.size() - memory.size(), (byte) 0);
+    }
+    return newMemory;
   }
 
 }
