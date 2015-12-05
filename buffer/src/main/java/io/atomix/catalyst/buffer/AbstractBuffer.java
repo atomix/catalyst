@@ -412,7 +412,7 @@ public abstract class AbstractBuffer implements Buffer {
    * Calculates the next capacity that meets the given minimum capacity.
    */
   private long calculateCapacity(long minimumCapacity) {
-    long newCapacity = capacity;
+    long newCapacity = Math.min(Math.max(capacity, 2), minimumCapacity);
     while (newCapacity < Math.min(minimumCapacity, maxCapacity)) {
       newCapacity <<= 1;
     }
