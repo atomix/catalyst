@@ -16,6 +16,7 @@
 package io.atomix.catalyst.transport;
 
 import io.atomix.catalyst.util.Assert;
+import io.atomix.catalyst.util.concurrent.ComposableFuture;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
@@ -60,12 +61,21 @@ public class LocalClient implements Client {
 
     LocalConnection connection = new LocalConnection(context, connections);
     connections.add(connection);
-    return server.connect(connection).thenApplyAsync(v -> connection, context.executor());
+
+    CompletableFuture<Connection> future = new CompletableFuture<>();
+    server.connect(connection).whenCompleteAsync((result, error) -> {
+      if (error == null) {
+        future.complete(connection);
+      } else {
+        future.completeExceptionally(error);
+      }
+    }, context.executor());
+    return future;
   }
 
   @Override
   public CompletableFuture<Void> close() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
+    ComposableFuture<Void> future = new ComposableFuture<>();
 
     ThreadContext context = getContext();
     CompletableFuture<?>[] futures = new CompletableFuture[connections.size()];
@@ -73,7 +83,8 @@ public class LocalClient implements Client {
     for (LocalConnection connection : connections) {
       futures[i++] = connection.close();
     }
-    CompletableFuture.allOf(futures).thenRunAsync(() -> future.complete(null), context.executor());
+
+    CompletableFuture.allOf(futures).whenCompleteAsync(future, context.executor());
     return future;
   }
 
