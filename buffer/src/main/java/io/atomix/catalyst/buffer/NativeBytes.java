@@ -339,6 +339,7 @@ public abstract class NativeBytes extends AbstractBytes {
   @Override
   public void close() {
     flush();
+    memory.free();
     super.close();
   }
 
