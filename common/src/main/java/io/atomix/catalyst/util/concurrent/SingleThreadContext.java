@@ -1,20 +1,13 @@
 package io.atomix.catalyst.util.concurrent;
 
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
+import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.util.Assert;
+import java.time.Duration;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Single threaded context.
@@ -110,6 +103,10 @@ public class SingleThreadContext implements ThreadContext {
   @Override
   public void close() {
     executor.shutdown();
+    try {
+      executor.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+    }
   }
 
 }
