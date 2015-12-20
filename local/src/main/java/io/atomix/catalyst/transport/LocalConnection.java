@@ -23,12 +23,12 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -37,6 +37,7 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalConnection implements Connection {
+  private static final long REQUEST_TIMEOUT = 500;
   private final UUID id = UUID.randomUUID();
   private final ThreadContext context;
   private final Set<LocalConnection> connections;
@@ -44,6 +45,8 @@ public class LocalConnection implements Connection {
   private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
+  private final Map<Long, ContextualFuture> responseFutures = new LinkedHashMap<>();
+  private long requestId;
 
   public LocalConnection(ThreadContext context) {
     this(context, null);
@@ -52,6 +55,7 @@ public class LocalConnection implements Connection {
   public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
     this.context = context;
     this.connections = connections;
+    context.schedule(Duration.ofMillis(250), this::timeout);
   }
 
   /**
@@ -65,28 +69,43 @@ public class LocalConnection implements Connection {
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     Assert.notNull(request, "request");
-    ThreadContext context = ThreadContext.currentContextOrThrow();
-    CompletableFuture<U> future = new CompletableFuture<>();
+    long requestId = ++this.requestId;
+    ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), ThreadContext.currentContextOrThrow());
+    context.execute(() -> {
+      responseFutures.put(requestId, future);
+      send(requestId, request);
+    });
+    return future;
+  }
 
+  /**
+   * Sends a request.
+   */
+  @SuppressWarnings("unchecked")
+  private <T, U> void send(long requestId, T request) {
     Buffer requestBuffer = context.serializer().writeObject(request);
-    connection.<U>receive(requestBuffer.flip()).whenCompleteAsync((responseBuffer, error) -> {
-      if (error == null) {
-        int status = responseBuffer.readByte();
-        if (status == 1) {
-          future.complete(context.serializer().readObject(responseBuffer));
-        } else {
-          future.completeExceptionally(context.serializer().readObject(responseBuffer));
-        }
-        responseBuffer.release();
-      } else {
-        future.completeExceptionally(error);
+    connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
+      ContextualFuture<U> future = responseFutures.remove(requestId);
+      if (future != null) {
+        future.context.execute(() -> {
+          if (error == null) {
+            int status = responseBuffer.readByte();
+            if (status == 1) {
+              future.complete(context.serializer().readObject(responseBuffer));
+            } else {
+              future.completeExceptionally(context.serializer().readObject(responseBuffer));
+            }
+            responseBuffer.release();
+          } else {
+            future.completeExceptionally(error);
+          }
+        });
       }
-    }, context.executor());
+    });
 
     if (request instanceof ReferenceCounted) {
       ((ReferenceCounted<?>) request).release();
     }
-    return future;
   }
 
   /**
@@ -123,10 +142,10 @@ public class LocalConnection implements Connection {
             }
           }, context.executor());
         });
-        return future;
       } catch (RejectedExecutionException e) {
-        return Futures.exceptionalFuture(new IllegalStateException("connection closed", e));
+        future.completeExceptionally(new IllegalStateException("connection closed"));
       }
+      return future;
     }
     return Futures.exceptionalFuture(new TransportException("no handler registered"));
   }
@@ -140,6 +159,24 @@ public class LocalConnection implements Connection {
       handlers.remove(type);
     }
     return this;
+  }
+
+  /**
+   * Times out requests.
+   */
+  void timeout() {
+    // Use ConcurrentHashMap instead of LinkedHashMap
+    long time = System.currentTimeMillis();
+    Iterator<Map.Entry<Long, ContextualFuture>> iterator = responseFutures.entrySet().iterator();
+    while (iterator.hasNext()) {
+      ContextualFuture future = iterator.next().getValue();
+      if (future.time + REQUEST_TIMEOUT < time) {
+        iterator.remove();
+        future.context.executor().execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
+      } else {
+        break;
+      }
+    }
   }
 
   @Override
@@ -180,6 +217,19 @@ public class LocalConnection implements Connection {
 
     private HandlerHolder(MessageHandler<?, ?> handler, ThreadContext context) {
       this.handler = handler;
+      this.context = context;
+    }
+  }
+
+  /**
+   * Contextual future.
+   */
+  private static class ContextualFuture<T> extends CompletableFuture<T> {
+    private final long time;
+    private final ThreadContext context;
+
+    private ContextualFuture(long time, ThreadContext context) {
+      this.time = time;
       this.context = context;
     }
   }
