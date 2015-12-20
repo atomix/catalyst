@@ -102,11 +102,7 @@ public class SingleThreadContext implements ThreadContext {
 
   @Override
   public void close() {
-    executor.shutdown();
-    try {
-      executor.awaitTermination(10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-    }
+    executor.shutdownNow();
   }
 
 }
