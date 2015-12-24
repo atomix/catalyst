@@ -23,12 +23,12 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
-import java.time.Duration;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -37,7 +37,8 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalConnection implements Connection {
-  private static final long REQUEST_TIMEOUT = 500;
+  private static final int RESPONSE_ERROR = 0x00;
+  private static final int RESPONSE_OK = 0x01;
   private final UUID id = UUID.randomUUID();
   private final ThreadContext context;
   private final Set<LocalConnection> connections;
@@ -45,8 +46,7 @@ public class LocalConnection implements Connection {
   private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
-  private final Map<Long, ContextualFuture> responseFutures = new LinkedHashMap<>();
-  private long requestId;
+  private volatile boolean open = true;
 
   public LocalConnection(ThreadContext context) {
     this(context, null);
@@ -55,7 +55,6 @@ public class LocalConnection implements Connection {
   public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
     this.context = context;
     this.connections = connections;
-    context.schedule(Duration.ofMillis(250), this::timeout);
   }
 
   /**
@@ -68,44 +67,37 @@ public class LocalConnection implements Connection {
 
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
-    Assert.notNull(request, "request");
-    long requestId = ++this.requestId;
-    ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), ThreadContext.currentContextOrThrow());
-    context.execute(() -> {
-      responseFutures.put(requestId, future);
-      send(requestId, request);
-    });
-    return future;
-  }
+    if (!open || !connection.open)
+      return Futures.exceptionalFuture(new IllegalStateException("connection closed"));
 
-  /**
-   * Sends a request.
-   */
-  @SuppressWarnings("unchecked")
-  private <T, U> void send(long requestId, T request) {
-    Buffer requestBuffer = context.serializer().writeObject(request);
-    connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
-      ContextualFuture<U> future = responseFutures.remove(requestId);
-      if (future != null) {
-        future.context.execute(() -> {
-          if (error == null) {
-            int status = responseBuffer.readByte();
-            if (status == 1) {
-              future.complete(context.serializer().readObject(responseBuffer));
-            } else {
-              future.completeExceptionally(context.serializer().readObject(responseBuffer));
-            }
-            responseBuffer.release();
+    Assert.notNull(request, "request");
+    CompletableFuture<U> future = new CompletableFuture<>();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
+    this.context.execute(() -> {
+      Buffer requestBuffer = this.context.serializer().writeObject(request);
+      connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
+        if (error == null) {
+          int status = responseBuffer.readByte();
+          if (status == RESPONSE_OK) {
+            U response = this.context.serializer().readObject(responseBuffer);
+            context.execute(() -> future.complete(response));
+          } else if (status == RESPONSE_ERROR) {
+            Throwable exception = this.context.serializer().readObject(responseBuffer);
+            context.execute(() -> future.completeExceptionally(exception));
           } else {
-            future.completeExceptionally(error);
+            context.execute(() -> future.completeExceptionally(new TransportException("malformed response")));
           }
-        });
+          responseBuffer.release();
+        } else {
+          context.execute(() -> future.completeExceptionally(error));
+        }
+      });
+
+      if (request instanceof ReferenceCounted) {
+        ((ReferenceCounted<?>) request).release();
       }
     });
-
-    if (request instanceof ReferenceCounted) {
-      ((ReferenceCounted<?>) request).release();
-    }
+    return future;
   }
 
   /**
@@ -125,22 +117,13 @@ public class LocalConnection implements Connection {
 
       try {
         holder.context.executor().execute(() -> {
-          handler.handle(request).whenCompleteAsync((response, error) -> {
-            Buffer responseBuffer = context.serializer().allocate();
-            if (error == null) {
-              responseBuffer.writeByte(1);
-              context.serializer().writeObject(response, responseBuffer);
+          handler.handle(request).whenComplete((response, error) -> {
+            if (!open || !connection.open) {
+              future.completeExceptionally(new IllegalStateException("connection closed"));
             } else {
-              responseBuffer.writeByte(0);
-              context.serializer().writeObject(error, responseBuffer);
+              respond(response, error, future, context);
             }
-
-            future.complete(responseBuffer.flip());
-
-            if (response instanceof ReferenceCounted) {
-              ((ReferenceCounted<?>) response).release();
-            }
-          }, context.executor());
+          });
         });
       } catch (RejectedExecutionException e) {
         future.completeExceptionally(new IllegalStateException("connection closed"));
@@ -148,6 +131,32 @@ public class LocalConnection implements Connection {
       return future;
     }
     return Futures.exceptionalFuture(new TransportException("no handler registered"));
+  }
+
+  /**
+   * Responds to a request.
+   */
+  private void respond(Object response, Throwable error, CompletableFuture<Buffer> future, ThreadContext context) {
+    try {
+      context.executor().execute(() -> {
+        Buffer responseBuffer = context.serializer().allocate();
+        if (error == null) {
+          responseBuffer.writeByte(RESPONSE_OK);
+          context.serializer().writeObject(response, responseBuffer);
+        } else {
+          responseBuffer.writeByte(RESPONSE_ERROR);
+          context.serializer().writeObject(error, responseBuffer);
+        }
+
+        future.complete(responseBuffer.flip());
+
+        if (response instanceof ReferenceCounted) {
+          ((ReferenceCounted<?>) response).release();
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      // Do nothing if the sending context is closed.
+    }
   }
 
   @Override
@@ -159,24 +168,6 @@ public class LocalConnection implements Connection {
       handlers.remove(type);
     }
     return this;
-  }
-
-  /**
-   * Times out requests.
-   */
-  void timeout() {
-    // Use ConcurrentHashMap instead of LinkedHashMap
-    long time = System.currentTimeMillis();
-    Iterator<Map.Entry<Long, ContextualFuture>> iterator = responseFutures.entrySet().iterator();
-    while (iterator.hasNext()) {
-      ContextualFuture future = iterator.next().getValue();
-      if (future.time + REQUEST_TIMEOUT < time) {
-        iterator.remove();
-        future.context.executor().execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
-      } else {
-        break;
-      }
-    }
   }
 
   @Override
@@ -200,6 +191,7 @@ public class LocalConnection implements Connection {
    * Closes the connection.
    */
   private void doClose() {
+    open = false;
     if (connections != null)
       connections.remove(this);
 
@@ -217,19 +209,6 @@ public class LocalConnection implements Connection {
 
     private HandlerHolder(MessageHandler<?, ?> handler, ThreadContext context) {
       this.handler = handler;
-      this.context = context;
-    }
-  }
-
-  /**
-   * Contextual future.
-   */
-  private static class ContextualFuture<T> extends CompletableFuture<T> {
-    private final long time;
-    private final ThreadContext context;
-
-    private ContextualFuture(long time, ThreadContext context) {
-      this.time = time;
       this.context = context;
     }
   }
