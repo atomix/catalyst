@@ -38,7 +38,17 @@ public class SingleThreadContext implements ThreadContext {
    * @param serializer The context serializer.
    */
   public SingleThreadContext(String nameFormat, Serializer serializer) {
-    this(Executors.newSingleThreadScheduledExecutor(new CatalystThreadFactory(nameFormat)), serializer);
+    this(new CatalystThreadFactory(nameFormat), serializer);
+  }
+
+  /**
+   * Creates a new single thread context.
+   *
+   * @param factory The thread factory.
+   * @param serializer The context serializer.
+   */
+  public SingleThreadContext(CatalystThreadFactory factory, Serializer serializer) {
+    this(Executors.newSingleThreadScheduledExecutor(factory), serializer);
   }
 
   /**
