@@ -49,6 +49,7 @@ public class LocalServer implements Server {
    */
   CompletableFuture<Void> connect(LocalConnection connection) {
     LocalConnection localConnection = new LocalConnection(listener.context, connections);
+    connections.add(localConnection);
     connection.connect(localConnection);
     localConnection.connect(connection);
     return CompletableFuture.runAsync(() -> listener.listener.accept(localConnection), listener.context.executor());

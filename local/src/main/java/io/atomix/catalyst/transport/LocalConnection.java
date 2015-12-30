@@ -23,6 +23,7 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +47,7 @@ public class LocalConnection implements Connection {
   private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
+  private final Set<CompletableFuture<?>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private volatile boolean open = true;
 
   public LocalConnection(ThreadContext context) {
@@ -128,7 +130,9 @@ public class LocalConnection implements Connection {
       } catch (RejectedExecutionException e) {
         future.completeExceptionally(new IllegalStateException("connection closed"));
       }
-      return future;
+
+      futures.add(future);
+      return future.whenComplete((result, error) -> futures.remove(future));
     }
     return Futures.exceptionalFuture(new TransportException("no handler registered"));
   }
@@ -184,6 +188,11 @@ public class LocalConnection implements Connection {
   public CompletableFuture<Void> close() {
     doClose();
     connection.doClose();
+    futures.forEach(f -> {
+      if (!f.isDone()) {
+        f.completeExceptionally(new IllegalStateException("connection closed"));
+      }
+    });
     return ThreadContext.currentContextOrThrow().execute(() -> null);
   }
 
