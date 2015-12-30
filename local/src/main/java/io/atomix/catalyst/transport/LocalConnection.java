@@ -47,7 +47,7 @@ public class LocalConnection implements Connection {
   private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
-  private final Set<CompletableFuture<?>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<ContextualFuture<?>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
   volatile boolean open = true;
 
   public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
@@ -70,10 +70,11 @@ public class LocalConnection implements Connection {
 
     Assert.notNull(request, "request");
 
-    CompletableFuture<U> future = new CompletableFuture<>();
+    ThreadContext context = ThreadContext.currentContextOrThrow();
+
+    ContextualFuture<U> future = new ContextualFuture<>(context);
     futures.add(future);
 
-    ThreadContext context = ThreadContext.currentContextOrThrow();
     this.context.execute(() -> {
       Buffer requestBuffer = this.context.serializer().writeObject(request);
       connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
@@ -200,7 +201,13 @@ public class LocalConnection implements Connection {
 
     futures.forEach(f -> {
       if (!f.isDone())
-        f.completeExceptionally(new IllegalStateException("connection closed"));
+        try {
+          f.context.executor().execute(() -> {
+            if (!f.isDone())
+              f.completeExceptionally(new IllegalStateException("connection closed"));
+          });
+        } catch (RejectedExecutionException e) {
+        }
     });
 
     for (Consumer<Connection> closeListener : closeListeners) {
@@ -208,6 +215,17 @@ public class LocalConnection implements Connection {
         context.executor().execute(() -> closeListener.accept(this));
       } catch (RejectedExecutionException e) {
       }
+    }
+  }
+
+  /**
+   * Contextual future.
+   */
+  private static class ContextualFuture<T> extends CompletableFuture<T> {
+    private final ThreadContext context;
+
+    private ContextualFuture(ThreadContext context) {
+      this.context = context;
     }
   }
 
