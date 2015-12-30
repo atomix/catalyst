@@ -23,7 +23,6 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +46,6 @@ public class LocalConnection implements Connection {
   private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
-  private final Set<ContextualFuture<?>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
   volatile boolean open = true;
 
   public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
@@ -72,34 +70,37 @@ public class LocalConnection implements Connection {
 
     ThreadContext context = ThreadContext.currentContextOrThrow();
 
-    ContextualFuture<U> future = new ContextualFuture<>(context);
-    futures.add(future);
+    CompletableFuture<U> future = new CompletableFuture<>();
 
     this.context.execute(() -> {
-      Buffer requestBuffer = this.context.serializer().writeObject(request);
-      connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
-        if (error == null) {
-          int status = responseBuffer.readByte();
-          if (status == RESPONSE_OK) {
-            U response = this.context.serializer().readObject(responseBuffer);
-            context.execute(() -> future.complete(response));
-          } else if (status == RESPONSE_ERROR) {
-            Throwable exception = this.context.serializer().readObject(responseBuffer);
-            context.execute(() -> future.completeExceptionally(exception));
+      if (open && connection.open) {
+        Buffer requestBuffer = this.context.serializer().writeObject(request);
+        connection.<U>receive(requestBuffer.flip()).whenComplete((responseBuffer, error) -> {
+          if (error == null) {
+            int status = responseBuffer.readByte();
+            if (status == RESPONSE_OK) {
+              U response = this.context.serializer().readObject(responseBuffer);
+              context.executor().execute(() -> future.complete(response));
+            } else if (status == RESPONSE_ERROR) {
+              Throwable exception = this.context.serializer().readObject(responseBuffer);
+              context.executor().execute(() -> future.completeExceptionally(exception));
+            } else {
+              context.executor().execute(() -> future.completeExceptionally(new TransportException("malformed response")));
+            }
+            responseBuffer.release();
           } else {
-            context.execute(() -> future.completeExceptionally(new TransportException("malformed response")));
+            context.executor().execute(() -> future.completeExceptionally(error));
           }
-          responseBuffer.release();
-        } else {
-          context.execute(() -> future.completeExceptionally(error));
-        }
-      });
+        });
+      } else {
+        context.executor().execute(() -> future.completeExceptionally(new IllegalStateException("connection closed")));
+      }
 
       if (request instanceof ReferenceCounted) {
         ((ReferenceCounted<?>) request).release();
       }
     });
-    return future.whenComplete((result, error) -> futures.remove(future));
+    return future;
   }
 
   /**
@@ -119,13 +120,17 @@ public class LocalConnection implements Connection {
 
       try {
         holder.context.executor().execute(() -> {
-          handler.handle(request).whenComplete((response, error) -> {
-            if (!open || !connection.open) {
-              future.completeExceptionally(new IllegalStateException("connection closed"));
-            } else {
-              respond(response, error, future, context);
-            }
-          });
+          if (open && connection.open) {
+            handler.handle(request).whenComplete((response, error) -> {
+              if (!open || !connection.open) {
+                future.completeExceptionally(new IllegalStateException("connection closed"));
+              } else {
+                respond(response, error, future, context);
+              }
+            });
+          } else {
+            future.completeExceptionally(new IllegalStateException("connection closed"));
+          }
         });
       } catch (RejectedExecutionException e) {
         future.completeExceptionally(new IllegalStateException("connection closed"));
@@ -198,17 +203,6 @@ public class LocalConnection implements Connection {
   private void doClose() {
     open = false;
     connections.remove(this);
-
-    futures.forEach(f -> {
-      if (!f.isDone())
-        try {
-          f.context.executor().execute(() -> {
-            if (!f.isDone())
-              f.completeExceptionally(new IllegalStateException("connection closed"));
-          });
-        } catch (RejectedExecutionException e) {
-        }
-    });
 
     for (Consumer<Connection> closeListener : closeListeners) {
       try {
