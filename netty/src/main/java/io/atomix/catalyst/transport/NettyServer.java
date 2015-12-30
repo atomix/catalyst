@@ -95,7 +95,7 @@ public class NettyServer implements Server {
         public void initChannel(SocketChannel channel) throws Exception {
           ChannelPipeline pipeline = channel.pipeline();
           pipeline.addLast(FIELD_PREPENDER);
-          pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 32, 0, 2, 0, 2));
+          pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
           pipeline.addLast(handler);
         }
       })
