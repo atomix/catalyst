@@ -28,7 +28,7 @@ package io.atomix.catalyst.transport;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public interface Transport {
+public interface Transport extends AutoCloseable {
 
   /**
    * Creates a new transport client.
@@ -43,5 +43,12 @@ public interface Transport {
    * @return The transport server.
    */
   Server server();
+
+  /**
+   * Closes the transport.
+   */
+  @Override
+  default void close() {
+  }
 
 }

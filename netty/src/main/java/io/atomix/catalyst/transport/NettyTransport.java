@@ -60,4 +60,12 @@ public class NettyTransport implements Transport {
     return new NettyServer(eventLoopGroup);
   }
 
+  @Override
+  public void close() {
+    try {
+      eventLoopGroup.shutdownGracefully().sync();
+    } catch (InterruptedException e) {
+    }
+  }
+
 }
