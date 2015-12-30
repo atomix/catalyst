@@ -48,11 +48,7 @@ public class LocalConnection implements Connection {
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
   private final Set<CompletableFuture<?>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private volatile boolean open = true;
-
-  public LocalConnection(ThreadContext context) {
-    this(context, null);
-  }
+  volatile boolean open = true;
 
   public LocalConnection(ThreadContext context, Set<LocalConnection> connections) {
     this.context = context;
@@ -73,7 +69,10 @@ public class LocalConnection implements Connection {
       return Futures.exceptionalFuture(new IllegalStateException("connection closed"));
 
     Assert.notNull(request, "request");
+
     CompletableFuture<U> future = new CompletableFuture<>();
+    futures.add(future);
+
     ThreadContext context = ThreadContext.currentContextOrThrow();
     this.context.execute(() -> {
       Buffer requestBuffer = this.context.serializer().writeObject(request);
@@ -99,7 +98,7 @@ public class LocalConnection implements Connection {
         ((ReferenceCounted<?>) request).release();
       }
     });
-    return future;
+    return future.whenComplete((result, error) -> futures.remove(future));
   }
 
   /**
@@ -131,8 +130,7 @@ public class LocalConnection implements Connection {
         future.completeExceptionally(new IllegalStateException("connection closed"));
       }
 
-      futures.add(future);
-      return future.whenComplete((result, error) -> futures.remove(future));
+      return future;
     }
     return Futures.exceptionalFuture(new TransportException("no handler registered"));
   }
@@ -186,13 +184,10 @@ public class LocalConnection implements Connection {
 
   @Override
   public CompletableFuture<Void> close() {
+    if (!open)
+      return CompletableFuture.completedFuture(null);
     doClose();
     connection.doClose();
-    futures.forEach(f -> {
-      if (!f.isDone()) {
-        f.completeExceptionally(new IllegalStateException("connection closed"));
-      }
-    });
     return ThreadContext.currentContextOrThrow().execute(() -> null);
   }
 
@@ -201,11 +196,18 @@ public class LocalConnection implements Connection {
    */
   private void doClose() {
     open = false;
-    if (connections != null)
-      connections.remove(this);
+    connections.remove(this);
+
+    futures.forEach(f -> {
+      if (!f.isDone())
+        f.completeExceptionally(new IllegalStateException("connection closed"));
+    });
 
     for (Consumer<Connection> closeListener : closeListeners) {
-      context.executor().execute(() -> closeListener.accept(this));
+      try {
+        context.executor().execute(() -> closeListener.accept(this));
+      } catch (RejectedExecutionException e) {
+      }
     }
   }
 
