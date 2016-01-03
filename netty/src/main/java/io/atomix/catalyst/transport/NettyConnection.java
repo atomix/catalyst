@@ -27,10 +27,10 @@ import io.netty.channel.ChannelFuture;
 
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
@@ -67,7 +67,7 @@ public class NettyConnection implements Connection {
   private volatile Throwable failure;
   private volatile boolean closed;
   private Scheduled timeout;
-  private final Map<Long, ContextualFuture> responseFutures = new LinkedHashMap<>(1024);
+  private final Map<Long, ContextualFuture> responseFutures = new ConcurrentSkipListMap<>();
   private ChannelFuture writeFuture;
 
   /**
@@ -264,7 +264,6 @@ public class NettyConnection implements Connection {
    * Times out requests.
    */
   void timeout() {
-    // Use ConcurrentHashMap instead of LinkedHashMap
     long time = System.currentTimeMillis();
     Iterator<Map.Entry<Long, ContextualFuture>> iterator = responseFutures.entrySet().iterator();
     while (iterator.hasNext()) {
@@ -286,23 +285,20 @@ public class NettyConnection implements Connection {
 
     long requestId = ++this.requestId;
 
-    context.executor().execute(() -> {
+    ByteBuf buffer = this.channel.alloc().buffer(9);
+    buffer.writeByte(REQUEST)
+      .writeLong(requestId);
 
-      ByteBuf buffer = this.channel.alloc().buffer(9);
-      buffer.writeByte(REQUEST)
-        .writeLong(requestId);
-
-      writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
-        if (channelFuture.isSuccess()) {
-          if (!closed) {
-            responseFutures.put(requestId, future);
-          } else {
-            future.context.executor().execute(() -> future.completeExceptionally(new TransportException("connection closed")));
-          }
+    writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
+      if (channelFuture.isSuccess()) {
+        if (!closed) {
+          responseFutures.put(requestId, future);
         } else {
-          future.context.executor().execute(() -> future.completeExceptionally(new TransportException(channelFuture.cause())));
+          future.context.executor().execute(() -> future.completeExceptionally(new TransportException("connection closed")));
         }
-      });
+      } else {
+        future.context.executor().execute(() -> future.completeExceptionally(new TransportException(channelFuture.cause())));
+      }
     });
     return future;
   }
@@ -332,23 +328,24 @@ public class NettyConnection implements Connection {
 
   @Override
   public CompletableFuture<Void> close() {
+    ThreadContext context = ThreadContext.currentContextOrThrow();
     CompletableFuture<Void> future = new CompletableFuture<>();
     if (writeFuture != null && !writeFuture.isDone()) {
       writeFuture.addListener(channelFuture -> {
         channel.close().addListener(closeFuture -> {
           if (closeFuture.isSuccess()) {
-            future.complete(null);
+            context.executor().execute(() -> future.complete(null));
           } else {
-            future.completeExceptionally(closeFuture.cause());
+            context.executor().execute(() -> future.completeExceptionally(closeFuture.cause()));
           }
         });
       });
     } else {
       channel.close().addListener(closeFuture -> {
         if (closeFuture.isSuccess()) {
-          future.complete(null);
+          context.executor().execute(() -> future.complete(null));
         } else {
-          future.completeExceptionally(closeFuture.cause());
+          context.executor().execute(() -> future.completeExceptionally(closeFuture.cause()));
         }
       });
     }
