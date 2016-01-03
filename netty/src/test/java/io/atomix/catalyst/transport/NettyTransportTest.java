@@ -77,7 +77,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
       client.close().thenRun(this::resume);
       server.close().thenRun(this::resume);
     });
-    await(1000);
+    await(1000, 2);
   }
 
 }
