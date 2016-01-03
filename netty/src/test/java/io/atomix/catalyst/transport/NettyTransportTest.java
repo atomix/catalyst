@@ -57,7 +57,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await();
+    await(1000);
 
     context.executor().execute(() -> {
       try {
@@ -71,14 +71,13 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await();
+    await(1000);
 
     context.executor().execute(() -> {
-      client.close().join();
-      server.close().join();
-      resume();
+      client.close().thenRun(this::resume);
+      server.close().thenRun(this::resume);
     });
-    await();
+    await(1000);
   }
 
 }
