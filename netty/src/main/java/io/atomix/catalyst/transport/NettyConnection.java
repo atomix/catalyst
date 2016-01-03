@@ -289,12 +289,14 @@ public class NettyConnection implements Connection {
     buffer.writeByte(REQUEST)
       .writeLong(requestId);
 
+    responseFutures.put(requestId, future);
     writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
       if (channelFuture.isSuccess()) {
-        if (!closed) {
-          responseFutures.put(requestId, future);
-        } else {
-          future.context.executor().execute(() -> future.completeExceptionally(new TransportException("connection closed")));
+        if (closed) {
+          ContextualFuture responseFuture = responseFutures.remove(requestId);
+          if (responseFuture != null) {
+            responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new TransportException("connection closed")));
+          }
         }
       } else {
         future.context.executor().execute(() -> future.completeExceptionally(new TransportException(channelFuture.cause())));
