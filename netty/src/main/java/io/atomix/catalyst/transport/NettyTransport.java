@@ -18,8 +18,6 @@ package io.atomix.catalyst.transport;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.CatalystThreadFactory;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.ThreadFactory;
@@ -41,13 +39,8 @@ public class NettyTransport implements Transport {
    */
   public NettyTransport(int threads) {
     Assert.arg(threads > 0, "threads must be positive");
-
     ThreadFactory threadFactory = new CatalystThreadFactory("catalyst-event-loop-%d");
-    if (Epoll.isAvailable()) {
-      eventLoopGroup = new EpollEventLoopGroup(threads, threadFactory);
-    } else {
-      eventLoopGroup = new NioEventLoopGroup(threads, threadFactory);
-    }
+    eventLoopGroup = new NioEventLoopGroup(threads, threadFactory);
   }
 
   @Override

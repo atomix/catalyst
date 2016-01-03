@@ -21,8 +21,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -88,7 +86,7 @@ public class NettyServer implements Server {
 
     final ServerBootstrap bootstrap = new ServerBootstrap();
     bootstrap.group(eventLoopGroup)
-      .channel(eventLoopGroup instanceof EpollEventLoopGroup ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
+      .channel(NioServerSocketChannel.class)
       .handler(new LoggingHandler(LogLevel.DEBUG))
       .childHandler(new ChannelInitializer<SocketChannel>() {
         @Override
