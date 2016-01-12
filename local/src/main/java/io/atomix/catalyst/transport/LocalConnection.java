@@ -184,7 +184,11 @@ public class LocalConnection implements Connection {
     connections.remove(this);
 
     for (Map.Entry<Long, ContextualFuture> entry : futures.entrySet()) {
-      entry.getValue().completeExceptionally(new IllegalStateException("connection closed"));
+      ContextualFuture future = entry.getValue();
+      try {
+        future.context.executor().execute(() -> future.completeExceptionally(new IllegalStateException("connection closed")));
+      } catch (RejectedExecutionException e) {
+      }
     }
     futures.clear();
 
