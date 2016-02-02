@@ -293,6 +293,7 @@ public class SerializerTest {
    */
   public void testSerializeEnum() {
     Serializer serializer = new Serializer();
+    serializer.register(TestEnum.class);
     TestEnum test = TestEnum.THREE;
     Buffer buffer = serializer.writeObject(test).flip();
     Enum<?> result = serializer.readObject(buffer);
@@ -304,6 +305,7 @@ public class SerializerTest {
    */
   public void testSerializeEnumInterface() {
     Serializer serializer = new Serializer();
+    serializer.register(TestEnumImplements.class);
     TestEnumInterface test = TestEnumImplements.THREE;
     Buffer buffer = serializer.writeObject(test).flip();
     Enum<?> result = serializer.readObject(buffer);
@@ -426,6 +428,23 @@ public class SerializerTest {
     assertNull(((TestPojoWithSerializer) result.object).object);
     assertEquals(((TestPojoWithSerializer) result.object).string, "Hello world again!");
     assertEquals(result.string, "Hello world!");
+  }
+
+  /**
+   * Tests serializing an unregistered class.
+   */
+  @Test(expectedExceptions=SerializationException.class)
+  public void testSerializeUnregisteredFail() {
+    Serializer serializer = new Serializer();
+    serializer.readObject(serializer.writeObject(new TestUnregistered()).flip());
+  }
+
+  /**
+   * Tests serializing an unregistered class.
+   */
+  public void testSerializeUnregisteredSucceed() {
+    Serializer serializer = new Serializer().disableWhitelist();
+    serializer.readObject(serializer.writeObject(new TestUnregistered()).flip());
   }
 
   /**
@@ -582,7 +601,7 @@ public class SerializerTest {
     }
   }
 
-  @SerializeWith(id=0)
+  @SerializeWith(id=1)
   public static class TestSerializeWithId implements CatalystSerializable {
     protected byte primitive;
 
@@ -610,6 +629,9 @@ public class SerializerTest {
     public void readObject(BufferInput<?> buffer, Serializer serializer) {
       primitive = (byte) buffer.readByte();
     }
+  }
+
+  public static class TestUnregistered implements Serializable {
   }
 
   public enum TestEnum {

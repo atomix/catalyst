@@ -237,7 +237,7 @@ public class SerializerRegistry implements Cloneable {
    * @param type The serializable class.
    * @return The serializer for the given class.
    */
-  public TypeSerializerFactory lookup(Class<?> type) {
+  TypeSerializerFactory factory(Class<?> type) {
     TypeSerializerFactory factory = factories.get(type);
     if (factory == null) {
       for (Map.Entry<Class<?>, TypeSerializerFactory> entry : factories.entrySet()) {
@@ -247,27 +247,52 @@ public class SerializerRegistry implements Cloneable {
         }
       }
 
-      if (factory != null) {
-        factories.put(type, factory);
-      } else {
-        factories.put(type, null);
+      // If no factory was found, determine if a Java serializable factory can be used.
+      if (factory == null) {
+        if (CatalystSerializable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class);
+        } else if (Externalizable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(ExternalizableSerializer.class);
+        } else if (Serializable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(JavaSerializableSerializer.class);
+        }
       }
+
+      factories.put(type, factory);
     }
     return factory;
   }
 
   /**
-   * Returns a map of registered ids and their IDs.
+   * Looks up the serializable type ID for the given type.
    */
-  Map<Class<?>, Integer> ids() {
-    return ids;
+  int id(Class<?> type) {
+    Integer id = ids.get(type);
+    if (id != null)
+      return id;
+
+    for (Map.Entry<Class<?>, Integer> entry : ids.entrySet()) {
+      if (entry.getKey().isAssignableFrom(type)) {
+        id = entry.getValue();
+        break;
+      }
+    }
+
+    if (id != null) {
+      ids.put(type, id);
+      return id;
+    }
+    return 0;
   }
 
   /**
-   * Returns a map of serialization IDs and registered ids.
+   * Returns the type for the given ID.
+   *
+   * @param id The ID for which to return the type.
+   * @return The type for the given ID.
    */
-  Map<Integer, Class<?>> types() {
-    return types;
+  Class<?> type(int id) {
+    return types.get(id);
   }
 
   @Override

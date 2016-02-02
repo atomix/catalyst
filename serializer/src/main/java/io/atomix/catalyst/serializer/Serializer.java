@@ -55,6 +55,7 @@ public class Serializer implements Cloneable {
   private Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
   private Map<String, Class<?>> types = new HashMap<>();
   private final BufferAllocator allocator;
+  private boolean whitelistRequired = true;
 
   /**
    * Creates a new serializer instance with a default {@link UnpooledHeapAllocator}.
@@ -181,6 +182,43 @@ public class Serializer implements Cloneable {
       throw new NullPointerException("allocator cannot be null");
     this.allocator = allocator;
     registry = new SerializerRegistry(resolvers);
+  }
+
+  /**
+   * Enables whitelisting for serializable types.
+   * <p>
+   * When whitelisting is enabled, only types that are registered with the {@link SerializerRegistry}
+   * can be serialized and deserialized, and classes will never be loaded by class names. This prevents
+   * certain types of attacks in untrusted networks.
+   *
+   * @return The serializer.
+   */
+  public Serializer enableWhitelist() {
+    this.whitelistRequired = true;
+    return this;
+  }
+
+  /**
+   * Disables whitelisting for serializable types.
+   * <p>
+   * When whitelisting is disabled, types that are not registered may be serialized and deserialized
+   * by this serializer. This can pose a security risk in an untrusted network. It's recommended that
+   * users enable whitelisting and register serializable classes.
+   *
+   * @return The serializer.
+   */
+  public Serializer disableWhitelist() {
+    this.whitelistRequired = false;
+    return this;
+  }
+
+  /**
+   * Indicates whether whitelisting is enabled for the serializer.
+   *
+   * @return Whether whitelisting is enabled for the serializer.
+   */
+  public boolean isWhitelistRequired() {
+    return whitelistRequired;
   }
 
   /**
@@ -420,7 +458,7 @@ public class Serializer implements Cloneable {
   private <T> TypeSerializer<T> getSerializer(Class<T> type) {
     TypeSerializer<T> serializer = (TypeSerializer<T>) serializers.get(type);
     if (serializer == null) {
-      TypeSerializerFactory factory = registry.lookup(type);
+      TypeSerializerFactory factory = registry.factory(type);
       if (factory != null) {
         serializer = (TypeSerializer<T>) factory.createSerializer(type);
         serializers.put(type, serializer);
@@ -573,10 +611,10 @@ public class Serializer implements Cloneable {
     }
 
     // Lookup the serializable type ID for the type.
-    Integer typeId = registry.ids().get(type);
+    int typeId = registry.id(type);
 
     // If no type ID was registered, write the object with the class name.
-    if (typeId == null) {
+    if (typeId == 0) {
       return writeByClass(type, object, buffer, serializer);
     }
 
@@ -688,8 +726,10 @@ public class Serializer implements Cloneable {
    * @param <T> The object type.
    * @return The written buffer.
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings("unchecked")
   private <T> BufferOutput<?> writeByClass(Class<?> type, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
+    if (whitelistRequired)
+      throw new SerializationException("cannot serialize unregistered type: " + type);
     serializer.write(object, buffer.writeByte(TYPE_CLASS).writeUTF8(type.getName()), this);
     return buffer;
   }
@@ -885,7 +925,7 @@ public class Serializer implements Cloneable {
    */
   @SuppressWarnings("unchecked")
   private <T> T readById(int id, BufferInput<?> buffer) {
-    Class<T> type = (Class<T>) registry.types().get(id);
+    Class<T> type = (Class<T>) registry.type(id);
     if (type == null)
       throw new SerializationException("cannot deserialize: unknown type");
 
@@ -906,6 +946,9 @@ public class Serializer implements Cloneable {
   @SuppressWarnings("unchecked")
   private <T> T readByClass(BufferInput<?> buffer) {
     String name = buffer.readUTF8();
+    if (whitelistRequired)
+      throw new SerializationException("cannot deserialize unregistered type: " + name);
+
     Class<T> type = (Class<T>) types.get(name);
     if (type == null) {
       try {
@@ -920,7 +963,8 @@ public class Serializer implements Cloneable {
     
     TypeSerializer<T> serializer = getSerializer(type);
     if (serializer == null)
-      throw new SerializationException("cannot deserialize: unknown type");
+      throw new SerializationException("cannot deserialize unregistered type: " + name);
+
     return serializer.read(type, buffer, this);
   }
 
