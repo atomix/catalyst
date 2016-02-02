@@ -249,7 +249,10 @@ public class SerializerRegistry implements Cloneable {
 
       // If no factory was found, determine if a Java serializable factory can be used.
       if (factory == null) {
-        if (CatalystSerializable.class.isAssignableFrom(type)) {
+        SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
+        if (serializeWith != null && serializeWith.serializer() != null) {
+          factory = new DefaultTypeSerializerFactory(serializeWith.serializer());
+        } else if (CatalystSerializable.class.isAssignableFrom(type)) {
           factory = new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class);
         } else if (Externalizable.class.isAssignableFrom(type)) {
           factory = new DefaultTypeSerializerFactory(ExternalizableSerializer.class);
