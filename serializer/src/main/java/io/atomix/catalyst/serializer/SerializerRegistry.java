@@ -16,10 +16,13 @@
 package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.CatalystException;
+import io.atomix.catalyst.serializer.util.CatalystSerializableSerializer;
 import io.atomix.catalyst.serializer.util.ExternalizableSerializer;
+import io.atomix.catalyst.serializer.util.JavaSerializableSerializer;
 import io.atomix.catalyst.util.Hash;
 
 import java.io.Externalizable;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -150,6 +153,8 @@ public class SerializerRegistry implements Cloneable {
       return register(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class), id);
     } else if (Externalizable.class.isAssignableFrom(type)) {
       return register(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class), id);
+    } else if (Serializable.class.isAssignableFrom(type)) {
+      return register(type, new DefaultTypeSerializerFactory(JavaSerializableSerializer.class), id);
     } else {
       throw new CatalystException("failed to register serializable type: " + type);
     }

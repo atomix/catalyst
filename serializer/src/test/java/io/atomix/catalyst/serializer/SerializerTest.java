@@ -457,6 +457,7 @@ public class SerializerTest {
    */
   public void testSerializeSerializable() {
     Serializer serializer = new Serializer();
+    serializer.register(TestSerializable.class);
     TestSerializable serializable = new TestSerializable();
     serializable.primitive = 100;
     serializable.string = "Hello world!";
