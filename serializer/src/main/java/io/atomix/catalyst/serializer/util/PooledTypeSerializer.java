@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.atomix.catalyst.serializer;
+package io.atomix.catalyst.serializer.util;
 
 import io.atomix.catalyst.buffer.BufferInput;
+import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.serializer.TypeSerializer;
 import io.atomix.catalyst.util.ReferenceCounted;
 
 /**
  * Provides pooled object serialization.
  * <p>
  * The {@code PooledSerializer} is provided as a base class for {@link ReferenceCounted} object serializers. When objects
- * are deserialized by pooled serializers, available objects will be acquired via {@link PooledSerializer#acquire(Class)}
+ * are deserialized by pooled serializers, available objects will be acquired via {@link PooledTypeSerializer#acquire(Class)}
  * rather than being constructed new.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public abstract class PooledSerializer<T extends ReferenceCounted<T>> implements TypeSerializer<T> {
+public abstract class PooledTypeSerializer<T extends ReferenceCounted<T>> implements TypeSerializer<T> {
 
   @Override
   public T read(Class<T> type, BufferInput<?> buffer, Serializer serializer) {

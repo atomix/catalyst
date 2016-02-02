@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.serializer;
 
+import io.atomix.catalyst.serializer.util.CatalystSerializableSerializer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

@@ -16,10 +16,13 @@
 package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.CatalystException;
+import io.atomix.catalyst.serializer.util.CatalystSerializableSerializer;
 import io.atomix.catalyst.serializer.util.ExternalizableSerializer;
+import io.atomix.catalyst.serializer.util.JavaSerializableSerializer;
 import io.atomix.catalyst.util.Hash;
 
 import java.io.Externalizable;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -150,6 +153,8 @@ public class SerializerRegistry implements Cloneable {
       return register(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class), id);
     } else if (Externalizable.class.isAssignableFrom(type)) {
       return register(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class), id);
+    } else if (Serializable.class.isAssignableFrom(type)) {
+      return register(type, new DefaultTypeSerializerFactory(JavaSerializableSerializer.class), id);
     } else {
       throw new CatalystException("failed to register serializable type: " + type);
     }
@@ -232,7 +237,7 @@ public class SerializerRegistry implements Cloneable {
    * @param type The serializable class.
    * @return The serializer for the given class.
    */
-  public TypeSerializerFactory lookup(Class<?> type) {
+  TypeSerializerFactory factory(Class<?> type) {
     TypeSerializerFactory factory = factories.get(type);
     if (factory == null) {
       for (Map.Entry<Class<?>, TypeSerializerFactory> entry : factories.entrySet()) {
@@ -242,27 +247,55 @@ public class SerializerRegistry implements Cloneable {
         }
       }
 
-      if (factory != null) {
-        factories.put(type, factory);
-      } else {
-        factories.put(type, null);
+      // If no factory was found, determine if a Java serializable factory can be used.
+      if (factory == null) {
+        SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
+        if (serializeWith != null && serializeWith.serializer() != null) {
+          factory = new DefaultTypeSerializerFactory(serializeWith.serializer());
+        } else if (CatalystSerializable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class);
+        } else if (Externalizable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(ExternalizableSerializer.class);
+        } else if (Serializable.class.isAssignableFrom(type)) {
+          factory = new DefaultTypeSerializerFactory(JavaSerializableSerializer.class);
+        }
       }
+
+      factories.put(type, factory);
     }
     return factory;
   }
 
   /**
-   * Returns a map of registered ids and their IDs.
+   * Looks up the serializable type ID for the given type.
    */
-  Map<Class<?>, Integer> ids() {
-    return ids;
+  int id(Class<?> type) {
+    Integer id = ids.get(type);
+    if (id != null)
+      return id;
+
+    for (Map.Entry<Class<?>, Integer> entry : ids.entrySet()) {
+      if (entry.getKey().isAssignableFrom(type)) {
+        id = entry.getValue();
+        break;
+      }
+    }
+
+    if (id != null) {
+      ids.put(type, id);
+      return id;
+    }
+    return 0;
   }
 
   /**
-   * Returns a map of serialization IDs and registered ids.
+   * Returns the type for the given ID.
+   *
+   * @param id The ID for which to return the type.
+   * @return The type for the given ID.
    */
-  Map<Integer, Class<?>> types() {
-    return types;
+  Class<?> type(int id) {
+    return types.get(id);
   }
 
   @Override

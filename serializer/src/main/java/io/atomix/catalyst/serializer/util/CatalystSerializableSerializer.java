@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.atomix.catalyst.serializer;
+package io.atomix.catalyst.serializer.util;
 
+import io.atomix.catalyst.serializer.CatalystSerializable;
+import io.atomix.catalyst.serializer.SerializationException;
+import io.atomix.catalyst.serializer.Serializer;
+import io.atomix.catalyst.serializer.TypeSerializer;
 import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.ReferenceFactory;
 import io.atomix.catalyst.util.ReferencePool;
