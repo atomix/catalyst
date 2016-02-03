@@ -31,20 +31,28 @@ import java.net.InetSocketAddress;
  */
 @SerializeWith(id=299)
 public class Address implements CatalystSerializable {
+  private String host;
+  private int port;
   private InetSocketAddress address;
 
   public Address() {
   }
 
   public Address(Address address) {
-    this(Assert.notNull(address, "address").address);
+    this(address.host, address.port, Assert.notNull(address, "address").address);
   }
 
   public Address(String host, int port) {
-    this(new InetSocketAddress(host, port));
+    this(host, port, new InetSocketAddress(host, port));
   }
 
   public Address(InetSocketAddress address) {
+    this(address.getHostName(), address.getPort(), address);
+  }
+
+  private Address(String host, int port, InetSocketAddress address) {
+    this.host = Assert.notNull(host, "host");
+    this.port = port;
     this.address = Assert.notNull(address, "address");
   }
 
@@ -77,12 +85,12 @@ public class Address implements CatalystSerializable {
 
   @Override
   public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
-    serializer.writeObject(address, buffer);
+    buffer.writeUTF8(address.getHostName()).writeInt(address.getPort());
   }
 
   @Override
   public void readObject(BufferInput<?> buffer, Serializer serializer) {
-    address = serializer.readObject(buffer);
+    address = new InetSocketAddress(buffer.readUTF8(), buffer.readInt());
   }
 
   @Override
