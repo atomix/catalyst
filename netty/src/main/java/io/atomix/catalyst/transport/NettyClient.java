@@ -43,14 +43,14 @@ public class NettyClient implements Client {
   private static final ByteBufAllocator ALLOCATOR = new PooledByteBufAllocator(true);
   private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
 
-  private final EventLoopGroup eventLoopGroup;
+  private final NettyTransport transport;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
 
   /**
    * @throws NullPointerException if {@code id} or {@code eventLoopGroup} are null 
    */
-  public NettyClient(EventLoopGroup eventLoopGroup) {
-    this.eventLoopGroup = Assert.notNull(eventLoopGroup, "eventLoopGroup");
+  public NettyClient(NettyTransport transport) {
+    this.transport = Assert.notNull(transport, "transport");
   }
 
   @Override
@@ -62,7 +62,7 @@ public class NettyClient implements Client {
     LOGGER.info("Connecting to {}", address);
 
     Bootstrap bootstrap = new Bootstrap();
-    bootstrap.group(eventLoopGroup)
+    bootstrap.group(transport.eventLoopGroup())
       .channel(NioSocketChannel.class)
       .handler(new ChannelInitializer<SocketChannel>() {
         @Override
@@ -74,10 +74,17 @@ public class NettyClient implements Client {
         }
       });
 
-    bootstrap.option(ChannelOption.TCP_NODELAY, true);
-    bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-    bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
+    bootstrap.option(ChannelOption.TCP_NODELAY, transport.properties().tcpNoDelay());
+    bootstrap.option(ChannelOption.SO_KEEPALIVE, transport.properties().tcpKeepAlive());
+    bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, transport.properties().connectTimeout());
     bootstrap.option(ChannelOption.ALLOCATOR, ALLOCATOR);
+
+    if (transport.properties().sendBufferSize() != -1) {
+      bootstrap.option(ChannelOption.SO_SNDBUF, transport.properties().sendBufferSize());
+    }
+    if (transport.properties().receiveBufferSize() != -1) {
+      bootstrap.option(ChannelOption.SO_RCVBUF, transport.properties().receiveBufferSize());
+    }
 
     bootstrap.connect(address.socketAddress()).addListener(channelFuture -> {
       if (channelFuture.isSuccess()) {
