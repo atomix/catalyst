@@ -48,15 +48,15 @@ public class NettyServer implements Server {
   private static final ByteBufAllocator ALLOCATOR = new PooledByteBufAllocator(true);
   private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
 
-  private final EventLoopGroup eventLoopGroup;
+  private final NettyTransport transport;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
   private ServerHandler handler;
   private ChannelGroup channelGroup;
   private volatile boolean listening;
   private CompletableFuture<Void> listenFuture;
 
-  public NettyServer(EventLoopGroup eventLoopGroup) {
-    this.eventLoopGroup = eventLoopGroup;
+  public NettyServer(NettyTransport transport) {
+    this.transport = Assert.notNull(transport, "transport");
   }
 
   @Override
@@ -85,7 +85,7 @@ public class NettyServer implements Server {
     handler = new ServerHandler(connections, listener, context);
 
     final ServerBootstrap bootstrap = new ServerBootstrap();
-    bootstrap.group(eventLoopGroup)
+    bootstrap.group(transport.eventLoopGroup())
       .channel(NioServerSocketChannel.class)
       .handler(new LoggingHandler(LogLevel.DEBUG))
       .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -97,11 +97,18 @@ public class NettyServer implements Server {
           pipeline.addLast(handler);
         }
       })
-      .option(ChannelOption.SO_BACKLOG, 128)
-      .option(ChannelOption.TCP_NODELAY, true)
-      .option(ChannelOption.SO_REUSEADDR, true)
+      .option(ChannelOption.SO_BACKLOG, transport.properties().acceptBacklog())
+      .option(ChannelOption.TCP_NODELAY, transport.properties().tcpNoDelay())
+      .option(ChannelOption.SO_REUSEADDR, transport.properties().reuseAddress())
       .childOption(ChannelOption.ALLOCATOR, ALLOCATOR)
-      .childOption(ChannelOption.SO_KEEPALIVE, true);
+      .childOption(ChannelOption.SO_KEEPALIVE, transport.properties().tcpKeepAlive());
+
+    if (transport.properties().sendBufferSize() != -1) {
+      bootstrap.childOption(ChannelOption.SO_SNDBUF, transport.properties().sendBufferSize());
+    }
+    if (transport.properties().receiveBufferSize() != -1) {
+      bootstrap.childOption(ChannelOption.SO_RCVBUF, transport.properties().receiveBufferSize());
+    }
 
     LOGGER.info("Binding to {}", address);
 

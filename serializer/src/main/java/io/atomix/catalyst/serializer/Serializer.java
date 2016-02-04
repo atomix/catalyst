@@ -22,6 +22,7 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Catalyst serializer.
@@ -55,7 +56,7 @@ public class Serializer implements Cloneable {
   private Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
   private Map<String, Class<?>> types = new HashMap<>();
   private final BufferAllocator allocator;
-  private boolean whitelistRequired = true;
+  private AtomicBoolean whitelistRequired = new AtomicBoolean(true);
 
   /**
    * Creates a new serializer instance with a default {@link UnpooledHeapAllocator}.
@@ -194,7 +195,7 @@ public class Serializer implements Cloneable {
    * @return The serializer.
    */
   public Serializer enableWhitelist() {
-    this.whitelistRequired = true;
+    whitelistRequired.set(true);
     return this;
   }
 
@@ -208,7 +209,7 @@ public class Serializer implements Cloneable {
    * @return The serializer.
    */
   public Serializer disableWhitelist() {
-    this.whitelistRequired = false;
+    whitelistRequired.set(false);
     return this;
   }
 
@@ -218,7 +219,7 @@ public class Serializer implements Cloneable {
    * @return Whether whitelisting is enabled for the serializer.
    */
   public boolean isWhitelistRequired() {
-    return whitelistRequired;
+    return whitelistRequired.get();
   }
 
   /**
@@ -728,7 +729,7 @@ public class Serializer implements Cloneable {
    */
   @SuppressWarnings("unchecked")
   private <T> BufferOutput<?> writeByClass(Class<?> type, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
-    if (whitelistRequired)
+    if (whitelistRequired.get())
       throw new SerializationException("cannot serialize unregistered type: " + type);
     serializer.write(object, buffer.writeByte(TYPE_CLASS).writeUTF8(type.getName()), this);
     return buffer;
@@ -946,7 +947,7 @@ public class Serializer implements Cloneable {
   @SuppressWarnings("unchecked")
   private <T> T readByClass(BufferInput<?> buffer) {
     String name = buffer.readUTF8();
-    if (whitelistRequired)
+    if (whitelistRequired.get())
       throw new SerializationException("cannot deserialize unregistered type: " + name);
 
     Class<T> type = (Class<T>) types.get(name);
@@ -975,6 +976,7 @@ public class Serializer implements Cloneable {
       serializer.registry = registry.clone();
       serializer.serializers = new HashMap<>();
       serializer.types = new HashMap<>(types);
+      serializer.whitelistRequired = whitelistRequired;
       return serializer;
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);

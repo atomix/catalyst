@@ -20,6 +20,7 @@ import io.atomix.catalyst.util.concurrent.CatalystThreadFactory;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
+import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -28,29 +29,49 @@ import java.util.concurrent.ThreadFactory;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class NettyTransport implements Transport {
+  private final NettyProperties properties;
   private final EventLoopGroup eventLoopGroup;
 
   public NettyTransport() {
-    this(Runtime.getRuntime().availableProcessors());
+    this(new NettyProperties(new Properties()));
+  }
+
+  public NettyTransport(Properties properties) {
+    this(new NettyProperties(properties));
+  }
+
+  public NettyTransport(NettyProperties properties) {
+    this.properties = Assert.notNull(properties, "properties");
+    ThreadFactory threadFactory = new CatalystThreadFactory("catalyst-event-loop-%d");
+    eventLoopGroup = new NioEventLoopGroup(properties.threads(), threadFactory);
   }
 
   /**
-   * @throws IllegalArgumentException if {@code threads} is not positive
+   * Returns the Netty transport properties.
+   *
+   * @return The Netty transport properties.
    */
-  public NettyTransport(int threads) {
-    Assert.arg(threads > 0, "threads must be positive");
-    ThreadFactory threadFactory = new CatalystThreadFactory("catalyst-event-loop-%d");
-    eventLoopGroup = new NioEventLoopGroup(threads, threadFactory);
+  public NettyProperties properties() {
+    return properties;
+  }
+
+  /**
+   * Returns the Netty event loop group.
+   *
+   * @return The Netty event loop group.
+   */
+  public EventLoopGroup eventLoopGroup() {
+    return eventLoopGroup;
   }
 
   @Override
   public Client client() {
-    return new NettyClient(eventLoopGroup);
+    return new NettyClient(this);
   }
 
   @Override
   public Server server() {
-    return new NettyServer(eventLoopGroup);
+    return new NettyServer(this);
   }
 
   @Override
