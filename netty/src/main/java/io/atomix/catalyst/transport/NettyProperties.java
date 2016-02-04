@@ -46,7 +46,7 @@ public final class NettyProperties {
   private final PropertiesReader reader;
 
   public NettyProperties(Properties properties) {
-    this.reader = PropertiesReader.applyDefaults(properties, "netty.properties");
+    this.reader = new PropertiesReader(properties);
   }
 
   /**

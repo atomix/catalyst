@@ -42,23 +42,6 @@ public final class PropertiesReader {
   }
 
   /**
-   * Applies default values from the given properties file to the given properties.
-   *
-   * @param properties The properties to which to apply default values.
-   * @param defaultPropertiesFile The properties file from which to apply defaults.
-   * @return A new properties reader.
-   */
-  public static PropertiesReader applyDefaults(Properties properties, String defaultPropertiesFile) {
-    Properties defaultProperties = loadProperties(defaultPropertiesFile);
-    for (String property : defaultProperties.stringPropertyNames()) {
-      if (!properties.containsKey(property)) {
-        properties.setProperty(property, defaultProperties.getProperty(property));
-      }
-    }
-    return new PropertiesReader(properties);
-  }
-
-  /**
    * Loads properties from a properties file.
    */
   private static Properties loadProperties(String propertiesFile) {
