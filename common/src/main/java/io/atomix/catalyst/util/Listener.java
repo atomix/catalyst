@@ -23,6 +23,7 @@ import java.util.function.Consumer;
  * The listener context represents a registered listener. The context is normally returned when a {@link Consumer} is
  * registered and can be used to unregister the listener via {@link #close()}.
  *
+ * @param <T> event type
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public interface Listener<T> extends Consumer<T>, AutoCloseable {

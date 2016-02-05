@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 /**
  * Utility for managing a set of listeners.
  *
+ * @param <T> event type
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class Listeners<T> implements Iterable<Listener<T>> {

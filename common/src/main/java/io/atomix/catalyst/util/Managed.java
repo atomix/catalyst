@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface for types that can be asynchronously opened and closed.
  *
+ * @param <T> managed type
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public interface Managed<T> {
