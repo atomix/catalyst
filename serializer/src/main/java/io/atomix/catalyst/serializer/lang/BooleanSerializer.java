@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class BooleanSerializer implements TypeSerializer<Boolean> {
 
   @Override
-  public void write(Boolean object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Boolean object, BufferOutput buffer, Serializer serializer) {
     buffer.writeBoolean(object);
   }
 
   @Override
-  public Boolean read(Class<Boolean> type, BufferInput<?> buffer, Serializer serializer) {
+  public Boolean read(Class<Boolean> type, BufferInput buffer, Serializer serializer) {
     return buffer.readBoolean();
   }
 

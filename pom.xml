@@ -66,6 +66,8 @@
     <module>transport</module>
     <module>local</module>
     <module>netty</module>
+    <module>kryo</module>
+    <module>jackson</module>
   </modules>
 
   <dependencies>

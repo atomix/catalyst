@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class ByteSerializer implements TypeSerializer<Byte> {
 
   @Override
-  public void write(Byte object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Byte object, BufferOutput buffer, Serializer serializer) {
     buffer.writeByte(object);
   }
 
   @Override
-  public Byte read(Class<Byte> type, BufferInput<?> buffer, Serializer serializer) {
+  public Byte read(Class<Byte> type, BufferInput buffer, Serializer serializer) {
     return (byte) buffer.readByte();
   }
 

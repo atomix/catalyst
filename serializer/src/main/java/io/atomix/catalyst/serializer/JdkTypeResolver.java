@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.serializer;
 
+import io.atomix.catalyst.buffer.Buffer;
 import io.atomix.catalyst.serializer.collection.ListSerializer;
 import io.atomix.catalyst.serializer.collection.MapSerializer;
 import io.atomix.catalyst.serializer.collection.SetSerializer;
@@ -42,6 +43,7 @@ public class JdkTypeResolver implements SerializableTypeResolver {
     put(Set.class, SetSerializer.class);
     put(List.class, ListSerializer.class);
     put(Externalizable.class, ExternalizableSerializer.class);
+    put(Buffer.class, BufferSerializer.class);
   }};
 
   @Override

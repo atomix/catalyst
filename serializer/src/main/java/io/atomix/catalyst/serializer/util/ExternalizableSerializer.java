@@ -34,7 +34,7 @@ import java.io.IOException;
 public class ExternalizableSerializer implements TypeSerializer<Externalizable> {
 
   @Override
-  public void write(Externalizable externalizable, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Externalizable externalizable, BufferOutput buffer, Serializer serializer) {
     try {
       externalizable.writeExternal(new BufferObjectOutput(buffer, serializer));
     } catch (IOException e) {
@@ -43,7 +43,7 @@ public class ExternalizableSerializer implements TypeSerializer<Externalizable> 
   }
 
   @Override
-  public Externalizable read(Class<Externalizable> type, BufferInput<?> buffer, Serializer serializer) {
+  public Externalizable read(Class<Externalizable> type, BufferInput buffer, Serializer serializer) {
     try {
       Externalizable externalizable = type.newInstance();
       externalizable.readExternal(new BufferObjectInput(buffer, serializer));

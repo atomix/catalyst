@@ -30,12 +30,12 @@ import java.util.Date;
 public class DateSerializer implements TypeSerializer<Date> {
 
   @Override
-  public void write(Date date, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Date date, BufferOutput buffer, Serializer serializer) {
     buffer.writeLong(date.getTime());
   }
 
   @Override
-  public Date read(Class<Date> type, BufferInput<?> buffer, Serializer serializer) {
+  public Date read(Class<Date> type, BufferInput buffer, Serializer serializer) {
     return new Date(buffer.readLong());
   }
 

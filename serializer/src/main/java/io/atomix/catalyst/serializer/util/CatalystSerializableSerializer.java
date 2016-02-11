@@ -47,12 +47,12 @@ public class CatalystSerializableSerializer<T extends CatalystSerializable> impl
   private final Map<Class<?>, Constructor<?>> constructorMap = new HashMap<>();
 
   @Override
-  public void write(T object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(T object, BufferOutput buffer, Serializer serializer) {
     object.writeObject(buffer, serializer);
   }
 
   @Override
-  public T read(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
+  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
     if (ReferenceCounted.class.isAssignableFrom(type)) {
       return readReference(type, buffer, serializer);
     } else {

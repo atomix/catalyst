@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class DoubleArraySerializer implements TypeSerializer<double[]> {
 
   @Override
-  public void write(double[] doubles, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(double[] doubles, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(doubles.length);
     for (double d : doubles) {
       buffer.writeDouble(d);
@@ -36,7 +36,7 @@ public class DoubleArraySerializer implements TypeSerializer<double[]> {
   }
 
   @Override
-  public double[] read(Class<double[]> type, BufferInput<?> buffer, Serializer serializer) {
+  public double[] read(Class<double[]> type, BufferInput buffer, Serializer serializer) {
     double[] doubles = new double[buffer.readUnsignedShort()];
     for (int i = 0; i < doubles.length; i++) {
       doubles[i] = buffer.readDouble();

@@ -41,22 +41,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class Serializer implements Cloneable {
-  private static final int MAX_ID_8 = 255;
-  private static final int MAX_ID_16 = 65535;
-  private static final int MAX_ID_24 = 16777215;
-  private static final byte TYPE_NULL = 0x00;
-  private static final byte TYPE_BUFFER = 0x01;
-  private static final byte TYPE_ID_8 = 0x02;
-  private static final byte TYPE_ID_16 = 0x03;
-  private static final byte TYPE_ID_24 = 0x04;
-  private static final byte TYPE_ID_32 = 0x05;
-  private static final byte TYPE_CLASS = 0x07;
-  SerializerRegistry registry;
-  private Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
-  private Map<String, Class<?>> types = new HashMap<>();
+public class Serializer {
+  private final SerializerRegistry registry;
+  private final Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
+  private final Map<String, Class<?>> types = new HashMap<>();
   private final BufferAllocator allocator;
-  private AtomicBoolean whitelistRequired = new AtomicBoolean(true);
+  private final AtomicBoolean whitelistRequired;
 
   /**
    * Creates a new serializer instance with a default {@link UnpooledHeapAllocator}.
@@ -182,7 +172,14 @@ public class Serializer implements Cloneable {
     if (allocator == null)
       throw new NullPointerException("allocator cannot be null");
     this.allocator = allocator;
+    this.whitelistRequired = new AtomicBoolean(true);
     registry = new SerializerRegistry(resolvers);
+  }
+
+  private Serializer(SerializerRegistry registry, BufferAllocator allocator, AtomicBoolean whitelistRequired) {
+    this.registry = registry;
+    this.allocator = allocator;
+    this.whitelistRequired = whitelistRequired;
   }
 
   /**
@@ -214,12 +211,32 @@ public class Serializer implements Cloneable {
   }
 
   /**
+   * Sets whether whitelisting of class names is required.
+   *
+   * @param whitelistRequired Indicates whether to require whitelisting of class names.
+   * @return The serializer.
+   */
+  public Serializer withWhitelistRequired(boolean whitelistRequired) {
+    this.whitelistRequired.set(whitelistRequired);
+    return this;
+  }
+
+  /**
    * Indicates whether whitelisting is enabled for the serializer.
    *
    * @return Whether whitelisting is enabled for the serializer.
    */
   public boolean isWhitelistRequired() {
     return whitelistRequired.get();
+  }
+
+  /**
+   * Returns the serializer registry.
+   *
+   * @return The underlying serializable type registry.
+   */
+  public SerializerRegistry registry() {
+    return registry;
   }
 
   /**
@@ -256,10 +273,7 @@ public class Serializer implements Cloneable {
    * Registers a serializable type.
    * <p>
    * The serializable type must be assignable from {@link CatalystSerializable} or
-   * {@link java.io.Externalizable}. Users can specify a serialization type ID and/or {@link TypeSerializer}
-   * for the registered type by annotating it with {@link SerializeWith}. If the {@code SerializeWith}
-   * annotation provides a type ID, the given type will be registered with that ID. If the {@code SerializeWith}
-   * annotation provides a {@link TypeSerializer} class, the given type will be registered with that serializer.
+   * {@link java.io.Externalizable}.
    *
    * @param type The serializable type. This type must be assignable from {@link CatalystSerializable}
    *             or {@link java.io.Externalizable}.
@@ -275,10 +289,7 @@ public class Serializer implements Cloneable {
    * Registers a serializable type with an identifier.
    * <p>
    * The serializable type must be assignable from {@link CatalystSerializable} or
-   * {@link java.io.Externalizable}. Users can specify a {@link TypeSerializer} for the registered type
-   * by annotating it with {@link SerializeWith}. Even if the {@code SerializeWith} annotation provides
-   * a type ID, the annotated ID will be ignored and the provided type ID will be used. If the {@code SerializeWith}
-   * annotation provides a {@link TypeSerializer} class, the given type will be registered with that serializer.
+   * {@link java.io.Externalizable}.
    *
    * @param type The serializable type. This type must be assignable from {@link CatalystSerializable}
    *             or {@link java.io.Externalizable}.
@@ -589,11 +600,7 @@ public class Serializer implements Cloneable {
    */
   public <T> BufferOutput<?> writeObject(T object, BufferOutput<?> buffer) {
     if (object == null) {
-      return writeNull(buffer);
-    }
-
-    if (object instanceof Buffer) {
-      return writeBuffer((Buffer) object, buffer);
+      return buffer.writeByte(Identifier.NULL.code());
     }
 
     Class<?> type = object.getClass();
@@ -604,7 +611,7 @@ public class Serializer implements Cloneable {
       type = type.getEnclosingClass();
 
     // Look up the serializer for the given object type.
-    TypeSerializer<?> serializer = getSerializer(type);
+    TypeSerializer serializer = getSerializer(type);
 
     // If no serializer was found, throw a serialization exception.
     if (serializer == null) {
@@ -613,126 +620,36 @@ public class Serializer implements Cloneable {
 
     // Lookup the serializable type ID for the type.
     int typeId = registry.id(type);
-
-    // If no type ID was registered, write the object with the class name.
     if (typeId == 0) {
       return writeByClass(type, object, buffer, serializer);
     }
+    return writeById(typeId, object, buffer, serializer);
+  }
 
-    // Write the serializable type ID in the most compact form possible.
-    if (typeId >= 0) {
-      if (typeId <= MAX_ID_8) {
-        return writeById8(typeId, object, buffer, serializer);
-      } else if (typeId <= MAX_ID_16) {
-        return writeById16(typeId, object, buffer, serializer);
-      } else if (typeId <= MAX_ID_24) {
-        return writeById24(typeId, object, buffer, serializer);
+  /**
+   * Writes an object to the buffer using the given serialization ID.
+   */
+  @SuppressWarnings("unchecked")
+  private BufferOutput writeById(int id, Object object, BufferOutput output, TypeSerializer serializer) {
+    for (Identifier identifier : Identifier.values()) {
+      if (identifier.accept(id)) {
+        identifier.write(id, output.writeByte(identifier.code()));
+        serializer.write(object, output, this);
+        return output;
       }
     }
-    return writeById32(typeId, object, buffer, serializer);
+    throw new SerializationException("invalid type ID: " + id);
   }
 
   /**
-   * Writes a null value to the given buffer.
-   *
-   * @param buffer The buffer to which to write the null value.
-   * @return The written buffer.
-   */
-  private BufferOutput<?> writeNull(BufferOutput<?> buffer) {
-    return buffer.writeByte(TYPE_NULL);
-  }
-
-  /**
-   * Writes a buffer value to the given buffer.
-   *
-   * @param object The buffer to write.
-   * @param buffer The buffer to which to write the buffer.
-   * @return The written buffer.
-   */
-  private BufferOutput<?> writeBuffer(Buffer object, BufferOutput<?> buffer) {
-    return buffer.writeByte(TYPE_BUFFER).write(object);
-  }
-
-  /**
-   * Writes a writable object to the given buffer.
-   *
-   * @param id The writable ID.
-   * @param object The object to write to the buffer.
-   * @param buffer The buffer to which to write the object.
-   * @param serializer The serializer with which to serialize the object.
-   * @param <T> The object type.
-   * @return The written buffer.
+   * Writes an object to the buffer with its class name.
    */
   @SuppressWarnings("unchecked")
-  private <T> BufferOutput<?> writeById8(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
-    serializer.write(object, buffer.writeByte(TYPE_ID_8).writeUnsignedByte(id), this);
-    return buffer;
-  }
-
-  /**
-   * Writes a writable object to the given buffer.
-   *
-   * @param id The writable ID.
-   * @param object The object to write to the buffer.
-   * @param buffer The buffer to which to write the object.
-   * @param serializer The serializer with which to serialize the object.
-   * @param <T> The object type.
-   * @return The written buffer.
-   */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput<?> writeById16(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
-    serializer.write(object, buffer.writeByte(TYPE_ID_16).writeUnsignedShort(id), this);
-    return buffer;
-  }
-
-  /**
-   * Writes a writable object to the given buffer.
-   *
-   * @param id The writable ID.
-   * @param object The object to write to the buffer.
-   * @param buffer The buffer to which to write the object.
-   * @param serializer The serializer with which to serialize the object.
-   * @param <T> The object type.
-   * @return The written buffer.
-   */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput<?> writeById24(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
-    serializer.write(object, buffer.writeByte(TYPE_ID_24).writeUnsignedMedium(id), this);
-    return buffer;
-  }
-
-  /**
-   * Writes a writable object to the given buffer.
-   *
-   * @param id The writable ID.
-   * @param object The object to write to the buffer.
-   * @param buffer The buffer to which to write the object.
-   * @param serializer The serializer with which to serialize the object.
-   * @param <T> The object type.
-   * @return The written buffer.
-   */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput<?> writeById32(int id, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
-    serializer.write(object, buffer.writeByte(TYPE_ID_32).writeInt(id), this);
-    return buffer;
-  }
-
-  /**
-   * Writes a writable object to the given buffer.
-   *
-   * @param type The writable class.
-   * @param object The object to write to the buffer.
-   * @param buffer The buffer to which to write the object.
-   * @param serializer The serializer with which to serialize the object.
-   * @param <T> The object type.
-   * @return The written buffer.
-   */
-  @SuppressWarnings("unchecked")
-  private <T> BufferOutput<?> writeByClass(Class<?> type, T object, BufferOutput<?> buffer, TypeSerializer serializer) {
+  private BufferOutput writeByClass(Class<?> type, Object object, BufferOutput output, TypeSerializer serializer) {
     if (whitelistRequired.get())
       throw new SerializationException("cannot serialize unregistered type: " + type);
-    serializer.write(object, buffer.writeByte(TYPE_CLASS).writeUTF8(type.getName()), this);
-    return buffer;
+    serializer.write(object, output.writeByte(Identifier.CLASS.code()).writeUTF8(type.getName()), this);
+    return output;
   }
 
   /**
@@ -839,81 +756,16 @@ public class Serializer implements Cloneable {
    */
   @SuppressWarnings("unchecked")
   public <T> T readObject(BufferInput<?> buffer) {
-    int type = buffer.readByte();
-    switch (type) {
-      case TYPE_NULL:
+    int code = buffer.readByte();
+    Identifier identifier = Identifier.forCode(code);
+    switch (identifier) {
+      case NULL:
         return null;
-      case TYPE_BUFFER:
-        return (T) readBuffer(buffer);
-      case TYPE_ID_8:
-        return readById8(buffer);
-      case TYPE_ID_16:
-        return readById16(buffer);
-      case TYPE_ID_24:
-        return readById24(buffer);
-      case TYPE_ID_32:
-        return readById32(buffer);
-      case TYPE_CLASS:
+      case CLASS:
         return readByClass(buffer);
       default:
-        throw new SerializationException("unknown serializable type");
+        return readById(identifier.read(buffer), buffer);
     }
-  }
-
-  /**
-   * Reads a buffer from the given buffer.
-   *
-   * @param buffer The buffer from which to read the buffer.
-   * @return The read buffer.
-   */
-  private Buffer readBuffer(BufferInput<?> buffer) {
-    Buffer object = allocator.allocate();
-    buffer.read(object);
-    return object;
-  }
-
-  /**
-   * Reads a serializable object.
-   *
-   * @param buffer The buffer from which to read the object.
-   * @param <T> The object type.
-   * @return The read object.
-   */
-  private <T> T readById8(BufferInput<?> buffer) {
-    return readById(buffer.readUnsignedByte(), buffer);
-  }
-
-  /**
-   * Reads a serializable object.
-   *
-   * @param buffer The buffer from which to read the object.
-   * @param <T> The object type.
-   * @return The read object.
-   */
-  private <T> T readById16(BufferInput<?> buffer) {
-    return readById(buffer.readUnsignedShort(), buffer);
-  }
-
-  /**
-   * Reads a serializable object.
-   *
-   * @param buffer The buffer from which to read the object.
-   * @param <T> The object type.
-   * @return The read object.
-   */
-  private <T> T readById24(BufferInput<?> buffer) {
-    return readById(buffer.readUnsignedMedium(), buffer);
-  }
-
-  /**
-   * Reads a serializable object.
-   *
-   * @param buffer The buffer from which to read the object.
-   * @param <T> The object type.
-   * @return The read object.
-   */
-  private <T> T readById32(BufferInput<?> buffer) {
-    return readById(buffer.readInt(), buffer);
   }
 
   /**
@@ -969,18 +821,11 @@ public class Serializer implements Cloneable {
     return serializer.read(type, buffer, this);
   }
 
-  @Override
+  /**
+   * Clones the object.
+   */
   public final Serializer clone() {
-    try {
-      Serializer serializer = (Serializer) super.clone();
-      serializer.registry = registry.clone();
-      serializer.serializers = new HashMap<>();
-      serializer.types = new HashMap<>(types);
-      serializer.whitelistRequired = whitelistRequired;
-      return serializer;
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
+    return new Serializer(registry, allocator, whitelistRequired);
   }
 
 }

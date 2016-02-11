@@ -23,13 +23,19 @@ import java.io.IOException;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class BufferDataInput implements DataInput {
+public class BufferDataInput extends BufferInputStream implements DataInput {
   protected final BufferInput<?> buffer;
 
   public BufferDataInput(BufferInput<?> buffer) {
+    super(buffer);
     if (buffer == null)
       throw new NullPointerException("buffer cannot be null");
     this.buffer = buffer;
+  }
+
+  @Override
+  public int read() throws IOException {
+    return buffer.readByte();
   }
 
   @Override

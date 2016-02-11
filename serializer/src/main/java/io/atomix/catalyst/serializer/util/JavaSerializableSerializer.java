@@ -31,7 +31,7 @@ import java.io.*;
 public class JavaSerializableSerializer<T> implements TypeSerializer<T> {
 
   @Override
-  public void write(T object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(T object, BufferOutput buffer, Serializer serializer) {
     try (ByteArrayOutputStream os = new ByteArrayOutputStream(); ObjectOutputStream out = new ObjectOutputStream(os)) {
       out.writeObject(object);
       out.flush();
@@ -44,7 +44,7 @@ public class JavaSerializableSerializer<T> implements TypeSerializer<T> {
 
   @Override
   @SuppressWarnings("unchecked")
-  public T read(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
+  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
     byte[] bytes = new byte[buffer.readUnsignedShort()];
     buffer.read(bytes);
     try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {

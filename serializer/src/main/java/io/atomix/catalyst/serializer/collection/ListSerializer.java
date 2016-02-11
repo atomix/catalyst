@@ -31,7 +31,7 @@ import java.util.List;
 public class ListSerializer implements TypeSerializer<List<?>> {
 
   @Override
-  public void write(List<?> object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(List<?> object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
     for (Object value : object) {
       serializer.writeObject(value, buffer);
@@ -39,7 +39,7 @@ public class ListSerializer implements TypeSerializer<List<?>> {
   }
 
   @Override
-  public List<?> read(Class<List<?>> type, BufferInput<?> buffer, Serializer serializer) {
+  public List<?> read(Class<List<?>> type, BufferInput buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
     List<Object> object = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {

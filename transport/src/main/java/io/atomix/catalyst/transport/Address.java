@@ -18,7 +18,6 @@ package io.atomix.catalyst.transport;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.CatalystSerializable;
-import io.atomix.catalyst.serializer.SerializeWith;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
 
@@ -29,7 +28,6 @@ import java.net.InetSocketAddress;
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-@SerializeWith(id=299)
 public class Address implements CatalystSerializable {
   private String host;
   private int port;

@@ -26,10 +26,34 @@ public final class Hash {
   }
 
   /**
-   * Returns a consistent hash code for the given string.
+   * Returns a 16-bit hash code for the given string.
    *
    * @param value The string to hash.
-   * @return A consistency hash code for the given string.
+   * @return A 16-bit hash code for the given string.
+   */
+  public static int hash16(String value) {
+    return hash16(value.toCharArray());
+  }
+
+  /**
+   * Returns a 16-bit hash code for the given array.
+   *
+   * @param value The string to hash.
+   * @return A 16-bit hash code for the given array.
+   */
+  public static int hash16(char[] value) {
+    short h = 0;
+    for (int i = 0; i < value.length; i++) {
+      h = (short) (31 * h + value[i]);
+    }
+    return h;
+  }
+
+  /**
+   * Returns a 32-bit hash code for the given string.
+   *
+   * @param value The string to hash.
+   * @return A 32-bit hash code for the given string.
    */
   public static int hash32(String value) {
     return hash32(value.toCharArray());

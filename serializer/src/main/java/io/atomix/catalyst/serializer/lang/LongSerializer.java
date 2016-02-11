@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class LongSerializer implements TypeSerializer<Long> {
 
   @Override
-  public void write(Long object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Long object, BufferOutput buffer, Serializer serializer) {
     buffer.writeLong(object);
   }
 
   @Override
-  public Long read(Class<Long> type, BufferInput<?> buffer, Serializer serializer) {
+  public Long read(Class<Long> type, BufferInput buffer, Serializer serializer) {
     return buffer.readLong();
   }
 

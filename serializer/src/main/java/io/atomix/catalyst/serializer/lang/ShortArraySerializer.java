@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class ShortArraySerializer implements TypeSerializer<short[]> {
 
   @Override
-  public void write(short[] shorts, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(short[] shorts, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(shorts.length);
     for (short s : shorts) {
       buffer.writeShort(s);
@@ -36,7 +36,7 @@ public class ShortArraySerializer implements TypeSerializer<short[]> {
   }
 
   @Override
-  public short[] read(Class<short[]> type, BufferInput<?> buffer, Serializer serializer) {
+  public short[] read(Class<short[]> type, BufferInput buffer, Serializer serializer) {
     short[] shorts = new short[buffer.readUnsignedShort()];
     for (int i = 0; i < shorts.length; i++) {
       shorts[i] = buffer.readShort();

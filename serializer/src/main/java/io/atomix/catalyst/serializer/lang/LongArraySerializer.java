@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class LongArraySerializer implements TypeSerializer<long[]> {
 
   @Override
-  public void write(long[] longs, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(long[] longs, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(longs.length);
     for (long l : longs) {
       buffer.writeLong(l);
@@ -36,7 +36,7 @@ public class LongArraySerializer implements TypeSerializer<long[]> {
   }
 
   @Override
-  public long[] read(Class<long[]> type, BufferInput<?> buffer, Serializer serializer) {
+  public long[] read(Class<long[]> type, BufferInput buffer, Serializer serializer) {
     long[] longs = new long[buffer.readUnsignedShort()];
     for (int i = 0; i < longs.length; i++) {
       longs[i] = buffer.readLong();

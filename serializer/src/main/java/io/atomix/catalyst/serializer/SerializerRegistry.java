@@ -23,19 +23,23 @@ import io.atomix.catalyst.util.Hash;
 
 import java.io.Externalizable;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Serializer registry.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class SerializerRegistry implements Cloneable {
+public class SerializerRegistry {
   private static final SerializableTypeResolver PRIMITIVE_RESOLVER = new PrimitiveTypeResolver();
   private static final SerializableTypeResolver JDK_RESOLVER = new JdkTypeResolver();
-  private Map<Class<?>, TypeSerializerFactory> factories;
-  private Map<Class<?>, Integer> ids;
-  private Map<Integer, Class<?>> types;
+  private final Map<Class<?>, TypeSerializerFactory> factories = new ConcurrentHashMap<>();
+  private final Map<Class<?>, Integer> ids = new ConcurrentHashMap<>();
+  private final Map<Integer, Class<?>> types = new ConcurrentHashMap<>();
 
   @SuppressWarnings("unchecked")
   public SerializerRegistry() {
@@ -47,17 +51,9 @@ public class SerializerRegistry implements Cloneable {
   }
 
   public SerializerRegistry(Collection<SerializableTypeResolver> resolvers) {
-    this(new HashMap<>(), new HashMap<>(), new HashMap<>());
-
     PRIMITIVE_RESOLVER.resolve(this);
     JDK_RESOLVER.resolve(this);
     resolve(resolvers);
-  }
-
-  private SerializerRegistry(Map<Class<?>, TypeSerializerFactory> factories, Map<Class<?>, Integer> ids, Map<Integer, Class<?>> types) {
-    this.factories = factories;
-    this.ids = ids;
-    this.types = types;
   }
 
   /**
@@ -95,30 +91,12 @@ public class SerializerRegistry implements Cloneable {
   }
 
   /**
-   * Copies the serializer.
-   */
-  SerializerRegistry copy() {
-    return new SerializerRegistry(new HashMap<>(factories), new HashMap<>(ids), new HashMap<>(types));
-  }
-
-  /**
    * Returns the type ID for the given class.
    */
-  private int findTypeId(Class<?> type) {
+  private int calculateTypeId(Class<?> type) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
-
-    SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
-
-    if (serializeWith != null) {
-      int id = serializeWith.id();
-      if (id == -1) {
-        return Hash.hash32(type.getName());
-      }
-      return id;
-    } else {
-      return Hash.hash32(type.getName());
-    }
+    return Hash.hash32(type.getName());
   }
 
   /**
@@ -131,7 +109,7 @@ public class SerializerRegistry implements Cloneable {
   public SerializerRegistry register(Class<?> type) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
-    return register(type, findTypeId(type));
+    return register(type, calculateTypeId(type));
   }
 
   /**
@@ -146,10 +124,7 @@ public class SerializerRegistry implements Cloneable {
     if (type == null)
       throw new NullPointerException("type cannot be null");
 
-    SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
-    if (serializeWith != null && serializeWith.serializer() != null) {
-      return register(type, new DefaultTypeSerializerFactory(serializeWith.serializer()), id);
-    } else if (CatalystSerializable.class.isAssignableFrom(type)) {
+    if (CatalystSerializable.class.isAssignableFrom(type)) {
       return register(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class), id);
     } else if (Externalizable.class.isAssignableFrom(type)) {
       return register(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class), id);
@@ -170,7 +145,7 @@ public class SerializerRegistry implements Cloneable {
    */
   @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
-    return register(type, new DefaultTypeSerializerFactory(serializer), findTypeId(type));
+    return register(type, new DefaultTypeSerializerFactory(serializer), calculateTypeId(type));
   }
 
   /**
@@ -182,7 +157,7 @@ public class SerializerRegistry implements Cloneable {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory) {
-    return register(type, factory, findTypeId(type));
+    return register(type, factory, calculateTypeId(type));
   }
 
   /**
@@ -249,10 +224,7 @@ public class SerializerRegistry implements Cloneable {
 
       // If no factory was found, determine if a Java serializable factory can be used.
       if (factory == null) {
-        SerializeWith serializeWith = type.getAnnotation(SerializeWith.class);
-        if (serializeWith != null && serializeWith.serializer() != null) {
-          factory = new DefaultTypeSerializerFactory(serializeWith.serializer());
-        } else if (CatalystSerializable.class.isAssignableFrom(type)) {
+        if (CatalystSerializable.class.isAssignableFrom(type)) {
           factory = new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class);
         } else if (Externalizable.class.isAssignableFrom(type)) {
           factory = new DefaultTypeSerializerFactory(ExternalizableSerializer.class);
@@ -296,19 +268,6 @@ public class SerializerRegistry implements Cloneable {
    */
   Class<?> type(int id) {
     return types.get(id);
-  }
-
-  @Override
-  public final SerializerRegistry clone() {
-    try {
-      SerializerRegistry clone = (SerializerRegistry) super.clone();
-      clone.ids = new HashMap<>(ids);
-      clone.factories = new HashMap<>(factories);
-      clone.types = new HashMap<>(types);
-      return clone;
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
 }

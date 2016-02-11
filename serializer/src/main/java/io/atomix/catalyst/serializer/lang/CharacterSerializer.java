@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class CharacterSerializer implements TypeSerializer<Character> {
 
   @Override
-  public void write(Character object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Character object, BufferOutput buffer, Serializer serializer) {
     buffer.writeChar(object);
   }
 
   @Override
-  public Character read(Class<Character> type, BufferInput<?> buffer, Serializer serializer) {
+  public Character read(Class<Character> type, BufferInput buffer, Serializer serializer) {
     return buffer.readChar();
   }
 
