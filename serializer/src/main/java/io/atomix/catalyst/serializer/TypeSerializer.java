@@ -34,7 +34,7 @@ public interface TypeSerializer<T> {
    * @param buffer The buffer to which to write the object.
    * @param serializer The Catalyst serializer.
    */
-  void write(T object, BufferOutput<?> buffer, Serializer serializer);
+  void write(T object, BufferOutput buffer, Serializer serializer);
 
   /**
    * Reads the object from the given buffer.
@@ -44,6 +44,6 @@ public interface TypeSerializer<T> {
    * @return The read object.
    * @param serializer The Catalyst serializer.
    */
-  T read(Class<T> type, BufferInput<?> buffer, Serializer serializer);
+  T read(Class<T> type, BufferInput buffer, Serializer serializer);
 
 }

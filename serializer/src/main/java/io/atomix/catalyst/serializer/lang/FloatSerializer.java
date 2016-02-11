@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class FloatSerializer implements TypeSerializer<Float> {
 
   @Override
-  public void write(Float object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Float object, BufferOutput buffer, Serializer serializer) {
     buffer.writeFloat(object);
   }
 
   @Override
-  public Float read(Class<Float> type, BufferInput<?> buffer, Serializer serializer) {
+  public Float read(Class<Float> type, BufferInput buffer, Serializer serializer) {
     return buffer.readFloat();
   }
 

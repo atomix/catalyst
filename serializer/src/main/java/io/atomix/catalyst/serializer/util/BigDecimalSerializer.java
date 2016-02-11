@@ -31,13 +31,13 @@ import java.nio.charset.StandardCharsets;
 public class BigDecimalSerializer implements TypeSerializer<BigDecimal> {
 
   @Override
-  public void write(BigDecimal object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(BigDecimal object, BufferOutput buffer, Serializer serializer) {
     byte[] bytes = object.toPlainString().getBytes(StandardCharsets.UTF_8);
     buffer.writeInt(bytes.length).write(bytes);
   }
 
   @Override
-  public BigDecimal read(Class<BigDecimal> type, BufferInput<?> buffer, Serializer serializer) {
+  public BigDecimal read(Class<BigDecimal> type, BufferInput buffer, Serializer serializer) {
     byte[] bytes = new byte[buffer.readInt()];
     buffer.read(bytes);
     return new BigDecimal(new String(bytes, StandardCharsets.UTF_8));

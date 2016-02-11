@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class FloatArraySerializer implements TypeSerializer<float[]> {
 
   @Override
-  public void write(float[] floats, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(float[] floats, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(floats.length);
     for (float f : floats) {
       buffer.writeFloat(f);
@@ -36,7 +36,7 @@ public class FloatArraySerializer implements TypeSerializer<float[]> {
   }
 
   @Override
-  public float[] read(Class<float[]> type, BufferInput<?> buffer, Serializer serializer) {
+  public float[] read(Class<float[]> type, BufferInput buffer, Serializer serializer) {
     float[] floats = new float[buffer.readUnsignedShort()];
     for (int i = 0; i < floats.length; i++) {
       floats[i] = buffer.readFloat();

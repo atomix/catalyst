@@ -28,7 +28,7 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class CharacterArraySerializer implements TypeSerializer<char[]> {
 
   @Override
-  public void write(char[] chars, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(char[] chars, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(chars.length);
     for (char c : chars) {
       buffer.writeChar(c);
@@ -36,7 +36,7 @@ public class CharacterArraySerializer implements TypeSerializer<char[]> {
   }
 
   @Override
-  public char[] read(Class<char[]> type, BufferInput<?> buffer, Serializer serializer) {
+  public char[] read(Class<char[]> type, BufferInput buffer, Serializer serializer) {
     char[] chars = new char[buffer.readUnsignedShort()];
     for (int i = 0; i < chars.length; i++) {
       chars[i] = buffer.readChar();

@@ -32,7 +32,7 @@ import io.atomix.catalyst.util.ReferenceCounted;
 public abstract class PooledTypeSerializer<T extends ReferenceCounted<T>> implements TypeSerializer<T> {
 
   @Override
-  public T read(Class<T> type, BufferInput<?> buffer, Serializer serializer) {
+  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
     T object = acquire(type);
     read(object, buffer, serializer);
     return object;
@@ -53,6 +53,6 @@ public abstract class PooledTypeSerializer<T extends ReferenceCounted<T>> implem
    * @param buffer The buffer from which to read the object.
    * @param serializer The Catalyst serializer.
    */
-  protected abstract void read(T object, BufferInput<?> buffer, Serializer serializer);
+  protected abstract void read(T object, BufferInput buffer, Serializer serializer);
 
 }

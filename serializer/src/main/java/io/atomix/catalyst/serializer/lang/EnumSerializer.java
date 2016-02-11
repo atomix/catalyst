@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class EnumSerializer implements TypeSerializer<Enum<?>> {
 
   @Override
-  public void write(Enum<?> object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Enum<?> object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedByte(object.ordinal());
   }
 
   @Override
-  public Enum<?> read(Class<Enum<?>> type, BufferInput<?> buffer, Serializer serializer) {
+  public Enum<?> read(Class<Enum<?>> type, BufferInput buffer, Serializer serializer) {
     Enum<?>[] constants = type.getEnumConstants();
     return constants == null ? null : constants[buffer.readUnsignedByte()];
   }

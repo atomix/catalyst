@@ -31,13 +31,13 @@ import java.nio.charset.StandardCharsets;
 public class BigIntegerSerializer implements TypeSerializer<BigInteger> {
 
   @Override
-  public void write(BigInteger object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(BigInteger object, BufferOutput buffer, Serializer serializer) {
     byte[] bytes = object.toString().getBytes(StandardCharsets.UTF_8);
     buffer.writeInt(bytes.length).write(bytes);
   }
 
   @Override
-  public BigInteger read(Class<BigInteger> type, BufferInput<?> buffer, Serializer serializer) {
+  public BigInteger read(Class<BigInteger> type, BufferInput buffer, Serializer serializer) {
     byte[] bytes = new byte[buffer.readInt()];
     buffer.read(bytes);
     return new BigInteger(new String(bytes, StandardCharsets.UTF_8));

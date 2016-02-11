@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class DoubleSerializer implements TypeSerializer<Double> {
 
   @Override
-  public void write(Double object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Double object, BufferOutput buffer, Serializer serializer) {
     buffer.writeDouble(object);
   }
 
   @Override
-  public Double read(Class<Double> type, BufferInput<?> buffer, Serializer serializer) {
+  public Double read(Class<Double> type, BufferInput buffer, Serializer serializer) {
     return buffer.readDouble();
   }
 

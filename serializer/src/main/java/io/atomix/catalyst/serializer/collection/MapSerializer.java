@@ -31,7 +31,7 @@ import java.util.Map;
 public class MapSerializer implements TypeSerializer<Map<?, ?>> {
 
   @Override
-  public void write(Map<?, ?> object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Map<?, ?> object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
     for (Map.Entry<?, ?> entry : object.entrySet()) {
       serializer.writeObject(entry.getKey(), buffer);
@@ -40,7 +40,7 @@ public class MapSerializer implements TypeSerializer<Map<?, ?>> {
   }
 
   @Override
-  public Map<?, ?> read(Class<Map<?, ?>> type, BufferInput<?> buffer, Serializer serializer) {
+  public Map<?, ?> read(Class<Map<?, ?>> type, BufferInput buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
     Map<Object, Object> object = new HashMap<>(size);
     for (int i = 0; i < size; i++) {

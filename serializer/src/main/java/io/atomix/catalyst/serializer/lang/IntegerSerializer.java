@@ -28,12 +28,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class IntegerSerializer implements TypeSerializer<Integer> {
 
   @Override
-  public void write(Integer object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Integer object, BufferOutput buffer, Serializer serializer) {
     buffer.writeInt(object);
   }
 
   @Override
-  public Integer read(Class<Integer> type, BufferInput<?> buffer, Serializer serializer) {
+  public Integer read(Class<Integer> type, BufferInput buffer, Serializer serializer) {
     return buffer.readInt();
   }
 

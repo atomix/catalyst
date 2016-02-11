@@ -31,7 +31,7 @@ import java.util.Set;
 public class SetSerializer implements TypeSerializer<Set<?>> {
 
   @Override
-  public void write(Set<?> object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Set<?> object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
     for (Object value : object) {
       serializer.writeObject(value, buffer);
@@ -39,7 +39,7 @@ public class SetSerializer implements TypeSerializer<Set<?>> {
   }
 
   @Override
-  public Set<?> read(Class<Set<?>> type, BufferInput<?> buffer, Serializer serializer) {
+  public Set<?> read(Class<Set<?>> type, BufferInput buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
     Set<Object> object = new HashSet<>(size);
     for (int i = 0; i < size; i++) {

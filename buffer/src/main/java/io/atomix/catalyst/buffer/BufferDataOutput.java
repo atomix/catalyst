@@ -22,10 +22,11 @@ import java.io.DataOutput;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class BufferDataOutput implements DataOutput {
+public class BufferDataOutput extends BufferOutputStream implements DataOutput {
   protected final BufferOutput<?> buffer;
 
   public BufferDataOutput(BufferOutput<?> buffer) {
+    super(buffer);
     if (buffer == null)
       throw new NullPointerException("buffer cannot be null");
     this.buffer = buffer;

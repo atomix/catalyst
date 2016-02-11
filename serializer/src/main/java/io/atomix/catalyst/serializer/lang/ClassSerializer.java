@@ -29,12 +29,12 @@ import io.atomix.catalyst.serializer.TypeSerializer;
 public class ClassSerializer implements TypeSerializer<Class<?>> {
 
   @Override
-  public void write(Class<?> object, BufferOutput<?> buffer, Serializer serializer) {
+  public void write(Class<?> object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUTF8(object.getName());
   }
 
   @Override
-  public Class<?> read(Class<Class<?>> type, BufferInput<?> buffer, Serializer serializer) {
+  public Class<?> read(Class<Class<?>> type, BufferInput buffer, Serializer serializer) {
     try {
       return Class.forName(buffer.readUTF8());
     } catch (ClassNotFoundException e) {

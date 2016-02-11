@@ -501,40 +501,6 @@ public class SerializerTest {
     assertEquals(result.string, "Hello world!");
   }
 
-  /**
-   * Tests serializing classes registered via ServiceLoaderTypeResolver during construction.
-   */
-  public void testResolverConstructor() {
-    testServiceLoaderResolver(new Serializer(new ServiceLoaderTypeResolver()));
-  }
-
-  /**
-   * Tests serializing classes registered via ServiceLoaderTypeResolver after construction.
-   */
-  public void testResolverMethod() {
-    testServiceLoaderResolver(new Serializer().resolve(new ServiceLoaderTypeResolver()));
-  }
-
-  /**
-   * Tests serializing classes registered via ServiceLoaderTypeResolver multiple times.
-   */
-  public void testResolverConstructorAndMethod() {
-    testServiceLoaderResolver(new Serializer(new ServiceLoaderTypeResolver()).resolve(new ServiceLoaderTypeResolver()));
-  }
-
-  /**
-   * Tests serializing classes registered via ServiceLoaderTypeResolver.
-   */
-  private void testServiceLoaderResolver(Serializer serializer) {
-    TestSerializeWithId withId = new TestSerializeWithId();
-    withId.primitive = 1;
-    TestSerializeWithoutId withoutId = new TestSerializeWithoutId();
-    withoutId.primitive = 2;
-    Buffer buffer = serializer.writeObject(withoutId, serializer.writeObject(withId)).flip();
-    assertEquals(serializer.<TestSerializeWithId>readObject(buffer).primitive, 1);
-    assertEquals(serializer.<TestSerializeWithoutId>readObject(buffer).primitive, 2);
-  }
-
   public static class TestCatalystSerializable implements CatalystSerializable {
     protected long primitive;
     protected Object object;
@@ -563,14 +529,14 @@ public class SerializerTest {
 
   public static class TestSerializer implements TypeSerializer<TestPojoWithSerializer> {
     @Override
-    public void write(TestPojoWithSerializer object, BufferOutput<?> buffer, Serializer serializer) {
+    public void write(TestPojoWithSerializer object, BufferOutput buffer, Serializer serializer) {
       buffer.writeLong(object.primitive);
       serializer.writeObject(object.object, buffer);
       buffer.writeUTF8(object.string);
     }
 
     @Override
-    public TestPojoWithSerializer read(Class<TestPojoWithSerializer> type, BufferInput<?> buffer, Serializer serializer) {
+    public TestPojoWithSerializer read(Class<TestPojoWithSerializer> type, BufferInput buffer, Serializer serializer) {
       TestPojoWithSerializer object = new TestPojoWithSerializer();
       object.primitive = buffer.readLong();
       object.object = serializer.readObject(buffer);
@@ -598,36 +564,6 @@ public class SerializerTest {
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       primitive = in.readLong();
       string = in.readUTF();
-    }
-  }
-
-  @SerializeWith(id=1)
-  public static class TestSerializeWithId implements CatalystSerializable {
-    protected byte primitive;
-
-    @Override
-    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
-      buffer.writeByte(primitive);
-    }
-
-    @Override
-    public void readObject(BufferInput<?> buffer, Serializer serializer) {
-      primitive = (byte) buffer.readByte();
-    }
-  }
-
-  @SerializeWith
-  public static class TestSerializeWithoutId implements CatalystSerializable {
-    protected byte primitive;
-
-    @Override
-    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
-      buffer.writeByte(primitive);
-    }
-
-    @Override
-    public void readObject(BufferInput<?> buffer, Serializer serializer) {
-      primitive = (byte) buffer.readByte();
     }
   }
 
