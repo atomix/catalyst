@@ -34,6 +34,14 @@ public final class NettyProperties {
   public static final String TCP_NO_DELAY = "tcpNoDelay";
   public static final String ACCEPT_BACKLOG = "acceptBacklog";
 
+  public static final String SSL_ENABLED = "ssl.enabled";
+  public static final String SSL_PROTOCOL = "ssl.protocol";
+  public static final String SSL_TRUSTSTORE_PATH = "ssl.truststore.path";
+  public static final String SSL_TRUSTSTORE_PASSWORD = "ssl.truststore.password";
+  public static final String SSL_KEYSTORE_PATH = "ssl.keystore.path";
+  public static final String SSL_KEYSTORE_PASSWORD = "ssl.keystore.password";
+  public static final String SSL_KEYSTORE_KEY_PASSWORD = "ssl.keystore.keypassword";
+
   private static final int DEFAULT_THREADS = Runtime.getRuntime().availableProcessors();
   private static final int DEFAULT_CONNECT_TIMEOUT = 5000;
   private static final int DEFAULT_SEND_BUFFER_SIZE = -1;
@@ -42,6 +50,9 @@ public final class NettyProperties {
   private static final boolean DEFAULT_TCP_KEEP_ALIVE = true;
   private static final boolean DEFAULT_TCP_NO_DELAY = false;
   private static final int DEFAULT_ACCEPT_BACKLOG = 1024;
+
+  private static final boolean DEFAULT_SSL_ENABLED = false;
+  private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
 
   private final PropertiesReader reader;
 
@@ -107,6 +118,55 @@ public final class NettyProperties {
    */
   public int acceptBacklog() {
     return reader.getInteger(ACCEPT_BACKLOG, DEFAULT_ACCEPT_BACKLOG);
+  }
+
+  /**
+   * The SSL enable.
+   */
+  public boolean sslEnabled() {
+    return reader.getBoolean(SSL_ENABLED, DEFAULT_SSL_ENABLED);
+  }
+
+  /**
+   * The SSL Protocol.
+   */
+  public String sslProtocol() {
+    return reader.getString(SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL);
+  }
+
+  /**
+   * The SSL truststore path.
+   */
+  public String sslTruststorePath() {
+    return reader.getString(SSL_TRUSTSTORE_PATH, null);
+  }
+
+  /**
+   * The SSL truststore password.
+   */
+  public String sslTruststorePassword() {
+    return reader.getString(SSL_TRUSTSTORE_PASSWORD, null);
+  }
+
+  /**
+   * The SSL keystore path.
+   */
+  public String sslKeystorePath() {
+    return reader.getString(SSL_KEYSTORE_PATH);
+  }
+
+  /**
+   * The SSL keystore password.
+   */
+  public String sslKeystorePassword() {
+    return reader.getString(SSL_KEYSTORE_PASSWORD, null);
+  }
+
+  /**
+   * The SSL keystore key password.
+   */
+  public String sslKeystoreKeyPassword() {
+    return reader.getString(SSL_KEYSTORE_KEY_PASSWORD, null);
   }
 
 }
