@@ -23,7 +23,7 @@ package io.atomix.catalyst.util;
  * @param <T> type to build
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public abstract class Builder<T> {
+public interface Builder<T> {
 
   /**
    * Builds the object.
@@ -33,6 +33,6 @@ public abstract class Builder<T> {
    *
    * @return The built object.
    */
-  public abstract T build();
+  T build();
 
 }
