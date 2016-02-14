@@ -61,12 +61,12 @@ public class JdkTypeResolver implements SerializableTypeResolver {
   public void resolve(SerializerRegistry registry) {
     int i = 176;
     for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : SERIALIZERS.entrySet()) {
-      registry.register(entry.getKey(), entry.getValue(), i++);
+      registry.register(entry.getKey(), i++, entry.getValue());
     }
 
     i = 190;
     for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : ABSTRACT_SERIALIZERS.entrySet()) {
-      registry.registerAbstract(entry.getKey(), entry.getValue(), i++);
+      registry.registerAbstract(entry.getKey(), i++, entry.getValue());
     }
 
     for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : DEFAULT_SERIALIZERS.entrySet()) {
