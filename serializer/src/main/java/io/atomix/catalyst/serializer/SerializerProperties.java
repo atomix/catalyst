@@ -31,10 +31,10 @@ import java.util.Properties;
 final class SerializerProperties {
   private static final String WHITELIST = "whitelist";
   private static final String ALLOCATOR = "allocator";
-  private static final String TYPE = "type";
-  private static final String SERIALIZER = "serializer";
-  private static final String ABSTRACT_SERIALIZER = "abstractSerializer";
-  private static final String DEFAULT_SERIALIZER = "defaultSerializer";
+  private static final String TYPES = "types";
+  private static final String SERIALIZERS = "serializers";
+  private static final String ABSTRACT_SERIALIZERS = "abstractSerializers";
+  private static final String DEFAULT_SERIALIZERS = "defaultSerializers";
 
   private final PropertiesReader reader;
 
@@ -73,7 +73,7 @@ final class SerializerProperties {
    * @return A map of serializable types defined by the properties.
    */
   Map<Integer, Class<?>> types() {
-    return reader.getMap(TYPE, this::idToInt, this::typeToClass);
+    return reader.getMap(TYPES, this::idToInt, this::typeToClass);
   }
 
   /**
@@ -82,7 +82,7 @@ final class SerializerProperties {
    * @return A map of type serializers.
    */
   Map<Integer, Class<?>> serializers() {
-    return reader.getMap(SERIALIZER, this::idToInt, this::serializerToClass);
+    return reader.getMap(SERIALIZERS, this::idToInt, this::serializerToClass);
   }
 
   /**
@@ -91,7 +91,7 @@ final class SerializerProperties {
    * @return A map of abstract serializers.
    */
   Map<Integer, Class<?>> abstractSerializers() {
-    return reader.getMap(ABSTRACT_SERIALIZER, this::idToInt, this::serializerToClass);
+    return reader.getMap(ABSTRACT_SERIALIZERS, this::idToInt, this::serializerToClass);
   }
 
   /**
@@ -100,7 +100,7 @@ final class SerializerProperties {
    * @return A map of default serializers.
    */
   Map<Integer, Class<?>> defaultSerializers() {
-    return reader.getMap(DEFAULT_SERIALIZER, this::idToInt, this::serializerToClass);
+    return reader.getMap(DEFAULT_SERIALIZERS, this::idToInt, this::serializerToClass);
   }
 
   /**
