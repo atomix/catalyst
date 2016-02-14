@@ -26,6 +26,8 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 
+import io.atomix.catalyst.util.PropertiesReader;
+import java.util.Properties;
 /**
  * Netty transport test.
  *
@@ -38,7 +40,64 @@ public class NettyTransportTest extends ConcurrentTestCase {
    * Tests connecting to a server and sending a message.
    */
   public void testSendReceive() throws Throwable {
-    Transport transport = new NettyTransport();
+
+    Properties properties = new Properties();
+    NettyProperties nettyProperties = new NettyProperties(properties);
+
+    Transport transport = new NettyTransport(nettyProperties);
+
+    Server server = transport.server();
+    Client client = transport.client();
+
+    ThreadContext context = new SingleThreadContext("test-thread-%d", new Serializer());
+
+    context.executor().execute(() -> {
+      try {
+        server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555)), connection -> {
+          connection.<String, String>handler(String.class, message -> {
+            threadAssertEquals("Hello world!", message);
+            return CompletableFuture.completedFuture("Hello world back!");
+          });
+        }).thenRun(this::resume);
+      } catch (UnknownHostException e) {
+        threadFail(e);
+      }
+    });
+    await(1000);
+
+    context.executor().execute(() -> {
+      try {
+        client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555))).thenAccept(connection -> {
+          connection.send("Hello world!").thenAccept(response -> {
+            threadAssertEquals("Hello world back!", response);
+            resume();
+          });
+        });
+      } catch (UnknownHostException e) {
+        threadFail(e);
+      }
+    });
+    await(1000);
+
+    context.executor().execute(() -> {
+      client.close().thenRun(this::resume);
+      server.close().thenRun(this::resume);
+    });
+    await(1000, 2);
+  }
+
+  @Test(enabled = false)
+  // This test fails because of cert validation
+  // Keeping it in here for own testing and as an example
+  public void testSendReceiveSSL() throws Throwable {
+
+    Properties properties = new Properties();
+    properties.put(NettyProperties.SSL_ENABLED, "true");
+    properties.put(NettyProperties.SSL_KEYSTORE_PATH, "src/test/resources/test.keystore");
+    properties.put(NettyProperties.SSL_KEYSTORE_PASSWORD, "password");
+    NettyProperties nettyProperties = new NettyProperties(properties);
+
+    Transport transport = new NettyTransport(nettyProperties);
 
     Server server = transport.server();
     Client client = transport.client();

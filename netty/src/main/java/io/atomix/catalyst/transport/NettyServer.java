@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.transport.NettyTls;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 import io.netty.bootstrap.ServerBootstrap;
@@ -30,6 +31,8 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.handler.ssl.SslHandler;
+import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,7 @@ public class NettyServer implements Server {
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
   private ServerHandler handler;
   private ChannelGroup channelGroup;
+  private NettyTls nettytls;
   private volatile boolean listening;
   private CompletableFuture<Void> listenFuture;
 
@@ -92,6 +96,9 @@ public class NettyServer implements Server {
         @Override
         public void initChannel(SocketChannel channel) throws Exception {
           ChannelPipeline pipeline = channel.pipeline();
+          if (transport.properties().sslEnabled() == true) {
+            pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).InitSSLEngine(false)));
+          }
           pipeline.addLast(FIELD_PREPENDER);
           pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
           pipeline.addLast(handler);
