@@ -320,7 +320,7 @@ public class Serializer {
    * @param serializer The serializer to register.
    * @return The serializer instance.
    */
-  public Serializer register(Class<?> type, Class<? extends TypeSerializer<?>> serializer) {
+  public Serializer register(Class<?> type, Class<? extends TypeSerializer> serializer) {
     registry.register(type, serializer);
     return this;
   }
@@ -368,7 +368,7 @@ public class Serializer {
    * @param serializer The serializer to register.
    * @return The serializer instance.
    */
-  public Serializer register(Class<?> type, int id, Class<? extends TypeSerializer<?>> serializer) {
+  public Serializer register(Class<?> type, int id, Class<? extends TypeSerializer> serializer) {
     registry.register(type, id, serializer);
     return this;
   }
@@ -420,7 +420,7 @@ public class Serializer {
    * @return The serializer.
    * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
    */
-  public Serializer registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer<?>> serializer) {
+  public Serializer registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer> serializer) {
     registry.registerAbstract(abstractType, serializer);
     return this;
   }
@@ -471,7 +471,7 @@ public class Serializer {
    * @return The serializer.
    * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
    */
-  public Serializer registerAbstract(Class<?> abstractType, int id, Class<? extends TypeSerializer<?>> serializer) {
+  public Serializer registerAbstract(Class<?> abstractType, int id, Class<? extends TypeSerializer> serializer) {
     registry.registerAbstract(abstractType, id, serializer);
     return this;
   }
