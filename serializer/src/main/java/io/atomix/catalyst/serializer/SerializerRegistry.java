@@ -44,8 +44,6 @@ public class SerializerRegistry {
   }
 
   public SerializerRegistry(Collection<SerializableTypeResolver> resolvers) {
-    PRIMITIVE_RESOLVER.resolve(this);
-    JDK_RESOLVER.resolve(this);
     resolve(resolvers);
   }
 

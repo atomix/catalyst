@@ -19,9 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -85,6 +83,26 @@ public final class PropertiesReader {
       }
     }
     return collection;
+  }
+
+  /**
+   * Returns a map of properties for a given prefix.
+   *
+   * @param prefix The prefix for which to return a map of property values.
+   * @param keyFactory A converter function to convert the map keys.
+   * @param valueFactory A converter function to convert the map values.
+   * @param <K> The map key type.
+   * @param <V> The map value type.
+   * @return The map.
+   */
+  public <K, V> Map<K, V> getMap(String prefix, Function<String, K> keyFactory, Function<String, V> valueFactory) {
+    Map<K, V> map = new HashMap<>();
+    for (String property : properties.stringPropertyNames()) {
+      if (property.startsWith(prefix + ".")) {
+        map.put(keyFactory.apply(property.substring(prefix.length() + 1)), valueFactory.apply(properties.getProperty(property)));
+      }
+    }
+    return map;
   }
 
   /**

@@ -63,7 +63,7 @@ public class Serializer {
    * </pre>
    */
   public Serializer() {
-    this(new UnpooledHeapAllocator(), new SerializableTypeResolver[0]);
+    this(new UnpooledHeapAllocator(), new PrimitiveTypeResolver(), new JdkTypeResolver());
   }
 
   /**
@@ -85,7 +85,7 @@ public class Serializer {
    * @param allocator The serializer buffer allocator.
    */
   public Serializer(BufferAllocator allocator) {
-    this(allocator, new SerializableTypeResolver[0]);
+    this(allocator, new PrimitiveTypeResolver(), new JdkTypeResolver());
   }
 
   /**
@@ -175,6 +175,49 @@ public class Serializer {
     this.allocator = allocator;
     this.whitelistRequired = new AtomicBoolean(true);
     registry = new SerializerRegistry(resolvers);
+  }
+
+  /**
+   * Creates a new serializer instance with the given properties.
+   *
+   * @param properties The properties with which to configure the serializer.
+   */
+  public Serializer(Properties properties) {
+    this(new SerializerProperties(properties));
+  }
+
+  @SuppressWarnings("unchecked")
+  private Serializer(SerializerProperties properties) {
+    this.allocator = properties.allocator();
+    this.whitelistRequired = new AtomicBoolean(properties.whitelist());
+    this.registry = new SerializerRegistry();
+
+    Map<Integer, Class<?>> types = properties.types();
+    Map<Integer, Class<?>> serializers = properties.serializers();
+    Map<Integer, Class<?>> abstractSerializers = properties.abstractSerializers();
+    Map<Integer, Class<?>> defaultSerializers = properties.defaultSerializers();
+
+    // Register default serializers.
+    for (Map.Entry<Integer, Class<?>> entry : defaultSerializers.entrySet()) {
+      registry.registerDefault(types.get(entry.getKey()), (Class<? extends TypeSerializer>) entry.getValue());
+    }
+
+    // Register serializable types.
+    for (Map.Entry<Integer, Class<?>> entry : types.entrySet()) {
+      // Register a concrete type serializer.
+      Class<?> serializer = serializers.get(entry.getKey());
+      if (serializer != null) {
+        registry.register(entry.getValue(), entry.getKey(), (Class<? extends TypeSerializer>) serializer);
+      }
+
+      // Register an abstract type serializer.
+      serializer = abstractSerializers.get(entry.getKey());
+      if (serializer != null) {
+        registry.registerAbstract(entry.getValue(), entry.getKey(), (Class<? extends TypeSerializer>) serializer);
+      } else {
+        registry.register(entry.getValue(), entry.getKey());
+      }
+    }
   }
 
   private Serializer(SerializerRegistry registry, BufferAllocator allocator, AtomicBoolean whitelistRequired) {
