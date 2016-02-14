@@ -16,12 +16,13 @@
 package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.buffer.Buffer;
-import io.atomix.catalyst.serializer.collection.ListSerializer;
-import io.atomix.catalyst.serializer.collection.MapSerializer;
-import io.atomix.catalyst.serializer.collection.SetSerializer;
+import io.atomix.catalyst.serializer.collection.ArrayListSerializer;
+import io.atomix.catalyst.serializer.collection.HashMapSerializer;
+import io.atomix.catalyst.serializer.collection.HashSetSerializer;
 import io.atomix.catalyst.serializer.util.*;
 
 import java.io.Externalizable;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -32,18 +33,28 @@ import java.util.*;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class JdkTypeResolver implements SerializableTypeResolver {
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  private static final HashMap<Class<?>, Class<? extends TypeSerializer<?>>> SERIALIZERS = new LinkedHashMap() {{
+  @SuppressWarnings("unchecked")
+  private static final Map<Class<?>, Class<? extends TypeSerializer<?>>> SERIALIZERS = new LinkedHashMap() {{
     put(BigInteger.class, BigIntegerSerializer.class);
     put(BigDecimal.class, BigDecimalSerializer.class);
     put(Date.class, DateSerializer.class);
+    put(HashMap.class, HashMapSerializer.class);
+    put(HashSet.class, HashSetSerializer.class);
+    put(ArrayList.class, ArrayListSerializer.class);
+    put(Buffer.class, BufferSerializer.class);
+  }};
+
+  @SuppressWarnings("unchecked")
+  private static final Map<Class<?>, Class<? extends TypeSerializer<?>>> ABSTRACT_SERIALIZERS = new LinkedHashMap() {{
     put(Calendar.class, CalendarSerializer.class);
     put(TimeZone.class, TimeZoneSerializer.class);
-    put(Map.class, MapSerializer.class);
-    put(Set.class, SetSerializer.class);
-    put(List.class, ListSerializer.class);
+  }};
+
+  @SuppressWarnings("unchecked")
+  private static final Map<Class<?>, Class<? extends TypeSerializer<?>>> DEFAULT_SERIALIZERS = new LinkedHashMap() {{
+    put(Serializable.class, JavaSerializableSerializer.class);
     put(Externalizable.class, ExternalizableSerializer.class);
-    put(Buffer.class, BufferSerializer.class);
+    put(CatalystSerializable.class, CatalystSerializableSerializer.class);
   }};
 
   @Override
@@ -51,6 +62,15 @@ public class JdkTypeResolver implements SerializableTypeResolver {
     int i = 176;
     for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : SERIALIZERS.entrySet()) {
       registry.register(entry.getKey(), entry.getValue(), i++);
+    }
+
+    i = 190;
+    for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : ABSTRACT_SERIALIZERS.entrySet()) {
+      registry.registerAbstract(entry.getKey(), entry.getValue(), i++);
+    }
+
+    for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : DEFAULT_SERIALIZERS.entrySet()) {
+      registry.registerDefault(entry.getKey(), entry.getValue());
     }
   }
 

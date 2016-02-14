@@ -15,18 +15,9 @@
  */
 package io.atomix.catalyst.serializer;
 
-import io.atomix.catalyst.CatalystException;
-import io.atomix.catalyst.serializer.util.CatalystSerializableSerializer;
-import io.atomix.catalyst.serializer.util.ExternalizableSerializer;
-import io.atomix.catalyst.serializer.util.JavaSerializableSerializer;
 import io.atomix.catalyst.util.Hash;
 
-import java.io.Externalizable;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,6 +29,8 @@ public class SerializerRegistry {
   private static final SerializableTypeResolver PRIMITIVE_RESOLVER = new PrimitiveTypeResolver();
   private static final SerializableTypeResolver JDK_RESOLVER = new JdkTypeResolver();
   private final Map<Class<?>, TypeSerializerFactory> factories = new ConcurrentHashMap<>();
+  private final Map<Class<?>, TypeSerializerFactory> abstractFactories = Collections.synchronizedMap(new LinkedHashMap<>(1024, 0.75f, true));
+  private final Map<Class<?>, TypeSerializerFactory> defaultFactories = Collections.synchronizedMap(new LinkedHashMap<>(1024, 0.75f, true));
   private final Map<Class<?>, Integer> ids = new ConcurrentHashMap<>();
   private final Map<Integer, Class<?>> types = new ConcurrentHashMap<>();
 
@@ -118,21 +111,19 @@ public class SerializerRegistry {
    * @param type The serializable class.
    * @param id The serialization ID.
    * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} is already registered
+   * @throws RegistrationException If the given {@code type} is already registered or if no default
+   *         serializer could be found for the given type.
    */
-  public SerializerRegistry register(Class<?> type, int id) {
+  public synchronized SerializerRegistry register(Class<?> type, int id) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
 
-    if (CatalystSerializable.class.isAssignableFrom(type)) {
-      return register(type, new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class), id);
-    } else if (Externalizable.class.isAssignableFrom(type)) {
-      return register(type, new DefaultTypeSerializerFactory(ExternalizableSerializer.class), id);
-    } else if (Serializable.class.isAssignableFrom(type)) {
-      return register(type, new DefaultTypeSerializerFactory(JavaSerializableSerializer.class), id);
-    } else {
-      throw new CatalystException("failed to register serializable type: " + type);
+    // Search for a default serializer for the type.
+    Class<?> baseType = findBaseType(type, defaultFactories);
+    if (baseType == null) {
+      throw new RegistrationException("no default serializer found for type: " + type);
     }
+    return register(type, defaultFactories.get(baseType), id);
   }
 
   /**
@@ -183,7 +174,7 @@ public class SerializerRegistry {
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} or {@code id} is already registered
    */
-  public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, int id) {
+  public synchronized SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, int id) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
 
@@ -203,7 +194,96 @@ public class SerializerRegistry {
     factories.put(type, factory);
     types.put(id, type);
     ids.put(type, id);
+
     return this;
+  }
+
+  /**
+   * Registers the given class as an abstract serializer for the given abstract type.
+   *
+   * @param abstractType The abstract type for which to register the serializer.
+   * @param serializer The serializer class.
+   * @return The serializer registry.
+   */
+  public SerializerRegistry registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer> serializer) {
+    return registerAbstract(abstractType, new DefaultTypeSerializerFactory(serializer), calculateTypeId(abstractType));
+  }
+
+  /**
+   * Registers the given class as an abstract serializer for the given abstract type.
+   *
+   * @param abstractType The abstract type for which to register the serializer.
+   * @param factory The serializer factory.
+   * @return The serializer registry.
+   */
+  public SerializerRegistry registerAbstract(Class<?> abstractType, TypeSerializerFactory factory) {
+    return registerAbstract(abstractType, factory, calculateTypeId(abstractType));
+  }
+
+  /**
+   * Registers the given class as an abstract serializer for the given abstract type.
+   *
+   * @param abstractType The abstract type for which to register the serializer.
+   * @param serializer The serializer class.
+   * @param id The serializable type ID.
+   * @return The serializer registry.
+   */
+  public SerializerRegistry registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer> serializer, int id) {
+    return registerAbstract(abstractType, new DefaultTypeSerializerFactory(serializer), id);
+  }
+
+  /**
+   * Registers the given class as an abstract serializer for the given abstract type.
+   *
+   * @param abstractType The abstract type for which to register the serializer.
+   * @param factory The serializer factory.
+   * @param id The serializable type ID.
+   * @return The serializer registry.
+   */
+  public SerializerRegistry registerAbstract(Class<?> abstractType, TypeSerializerFactory factory, int id) {
+    abstractFactories.put(abstractType, factory);
+    types.put(id, abstractType);
+    ids.put(abstractType, id);
+    return this;
+  }
+
+  /**
+   * Registers the given class as a default serializer for the given base type.
+   *
+   * @param baseType The base type for which to register the serializer.
+   * @param serializer The serializer class.
+   * @return The serializer registry.
+   */
+  public SerializerRegistry registerDefault(Class<?> baseType, Class<? extends TypeSerializer> serializer) {
+    return registerDefault(baseType, new DefaultTypeSerializerFactory(serializer));
+  }
+
+  /**
+   * Registers the given factory as a default serializer factory for the given base type.
+   *
+   * @param baseType The base type for which to register the serializer.
+   * @param factory The serializer factory.
+   * @return The serializer registry.
+   */
+  public synchronized SerializerRegistry registerDefault(Class<?> baseType, TypeSerializerFactory factory) {
+    defaultFactories.put(baseType, factory);
+    return this;
+  }
+
+  /**
+   * Finds a serializable base type for the given type in the given factories map.
+   */
+  private Class<?> findBaseType(Class<?> type, Map<Class<?>, TypeSerializerFactory> factories) {
+    if (factories.containsKey(type))
+      return type;
+
+    List<Map.Entry<Class<?>, TypeSerializerFactory>> orderedFactories = new ArrayList<>(factories.entrySet());
+    Collections.reverse(orderedFactories);
+
+    Optional<Map.Entry<Class<?>, TypeSerializerFactory>> optional = orderedFactories.stream()
+      .filter(e -> e.getKey().isAssignableFrom(type))
+      .findFirst();
+    return optional.isPresent() ? optional.get().getKey() : null;
   }
 
   /**
@@ -212,50 +292,43 @@ public class SerializerRegistry {
    * @param type The serializable class.
    * @return The serializer for the given class.
    */
-  TypeSerializerFactory factory(Class<?> type) {
+  synchronized TypeSerializerFactory factory(Class<?> type) {
     TypeSerializerFactory factory = factories.get(type);
-    if (factory == null) {
-      for (Map.Entry<Class<?>, TypeSerializerFactory> entry : factories.entrySet()) {
-        if (entry.getKey().isAssignableFrom(type)) {
-          factory = entry.getValue();
-          break;
-        }
-      }
-
-      // If no factory was found, determine if a Java serializable factory can be used.
-      if (factory == null) {
-        if (CatalystSerializable.class.isAssignableFrom(type)) {
-          factory = new DefaultTypeSerializerFactory(CatalystSerializableSerializer.class);
-        } else if (Externalizable.class.isAssignableFrom(type)) {
-          factory = new DefaultTypeSerializerFactory(ExternalizableSerializer.class);
-        } else if (Serializable.class.isAssignableFrom(type)) {
-          factory = new DefaultTypeSerializerFactory(JavaSerializableSerializer.class);
-        }
-      }
-
-      factories.put(type, factory);
+    if (factory != null) {
+      return factory;
     }
-    return factory;
+
+    Class<?> baseType;
+
+    // If no factory was found, determine if an abstract serializer can be used.
+    baseType = findBaseType(type, abstractFactories);
+    if (baseType != null) {
+      return abstractFactories.get(baseType);
+    }
+
+    // If no factory was found, determine if a default serializer can be used.
+    baseType = findBaseType(type, defaultFactories);
+    if (baseType != null) {
+      return defaultFactories.get(baseType);
+    }
+    return null;
   }
 
   /**
    * Looks up the serializable type ID for the given type.
    */
-  int id(Class<?> type) {
+  synchronized int id(Class<?> type) {
     Integer id = ids.get(type);
     if (id != null)
       return id;
 
-    for (Map.Entry<Class<?>, Integer> entry : ids.entrySet()) {
-      if (entry.getKey().isAssignableFrom(type)) {
-        id = entry.getValue();
-        break;
+    // If no ID was found for the given type, determine whether the type is an abstract type.
+    Class<?> baseType = findBaseType(type, abstractFactories);
+    if (baseType != null) {
+      id = ids.get(baseType);
+      if (id != null) {
+        return id;
       }
-    }
-
-    if (id != null) {
-      ids.put(type, id);
-      return id;
     }
     return 0;
   }

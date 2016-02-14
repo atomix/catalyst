@@ -20,29 +20,36 @@ import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Map serializer.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class MapSerializer implements TypeSerializer<Map<?, ?>> {
+public abstract class MapSerializer<T extends Map> implements TypeSerializer<T> {
+
+  /**
+   * Creates a new map for deserialization.
+   */
+  protected abstract T createMap(int size);
 
   @Override
-  public void write(Map<?, ?> object, BufferOutput buffer, Serializer serializer) {
+  @SuppressWarnings("unchecked")
+  public void write(T object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
-    for (Map.Entry<?, ?> entry : object.entrySet()) {
+    for (Map.Entry entry : (Set<Map.Entry>) object.entrySet()) {
       serializer.writeObject(entry.getKey(), buffer);
       serializer.writeObject(entry.getValue(), buffer);
     }
   }
 
   @Override
-  public Map<?, ?> read(Class<Map<?, ?>> type, BufferInput buffer, Serializer serializer) {
+  @SuppressWarnings("unchecked")
+  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    Map<Object, Object> object = new HashMap<>(size);
+    T object = createMap(size);
     for (int i = 0; i < size; i++) {
       Object key = serializer.readObject(buffer);
       Object value = serializer.readObject(buffer);

@@ -20,7 +20,6 @@ import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,10 +27,15 @@ import java.util.List;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class ListSerializer implements TypeSerializer<List<?>> {
+public abstract class ListSerializer<T extends List> implements TypeSerializer<T> {
+
+  /**
+   * Creates a new list object for deserialization.
+   */
+  protected abstract T createList(int size);
 
   @Override
-  public void write(List<?> object, BufferOutput buffer, Serializer serializer) {
+  public void write(T object, BufferOutput buffer, Serializer serializer) {
     buffer.writeUnsignedShort(object.size());
     for (Object value : object) {
       serializer.writeObject(value, buffer);
@@ -39,9 +43,10 @@ public class ListSerializer implements TypeSerializer<List<?>> {
   }
 
   @Override
-  public List<?> read(Class<List<?>> type, BufferInput buffer, Serializer serializer) {
+  @SuppressWarnings("unchecked")
+  public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
     int size = buffer.readUnsignedShort();
-    List<Object> object = new ArrayList<>(size);
+    T object = createList(size);
     for (int i = 0; i < size; i++) {
       object.add(serializer.readObject(buffer));
     }

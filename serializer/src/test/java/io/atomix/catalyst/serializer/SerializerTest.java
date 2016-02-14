@@ -317,7 +317,7 @@ public class SerializerTest {
    */
   public void testSerializeList() {
     Serializer serializer = new Serializer();
-    Buffer buffer = serializer.writeObject(Arrays.asList(1, 2, 3)).flip();
+    Buffer buffer = serializer.writeObject(new ArrayList<>(Arrays.asList(1, 2, 3))).flip();
     List<?> result = serializer.readObject(buffer);
     assertEquals(result, Arrays.asList(1, 2, 3));
   }

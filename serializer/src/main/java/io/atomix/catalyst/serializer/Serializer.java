@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Serializer {
   private final SerializerRegistry registry;
   private final Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
+  private final Map<Class<?>, Integer> ids = new HashMap<>();
   private final Map<String, Class<?>> types = new HashMap<>();
   private final BufferAllocator allocator;
   private final AtomicBoolean whitelistRequired;
@@ -400,6 +401,168 @@ public class Serializer {
   }
 
   /**
+   * Registers an abstract type serializer for the given abstract type.
+   * <p>
+   * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
+   * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
+   * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
+   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * <pre>
+   *   {@code
+   *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
+   *   }
+   * </pre>
+   *
+   * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
+   *                     the abstract type will be serialized using the given abstract serializer unless a
+   *                     serializer has been registered for the specific concrete type.
+   * @param serializer The abstract type serializer with which to serialize instances of the abstract type.
+   * @return The serializer.
+   * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
+   */
+  public Serializer registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer<?>> serializer) {
+    registry.registerAbstract(abstractType, serializer);
+    return this;
+  }
+
+  /**
+   * Registers an abstract type serializer for the given abstract type.
+   * <p>
+   * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
+   * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
+   * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
+   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * <pre>
+   *   {@code
+   *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
+   *   }
+   * </pre>
+   *
+   * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
+   *                     the abstract type will be serialized using the given abstract serializer unless a
+   *                     serializer has been registered for the specific concrete type.
+   * @param factory The abstract type serializer factory with which to serialize instances of the abstract type.
+   * @return The serializer.
+   * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
+   */
+  public Serializer registerAbstract(Class<?> abstractType, TypeSerializerFactory factory) {
+    registry.registerAbstract(abstractType, factory);
+    return this;
+  }
+
+  /**
+   * Registers an abstract type serializer for the given abstract type.
+   * <p>
+   * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
+   * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
+   * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
+   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * <pre>
+   *   {@code
+   *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
+   *   }
+   * </pre>
+   *
+   * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
+   *                     the abstract type will be serialized using the given abstract serializer unless a
+   *                     serializer has been registered for the specific concrete type.
+   * @param serializer The abstract type serializer with which to serialize instances of the abstract type.
+   * @param id The serializable type ID with which to serialize the abstract class.
+   * @return The serializer.
+   * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
+   */
+  public Serializer registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer<?>> serializer, int id) {
+    registry.registerAbstract(abstractType, serializer, id);
+    return this;
+  }
+
+  /**
+   * Registers an abstract type serializer for the given abstract type.
+   * <p>
+   * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
+   * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
+   * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
+   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * <pre>
+   *   {@code
+   *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
+   *   }
+   * </pre>
+   *
+   * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
+   *                     the abstract type will be serialized using the given abstract serializer unless a
+   *                     serializer has been registered for the specific concrete type.
+   * @param factory The abstract type serializer factory with which to serialize instances of the abstract type.
+   * @param id The serializable type ID with which to serialize the abstract class.
+   * @return The serializer.
+   * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
+   */
+  public Serializer registerAbstract(Class<?> abstractType, TypeSerializerFactory factory, int id) {
+    registry.registerAbstract(abstractType, factory, id);
+    return this;
+  }
+
+  /**
+   * Registers a default type serializer for the given base type.
+   * <p>
+   * Default serializers are used to serialize types for which no specific {@link TypeSerializer} is provided.
+   * When a serializable type is {@link #register(Class) registered} without a {@link TypeSerializer}, the
+   * first default serializer found for the given type is assigned as the serializer for that type. Default
+   * serializers are evaluated against registered types in reverse insertion order, so default serializers
+   * registered more recently take precedence over default serializers registered earlier.
+   * <pre>
+   *   {@code
+   *   serializer.registerDefault(Serializable.class, SerializableSerializer.class);
+   *   serializer.register(SomeSerializable.class, 1);
+   *   }
+   * </pre>
+   * If an object of a type that has not been {@link #register(Class) registered} is
+   * {@link #writeObject(Object) serialized} and {@link #isWhitelistRequired() whitelisting} is disabled,
+   * the object will be serialized with the class name and a default serializer if one is found.
+   *
+   * @param baseType The base type for which to register the default serializer. Types that extend the base
+   *                 type and are registered without a specific {@link TypeSerializer} will be serialized
+   *                 using the registered default {@link TypeSerializer}.
+   * @param serializer The default type serializer with which to serialize instances of the base type.
+   * @return The serializer.
+   * @throws NullPointerException if either argument is {@code null}
+   */
+  public Serializer registerDefault(Class<?> baseType, Class<? extends TypeSerializer> serializer) {
+    registry.registerDefault(baseType, serializer);
+    return this;
+  }
+
+  /**
+   * Registers a default type serializer for the given base type.
+   * <p>
+   * Default serializers are used to serialize types for which no specific {@link TypeSerializer} is provided.
+   * When a serializable type is {@link #register(Class) registered} without a {@link TypeSerializer}, the
+   * first default serializer found for the given type is assigned as the serializer for that type. Default
+   * serializers are evaluated against registered types in reverse insertion order, so default serializers
+   * registered more recently take precedence over default serializers registered earlier.
+   * <pre>
+   *   {@code
+   *   serializer.registerDefault(Serializable.class, SerializableSerializer.class);
+   *   serializer.register(SomeSerializable.class, 1);
+   *   }
+   * </pre>
+   * If an object of a type that has not been {@link #register(Class) registered} is
+   * {@link #writeObject(Object) serialized} and {@link #isWhitelistRequired() whitelisting} is disabled,
+   * the object will be serialized with the class name and a default serializer if one is found.
+   *
+   * @param baseType The base type for which to register the default serializer. Types that extend the base
+   *                 type and are registered without a specific {@link TypeSerializer} will be serialized
+   *                 using the registered default {@link TypeSerializer}.
+   * @param factory The default type serializer factory with which to serialize instances of the base type.
+   * @return The serializer.
+   * @throws NullPointerException if either argument is {@code null}
+   */
+  public Serializer registerDefault(Class<?> baseType, TypeSerializerFactory factory) {
+    registry.registerDefault(baseType, factory);
+    return this;
+  }
+
+  /**
    * Returns the underlying buffer allocator.
    *
    * @return The underlying buffer allocator.
@@ -616,6 +779,11 @@ public class Serializer {
     // If no serializer was found, throw a serialization exception.
     if (serializer == null) {
       throw new SerializationException("cannot serialize unregistered type: " + type);
+    }
+
+    // Cache the serializable type ID if necessary.
+    if (!ids.containsKey(type)) {
+      ids.put(type, registry.id(type));
     }
 
     // Lookup the serializable type ID for the type.
