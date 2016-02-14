@@ -364,12 +364,12 @@ public class Serializer {
    * factory will be copied and a new {@link TypeSerializer} will be instantiated for the clone.
    *
    * @param type The serializable type.
+   * @param id The serializable type ID.
    * @param serializer The serializer to register.
-   * @param id The type ID.
    * @return The serializer instance.
    */
-  public Serializer register(Class<?> type, Class<? extends TypeSerializer<?>> serializer, int id) {
-    registry.register(type, serializer, id);
+  public Serializer register(Class<?> type, int id, Class<? extends TypeSerializer<?>> serializer) {
+    registry.register(type, id, serializer);
     return this;
   }
 
@@ -391,12 +391,12 @@ public class Serializer {
    * the serializer factory will be copied and a new {@link TypeSerializer} will be instantiated for the clone.
    *
    * @param type The serializable type.
+   * @param id The serializable type ID.
    * @param factory The serializer factory to register.
-   * @param id The type ID.
    * @return The serializer instance.
    */
-  public Serializer register(Class<?> type, TypeSerializerFactory factory, int id) {
-    registry.register(type, factory, id);
+  public Serializer register(Class<?> type, int id, TypeSerializerFactory factory) {
+    registry.register(type, id, factory);
     return this;
   }
 
@@ -466,13 +466,13 @@ public class Serializer {
    * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
    *                     the abstract type will be serialized using the given abstract serializer unless a
    *                     serializer has been registered for the specific concrete type.
-   * @param serializer The abstract type serializer with which to serialize instances of the abstract type.
    * @param id The serializable type ID with which to serialize the abstract class.
+   * @param serializer The abstract type serializer with which to serialize instances of the abstract type.
    * @return The serializer.
    * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
    */
-  public Serializer registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer<?>> serializer, int id) {
-    registry.registerAbstract(abstractType, serializer, id);
+  public Serializer registerAbstract(Class<?> abstractType, int id, Class<? extends TypeSerializer<?>> serializer) {
+    registry.registerAbstract(abstractType, id, serializer);
     return this;
   }
 
@@ -492,13 +492,13 @@ public class Serializer {
    * @param abstractType The abstract type for which to register the abstract serializer. Types that extend
    *                     the abstract type will be serialized using the given abstract serializer unless a
    *                     serializer has been registered for the specific concrete type.
-   * @param factory The abstract type serializer factory with which to serialize instances of the abstract type.
    * @param id The serializable type ID with which to serialize the abstract class.
+   * @param factory The abstract type serializer factory with which to serialize instances of the abstract type.
    * @return The serializer.
    * @throws NullPointerException if the {@code abstractType} or {@code serializer} is {@code null}
    */
-  public Serializer registerAbstract(Class<?> abstractType, TypeSerializerFactory factory, int id) {
-    registry.registerAbstract(abstractType, factory, id);
+  public Serializer registerAbstract(Class<?> abstractType, int id, TypeSerializerFactory factory) {
+    registry.registerAbstract(abstractType, id, factory);
     return this;
   }
 

@@ -70,7 +70,7 @@ public class PrimitiveTypeResolver implements SerializableTypeResolver {
   public void resolve(SerializerRegistry registry) {
     int i = 128;
     for (Map.Entry<Class<?>, Class<? extends TypeSerializer<?>>> entry : SERIALIZERS.entrySet()) {
-      registry.register(entry.getKey(), entry.getValue(), i++);
+      registry.register(entry.getKey(), i++, entry.getValue());
     }
   }
 

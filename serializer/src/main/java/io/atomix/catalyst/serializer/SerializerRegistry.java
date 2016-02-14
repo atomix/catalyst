@@ -123,7 +123,7 @@ public class SerializerRegistry {
     if (baseType == null) {
       throw new RegistrationException("no default serializer found for type: " + type);
     }
-    return register(type, defaultFactories.get(baseType), id);
+    return register(type, id, defaultFactories.get(baseType));
   }
 
   /**
@@ -136,7 +136,7 @@ public class SerializerRegistry {
    */
   @SuppressWarnings("rawtypes")
   public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
-    return register(type, new DefaultTypeSerializerFactory(serializer), calculateTypeId(type));
+    return register(type, calculateTypeId(type), new DefaultTypeSerializerFactory(serializer));
   }
 
   /**
@@ -148,21 +148,21 @@ public class SerializerRegistry {
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory) {
-    return register(type, factory, calculateTypeId(type));
+    return register(type, calculateTypeId(type), factory);
   }
 
   /**
    * Registers the given class for serialization.
    *
    * @param type The serializable class.
+   * @param id The serializable type ID.
    * @param serializer The serializer.
-   * @param id The serialization ID.
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} is already registered
    */
   @SuppressWarnings("rawtypes")
-  public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer, int id) {
-    return register(type, new DefaultTypeSerializerFactory(serializer), id);
+  public SerializerRegistry register(Class<?> type, int id, Class<? extends TypeSerializer> serializer) {
+    return register(type, id, new DefaultTypeSerializerFactory(serializer));
   }
 
   /**
@@ -170,11 +170,11 @@ public class SerializerRegistry {
    *
    * @param type The serializable class.
    * @param factory The serializer factory.
-   * @param id The serialization ID.
+   * @param id The serializable type ID.
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} or {@code id} is already registered
    */
-  public synchronized SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, int id) {
+  public synchronized SerializerRegistry register(Class<?> type, int id, TypeSerializerFactory factory) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
 
@@ -206,7 +206,7 @@ public class SerializerRegistry {
    * @return The serializer registry.
    */
   public SerializerRegistry registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer> serializer) {
-    return registerAbstract(abstractType, new DefaultTypeSerializerFactory(serializer), calculateTypeId(abstractType));
+    return registerAbstract(abstractType, calculateTypeId(abstractType), new DefaultTypeSerializerFactory(serializer));
   }
 
   /**
@@ -217,30 +217,30 @@ public class SerializerRegistry {
    * @return The serializer registry.
    */
   public SerializerRegistry registerAbstract(Class<?> abstractType, TypeSerializerFactory factory) {
-    return registerAbstract(abstractType, factory, calculateTypeId(abstractType));
+    return registerAbstract(abstractType, calculateTypeId(abstractType), factory);
   }
 
   /**
    * Registers the given class as an abstract serializer for the given abstract type.
    *
    * @param abstractType The abstract type for which to register the serializer.
+   * @param id The serializable type ID.
    * @param serializer The serializer class.
-   * @param id The serializable type ID.
    * @return The serializer registry.
    */
-  public SerializerRegistry registerAbstract(Class<?> abstractType, Class<? extends TypeSerializer> serializer, int id) {
-    return registerAbstract(abstractType, new DefaultTypeSerializerFactory(serializer), id);
+  public SerializerRegistry registerAbstract(Class<?> abstractType, int id, Class<? extends TypeSerializer> serializer) {
+    return registerAbstract(abstractType, id, new DefaultTypeSerializerFactory(serializer));
   }
 
   /**
    * Registers the given class as an abstract serializer for the given abstract type.
    *
    * @param abstractType The abstract type for which to register the serializer.
-   * @param factory The serializer factory.
    * @param id The serializable type ID.
+   * @param factory The serializer factory.
    * @return The serializer registry.
    */
-  public SerializerRegistry registerAbstract(Class<?> abstractType, TypeSerializerFactory factory, int id) {
+  public SerializerRegistry registerAbstract(Class<?> abstractType, int id, TypeSerializerFactory factory) {
     abstractFactories.put(abstractType, factory);
     types.put(id, abstractType);
     ids.put(abstractType, id);
