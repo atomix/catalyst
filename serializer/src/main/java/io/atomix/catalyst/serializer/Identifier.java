@@ -19,9 +19,11 @@ import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 
 /**
+ * Handles parsing and writing of prefixes for serialization.
+ *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-public enum Identifier {
+enum Identifier {
 
   INT8(0x01) {
     @Override
