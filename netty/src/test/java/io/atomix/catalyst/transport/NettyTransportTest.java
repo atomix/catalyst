@@ -24,10 +24,8 @@ import org.testng.annotations.Test;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.CompletableFuture;
-
-import io.atomix.catalyst.util.PropertiesReader;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 /**
  * Netty transport test.
  *
@@ -86,15 +84,14 @@ public class NettyTransportTest extends ConcurrentTestCase {
     await(1000, 2);
   }
 
-  @Test(enabled = false)
+  @Test(enabled=false)
   // This test fails because of cert validation
   // Keeping it in here for own testing and as an example
   public void testSendReceiveSSL() throws Throwable {
-
     Properties properties = new Properties();
     properties.put(NettyProperties.SSL_ENABLED, "true");
-    properties.put(NettyProperties.SSL_KEYSTORE_PATH, "src/test/resources/test.keystore");
-    properties.put(NettyProperties.SSL_KEYSTORE_PASSWORD, "password");
+    properties.put(NettyProperties.SSL_KEY_STORE_PATH, "src/test/resources/test.keystore");
+    properties.put(NettyProperties.SSL_KEY_STORE_PASSWORD, "password");
     NettyProperties nettyProperties = new NettyProperties(properties);
 
     Transport transport = new NettyTransport(nettyProperties);

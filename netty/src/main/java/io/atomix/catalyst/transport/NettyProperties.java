@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.ConfigurationException;
 import io.atomix.catalyst.util.PropertiesReader;
 
 import java.util.Properties;
@@ -36,11 +37,11 @@ public final class NettyProperties {
 
   public static final String SSL_ENABLED = "ssl.enabled";
   public static final String SSL_PROTOCOL = "ssl.protocol";
-  public static final String SSL_TRUSTSTORE_PATH = "ssl.truststore.path";
-  public static final String SSL_TRUSTSTORE_PASSWORD = "ssl.truststore.password";
-  public static final String SSL_KEYSTORE_PATH = "ssl.keystore.path";
-  public static final String SSL_KEYSTORE_PASSWORD = "ssl.keystore.password";
-  public static final String SSL_KEYSTORE_KEY_PASSWORD = "ssl.keystore.keypassword";
+  public static final String SSL_TRUST_STORE_PATH = "ssl.trustStore.path";
+  public static final String SSL_TRUST_STORE_PASSWORD = "ssl.trustStore.password";
+  public static final String SSL_KEY_STORE_PATH = "ssl.keyStore.path";
+  public static final String SSL_KEY_STORE_PASSWORD = "ssl.keyStore.password";
+  public static final String SSL_KEY_STORE_KEY_PASSWORD = "ssl.keyStore.keyPassword";
 
   private static final int DEFAULT_THREADS = Runtime.getRuntime().availableProcessors();
   private static final int DEFAULT_CONNECT_TIMEOUT = 5000;
@@ -130,43 +131,48 @@ public final class NettyProperties {
   /**
    * The SSL Protocol.
    */
-  public String sslProtocol() {
-    return reader.getString(SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL);
+  public SslProtocol sslProtocol() {
+    String protocol = reader.getString(SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL);
+    try {
+      return SslProtocol.valueOf(protocol.replace(".", "_"));
+    } catch (IllegalArgumentException e) {
+      throw new ConfigurationException("unknown SSL protocol: " + protocol, e);
+    }
   }
 
   /**
-   * The SSL truststore path.
+   * The SSL trust store path.
    */
-  public String sslTruststorePath() {
-    return reader.getString(SSL_TRUSTSTORE_PATH, null);
+  public String sslTrustStorePath() {
+    return reader.getString(SSL_TRUST_STORE_PATH, null);
   }
 
   /**
-   * The SSL truststore password.
+   * The SSL trust store password.
    */
-  public String sslTruststorePassword() {
-    return reader.getString(SSL_TRUSTSTORE_PASSWORD, null);
+  public String sslTrustStorePassword() {
+    return reader.getString(SSL_TRUST_STORE_PASSWORD, null);
   }
 
   /**
-   * The SSL keystore path.
+   * The SSL key store path.
    */
-  public String sslKeystorePath() {
-    return reader.getString(SSL_KEYSTORE_PATH);
+  public String sslKeyStorePath() {
+    return reader.getString(SSL_KEY_STORE_PATH);
   }
 
   /**
-   * The SSL keystore password.
+   * The SSL key store password.
    */
-  public String sslKeystorePassword() {
-    return reader.getString(SSL_KEYSTORE_PASSWORD, null);
+  public String sslKeyStorePassword() {
+    return reader.getString(SSL_KEY_STORE_PASSWORD, null);
   }
 
   /**
-   * The SSL keystore key password.
+   * The SSL key store key password.
    */
-  public String sslKeystoreKeyPassword() {
-    return reader.getString(SSL_KEYSTORE_KEY_PASSWORD, null);
+  public String sslKeyStoreKeyPassword() {
+    return reader.getString(SSL_KEY_STORE_KEY_PASSWORD, null);
   }
 
 }

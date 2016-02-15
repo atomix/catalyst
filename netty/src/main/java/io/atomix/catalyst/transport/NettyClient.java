@@ -26,11 +26,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
-
 import io.netty.handler.ssl.SslHandler;
-import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +45,6 @@ public class NettyClient implements Client {
   private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
 
   private final NettyTransport transport;
-  private NettyTls nettytls;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
 
   /**
@@ -74,8 +69,8 @@ public class NettyClient implements Client {
         @Override
         protected void initChannel(SocketChannel channel) throws Exception {
           ChannelPipeline pipeline = channel.pipeline();
-          if (transport.properties().sslEnabled() == true) {
-            pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).InitSSLEngine(true)));
+          if (transport.properties().sslEnabled()) {
+            pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).initSSLEngine(true)));
           }
           pipeline.addLast(FIELD_PREPENDER);
           pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
