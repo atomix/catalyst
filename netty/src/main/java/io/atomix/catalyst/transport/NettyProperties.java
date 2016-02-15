@@ -132,9 +132,9 @@ public final class NettyProperties {
    * The SSL Protocol.
    */
   public SslProtocol sslProtocol() {
-    String protocol = reader.getString(SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL);
+    String protocol = reader.getString(SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL).replace(".", "_");
     try {
-      return SslProtocol.valueOf(protocol.replace(".", "_"));
+      return SslProtocol.valueOf(protocol);
     } catch (IllegalArgumentException e) {
       throw new ConfigurationException("unknown SSL protocol: " + protocol, e);
     }
