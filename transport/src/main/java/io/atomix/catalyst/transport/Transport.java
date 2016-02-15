@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.util.Builder;
+
 /**
  * Transport provider.
  * <p>
@@ -49,6 +51,12 @@ public interface Transport extends AutoCloseable {
    */
   @Override
   default void close() {
+  }
+
+  /**
+   * Transport builder.
+   */
+  interface Builder extends io.atomix.catalyst.util.Builder<Transport> {
   }
 
 }

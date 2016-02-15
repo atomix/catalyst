@@ -15,71 +15,62 @@
  */
 package io.atomix.catalyst.transport;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import io.atomix.catalyst.util.Assert;
-import java.io.FileInputStream;
-import java.security.KeyStore;
-import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 
 /**
  * Netty TLS.
  *
  * @author <a href="http://github.com/electrical">Richard Pijnenburg</a>
  */
-
-public class NettyTls {
-
+final class NettyTls {
   private static final Logger LOGGER = LoggerFactory.getLogger(NettyTls.class);
-  private static boolean ts_use_ks = true;
-  private static KeyStore ts;
-  private static NettyProperties properties;
+  private NettyProperties properties;
 
   public NettyTls(NettyProperties properties) {
     this.properties = properties;
   }
 
-  public SSLEngine InitSSLEngine(Boolean client) throws Exception {
-
-    if (properties.sslTruststorePath() != null) {
-      ts_use_ks = false;
-    }
-
+  /**
+   * Initializes an SSL engine.
+   *
+   * @param client Indicates whether the engine is being initialized for a client.
+   * @return The initialized SSL engine.
+   */
+  public SSLEngine initSslEngine(boolean client) throws Exception {
     // Load the keystore
-    KeyStore ks = loadKeystore(properties.sslKeystorePath(), properties.sslKeystorePassword());
+    KeyStore keyStore = loadKeystore(properties.sslKeyStorePath(), properties.sslKeyStorePassword());
 
     // Setup the keyManager to use our keystore
-    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    kmf.init(ks, KeyStoreKeyPass(properties));
+    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    keyManagerFactory.init(keyStore, keyStoreKeyPass(properties));
 
     // Setup the Trust keystore
-    if (ts_use_ks == false) {
+    KeyStore trustStore;
+    if (properties.sslTrustStorePath() != null) {
       // Use the separate Trust keystore
-      LOGGER.debug("Using separate Truststore");
-      KeyStore ts = loadKeystore(properties.sslTruststorePath(), properties.sslTruststorePassword());
+      LOGGER.debug("Using separate trust store");
+      trustStore = loadKeystore(properties.sslTrustStorePath(), properties.sslTrustStorePassword());
     } else {
       // Reuse the existing keystore
-      ts = ks;
-      LOGGER.debug("Using Keystore as Truststore");
+      trustStore = keyStore;
+      LOGGER.debug("Using key store as trust store");
     }
 
-    TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    tmFactory.init(ts);
+    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    trustManagerFactory.init(trustStore);
 
-    KeyManager[] km = kmf.getKeyManagers();
-    TrustManager[] tm = tmFactory.getTrustManagers();
+    KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+    TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
     SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(km, tm, null);
+    sslContext.init(keyManagers, trustManagers, null);
     SSLEngine sslEngine = sslContext.createSSLEngine();
     sslEngine.setUseClientMode(client);
     sslEngine.setWantClientAuth(true);
@@ -100,11 +91,11 @@ public class NettyTls {
     return ks;
   }
 
-  private char[] KeyStoreKeyPass(NettyProperties properties) throws Exception {
-    if (properties.sslKeystoreKeyPassword() != null) {
-      return properties.sslKeystoreKeyPassword().toCharArray();
+  private char[] keyStoreKeyPass(NettyProperties properties) throws Exception {
+    if (properties.sslKeyStoreKeyPassword() != null) {
+      return properties.sslKeyStoreKeyPassword().toCharArray();
     } else {
-      return properties.sslKeystorePassword().toCharArray();
+      return properties.sslKeyStorePassword().toCharArray();
     }
   }
 
