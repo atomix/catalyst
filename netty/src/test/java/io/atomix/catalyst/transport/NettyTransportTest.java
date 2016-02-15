@@ -38,7 +38,6 @@ public class NettyTransportTest extends ConcurrentTestCase {
    * Tests connecting to a server and sending a message.
    */
   public void testSendReceive() throws Throwable {
-
     Properties properties = new Properties();
     NettyProperties nettyProperties = new NettyProperties(properties);
 

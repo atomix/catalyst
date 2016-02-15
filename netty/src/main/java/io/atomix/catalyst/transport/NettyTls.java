@@ -43,7 +43,7 @@ final class NettyTls {
    * @param client Indicates whether the engine is being initialized for a client.
    * @return The initialized SSL engine.
    */
-  public SSLEngine initSSLEngine(boolean client) throws Exception {
+  public SSLEngine initSslEngine(boolean client) throws Exception {
     // Load the keystore
     KeyStore keyStore = loadKeystore(properties.sslKeyStorePath(), properties.sslKeyStorePassword());
 

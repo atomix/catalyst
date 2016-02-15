@@ -70,7 +70,7 @@ public class NettyClient implements Client {
         protected void initChannel(SocketChannel channel) throws Exception {
           ChannelPipeline pipeline = channel.pipeline();
           if (transport.properties().sslEnabled()) {
-            pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).initSSLEngine(true)));
+            pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).initSslEngine(true)));
           }
           pipeline.addLast(FIELD_PREPENDER);
           pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
