@@ -19,6 +19,7 @@ import io.atomix.catalyst.buffer.Buffer;
 import io.atomix.catalyst.serializer.collection.ArrayListSerializer;
 import io.atomix.catalyst.serializer.collection.HashMapSerializer;
 import io.atomix.catalyst.serializer.collection.HashSetSerializer;
+import io.atomix.catalyst.serializer.collection.MapEntrySerializer;
 import io.atomix.catalyst.serializer.util.*;
 
 import java.io.Externalizable;
@@ -48,6 +49,7 @@ public class JdkTypeResolver implements SerializableTypeResolver {
   private static final Map<Class<?>, Class<? extends TypeSerializer<?>>> ABSTRACT_SERIALIZERS = new LinkedHashMap() {{
     put(Calendar.class, CalendarSerializer.class);
     put(TimeZone.class, TimeZoneSerializer.class);
+    put(Map.Entry.class, MapEntrySerializer.class);
   }};
 
   @SuppressWarnings("unchecked")

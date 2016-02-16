@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.testng.Assert.*;
 
@@ -445,6 +446,24 @@ public class SerializerTest {
   public void testSerializeUnregisteredSucceed() {
     Serializer serializer = new Serializer().disableWhitelist();
     serializer.readObject(serializer.writeObject(new TestUnregistered()).flip());
+  }
+
+  /**
+   * Tests serializing map entries.
+   */
+  public void testSerializeMapEntries() {
+    Serializer serializer = new Serializer();
+    Map<String, String> map = new HashMap<>();
+    map.put("foo", "Hello world!");
+    map.put("bar", "Hello world again!");
+    Set<Map.Entry<String, String>> entries = new HashSet<>(map.entrySet());
+    Set<Map.Entry<String, String>> result = serializer.readObject(serializer.writeObject(entries).flip());
+    Set<String> keys = result.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+    Collection<String> values = result.stream().map(Map.Entry::getValue).collect(Collectors.toList());
+    assertTrue(keys.contains("foo"));
+    assertTrue(keys.contains("bar"));
+    assertTrue(values.contains("Hello world!"));
+    assertTrue(values.contains("Hello world again!"));
   }
 
   /**
