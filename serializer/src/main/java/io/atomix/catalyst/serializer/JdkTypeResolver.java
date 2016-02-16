@@ -42,11 +42,11 @@ public class JdkTypeResolver implements SerializableTypeResolver {
     put(HashMap.class, HashMapSerializer.class);
     put(HashSet.class, HashSetSerializer.class);
     put(ArrayList.class, ArrayListSerializer.class);
-    put(Buffer.class, BufferSerializer.class);
   }};
 
   @SuppressWarnings("unchecked")
   private static final Map<Class<?>, Class<? extends TypeSerializer<?>>> ABSTRACT_SERIALIZERS = new LinkedHashMap() {{
+    put(Buffer.class, BufferSerializer.class);
     put(Calendar.class, CalendarSerializer.class);
     put(TimeZone.class, TimeZoneSerializer.class);
     put(Map.Entry.class, MapEntrySerializer.class);
