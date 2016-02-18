@@ -63,9 +63,6 @@ public class SingleThreadContext implements ThreadContext {
 
   public SingleThreadContext(Thread thread, ScheduledExecutorService executor, Serializer serializer) {
     this.executor = executor;
-    if (executor instanceof ScheduledThreadPoolExecutor) {
-      ((ScheduledThreadPoolExecutor) executor).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
-    }
     this.serializer = serializer;
     Assert.state(thread instanceof CatalystThread, "not a Catalyst thread");
     ((CatalystThread) thread).setContext(this);
