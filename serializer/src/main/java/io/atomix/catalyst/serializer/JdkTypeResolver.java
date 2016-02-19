@@ -50,6 +50,7 @@ public class JdkTypeResolver implements SerializableTypeResolver {
     put(Calendar.class, CalendarSerializer.class);
     put(TimeZone.class, TimeZoneSerializer.class);
     put(Map.Entry.class, MapEntrySerializer.class);
+    put(Properties.class, PropertiesSerializer.class);
   }};
 
   @SuppressWarnings("unchecked")

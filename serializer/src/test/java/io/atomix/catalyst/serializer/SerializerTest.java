@@ -467,6 +467,17 @@ public class SerializerTest {
   }
 
   /**
+   * Tests serializing properties.
+   */
+  public void testSerializeProperties() {
+    Serializer serializer = new Serializer();
+    Properties properties = new Properties();
+    properties.setProperty("foo", "bar");
+    Properties result = serializer.readObject(serializer.writeObject(properties).flip());
+    assertEquals(result.getProperty("foo"), "bar");
+  }
+
+  /**
    * Tests serializing a POJO with a serializer.
    */
   public void testSerializeSerializer() {
