@@ -15,12 +15,8 @@
  */
 package io.atomix.catalyst.serializer.util;
 
-import io.atomix.catalyst.buffer.BufferInput;
-import io.atomix.catalyst.buffer.BufferOutput;
-import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.serializer.TypeSerializer;
+import io.atomix.catalyst.serializer.collection.MapSerializer;
 
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -28,24 +24,11 @@ import java.util.Properties;
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-public class PropertiesSerializer implements TypeSerializer<Properties> {
+public class PropertiesSerializer extends MapSerializer<Properties> {
 
   @Override
-  public void write(Properties object, BufferOutput buffer, Serializer serializer) {
-    buffer.writeUnsignedShort(object.size());
-    for (Map.Entry<Object, Object> entry : object.entrySet()) {
-      buffer.writeString(entry.getKey().toString()).writeString((String) entry.getValue());
-    }
-  }
-
-  @Override
-  public Properties read(Class<Properties> type, BufferInput buffer, Serializer serializer) {
-    Properties properties = new Properties();
-    int size = buffer.readUnsignedShort();
-    for (int i = 0; i < size; i++) {
-      properties.setProperty(buffer.readString(), buffer.readString());
-    }
-    return properties;
+  protected Properties createMap(int size) {
+    return new Properties();
   }
 
 }
