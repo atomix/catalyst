@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 /**
@@ -95,7 +96,10 @@ public class Listeners<T> implements Iterable<Listener<T>> {
     @Override
     public void accept(T event) {
       if (context != null) {
-        context.executor().execute(() -> listener.accept(event));
+        try {
+          context.executor().execute(() -> listener.accept(event));
+        } catch (RejectedExecutionException e) {
+        }
       } else {
         listener.accept(event);
       }

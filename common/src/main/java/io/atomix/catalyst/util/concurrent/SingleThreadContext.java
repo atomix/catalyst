@@ -24,7 +24,10 @@ public class SingleThreadContext implements ThreadContext {
   private final Executor wrappedExecutor = new Executor() {
     @Override
     public void execute(Runnable command) {
-      executor.execute(Runnables.logFailure(command, LOGGER));
+      try {
+        executor.execute(Runnables.logFailure(command, LOGGER));
+      } catch (RejectedExecutionException e) {
+      }
     }
   };
 
