@@ -15,13 +15,17 @@
  */
 package io.atomix.catalyst.serializer.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
-
-import java.io.*;
 
 /**
  * Java serializable serializer implementation.
@@ -36,7 +40,7 @@ public class JavaSerializableSerializer<T> implements TypeSerializer<T> {
       out.writeObject(object);
       out.flush();
       byte[] bytes = os.toByteArray();
-      buffer.writeUnsignedShort(bytes.length).write(bytes);
+      buffer.writeInt(bytes.length).write(bytes);
     } catch (IOException e) {
       throw new SerializationException("failed to serialize Java object", e);
     }
@@ -45,7 +49,7 @@ public class JavaSerializableSerializer<T> implements TypeSerializer<T> {
   @Override
   @SuppressWarnings("unchecked")
   public T read(Class<T> type, BufferInput buffer, Serializer serializer) {
-    byte[] bytes = new byte[buffer.readUnsignedShort()];
+    byte[] bytes = new byte[buffer.readInt()];
     buffer.read(bytes);
     try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
       try {
