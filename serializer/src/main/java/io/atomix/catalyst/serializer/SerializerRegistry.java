@@ -15,7 +15,8 @@
  */
 package io.atomix.catalyst.serializer;
 
-import io.atomix.catalyst.util.Hash;
+import io.atomix.catalyst.util.hash.Hasher;
+import io.atomix.catalyst.util.hash.StringHasher;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,8 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class SerializerRegistry {
-  private static final SerializableTypeResolver PRIMITIVE_RESOLVER = new PrimitiveTypeResolver();
-  private static final SerializableTypeResolver JDK_RESOLVER = new JdkTypeResolver();
+  private final Hasher hasher = new StringHasher();
   private final Map<Class<?>, TypeSerializerFactory> factories = new ConcurrentHashMap<>();
   private final Map<Class<?>, TypeSerializerFactory> abstractFactories = Collections.synchronizedMap(new LinkedHashMap<>(1024, 0.75f, true));
   private final Map<Class<?>, TypeSerializerFactory> defaultFactories = Collections.synchronizedMap(new LinkedHashMap<>(1024, 0.75f, true));
@@ -87,7 +87,7 @@ public class SerializerRegistry {
   private int calculateTypeId(Class<?> type) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
-    return Hash.hash32(type.getName());
+    return hasher.hash32(type.getName());
   }
 
   /**
