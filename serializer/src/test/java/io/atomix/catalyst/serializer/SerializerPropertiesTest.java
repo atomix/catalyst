@@ -39,7 +39,7 @@ public class SerializerPropertiesTest {
    * Tests serializer properties.
    */
   public void testProperties() throws Throwable {
-    SerializerProperties properties = new SerializerProperties(PropertiesReader.load("serializer-test.properties").properties());
+    SerializerProperties properties = new SerializerProperties(PropertiesReader.loadFromClasspath("serializer-test.properties").properties());
     assertTrue(properties.whitelist());
     assertTrue(properties.allocator() instanceof PooledHeapAllocator);
     assertEquals(properties.types().get(1), ArrayList.class);

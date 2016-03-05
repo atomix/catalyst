@@ -74,7 +74,7 @@ public class NettyPropertiesTest {
    * Tests configuring Netty properties from a properties file.
    */
   public void testPropertiesFile() {
-    NettyProperties properties = new NettyProperties(PropertiesReader.load("netty-test.properties").properties());
+    NettyProperties properties = new NettyProperties(PropertiesReader.loadFromClasspath("netty-test.properties").properties());
     assertEquals(properties.threads(), 1);
     assertEquals(properties.connectTimeout(), 1000);
     assertEquals(properties.sendBufferSize(), 1024);
