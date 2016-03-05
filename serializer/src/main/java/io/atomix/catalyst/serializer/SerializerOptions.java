@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Serializer properties.
+ * Serializer options.
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-final class SerializerProperties {
+final class SerializerOptions {
   private static final String WHITELIST = "whitelist";
   private static final String ALLOCATOR = "allocator";
   private static final String TYPES = "types";
@@ -38,7 +38,7 @@ final class SerializerProperties {
 
   private final PropertiesReader reader;
 
-  public SerializerProperties(Properties properties) {
+  public SerializerOptions(Properties properties) {
     this.reader = new PropertiesReader(properties);
   }
 

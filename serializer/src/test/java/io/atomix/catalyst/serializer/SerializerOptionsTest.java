@@ -28,26 +28,26 @@ import java.util.ArrayList;
 import static org.testng.Assert.*;
 
 /**
- * Serializer properties test.
+ * Serializer options test.
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
 @Test
-public class SerializerPropertiesTest {
+public class SerializerOptionsTest {
 
   /**
    * Tests serializer properties.
    */
   public void testProperties() throws Throwable {
-    SerializerProperties properties = new SerializerProperties(PropertiesReader.loadFromClasspath("serializer-test.properties").properties());
-    assertTrue(properties.whitelist());
-    assertTrue(properties.allocator() instanceof PooledHeapAllocator);
-    assertEquals(properties.types().get(1), ArrayList.class);
-    assertEquals(properties.serializers().get(1), ArrayListSerializer.class);
-    assertEquals(properties.types().get(2), Buffer.class);
-    assertEquals(properties.abstractSerializers().get(2), BufferSerializer.class);
-    assertEquals(properties.types().get(3), CatalystSerializable.class);
-    assertEquals(properties.defaultSerializers().get(3), CatalystSerializableSerializer.class);
+    SerializerOptions options = new SerializerOptions(PropertiesReader.loadFromClasspath("serializer-test.properties").properties());
+    assertTrue(options.whitelist());
+    assertTrue(options.allocator() instanceof PooledHeapAllocator);
+    assertEquals(options.types().get(1), ArrayList.class);
+    assertEquals(options.serializers().get(1), ArrayListSerializer.class);
+    assertEquals(options.types().get(2), Buffer.class);
+    assertEquals(options.abstractSerializers().get(2), BufferSerializer.class);
+    assertEquals(options.types().get(3), CatalystSerializable.class);
+    assertEquals(options.defaultSerializers().get(3), CatalystSerializableSerializer.class);
   }
 
 }

@@ -183,11 +183,11 @@ public class Serializer {
    * @param properties The properties with which to configure the serializer.
    */
   public Serializer(Properties properties) {
-    this(new SerializerProperties(properties));
+    this(new SerializerOptions(properties));
   }
 
   @SuppressWarnings("unchecked")
-  private Serializer(SerializerProperties properties) {
+  private Serializer(SerializerOptions properties) {
     this.allocator = properties.allocator();
     this.whitelistRequired = new AtomicBoolean(properties.whitelist());
     this.registry = new SerializerRegistry();

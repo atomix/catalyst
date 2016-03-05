@@ -39,7 +39,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
    */
   public void testSendReceive() throws Throwable {
     Properties properties = new Properties();
-    NettyProperties nettyProperties = new NettyProperties(properties);
+    NettyOptions nettyProperties = new NettyOptions(properties);
 
     Transport transport = new NettyTransport(nettyProperties);
 
@@ -88,10 +88,10 @@ public class NettyTransportTest extends ConcurrentTestCase {
   // Keeping it in here for own testing and as an example
   public void testSendReceiveSSL() throws Throwable {
     Properties properties = new Properties();
-    properties.put(NettyProperties.SSL_ENABLED, "true");
-    properties.put(NettyProperties.SSL_KEY_STORE_PATH, "src/test/resources/test.keystore");
-    properties.put(NettyProperties.SSL_KEY_STORE_PASSWORD, "password");
-    NettyProperties nettyProperties = new NettyProperties(properties);
+    properties.put(NettyOptions.SSL_ENABLED, "true");
+    properties.put(NettyOptions.SSL_KEY_STORE_PATH, "src/test/resources/test.keystore");
+    properties.put(NettyOptions.SSL_KEY_STORE_PASSWORD, "password");
+    NettyOptions nettyProperties = new NettyOptions(properties);
 
     Transport transport = new NettyTransport(nettyProperties);
 

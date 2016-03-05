@@ -31,9 +31,9 @@ import java.security.KeyStore;
  */
 final class NettyTls {
   private static final Logger LOGGER = LoggerFactory.getLogger(NettyTls.class);
-  private NettyProperties properties;
+  private NettyOptions properties;
 
-  public NettyTls(NettyProperties properties) {
+  public NettyTls(NettyOptions properties) {
     this.properties = properties;
   }
 
@@ -91,7 +91,7 @@ final class NettyTls {
     return ks;
   }
 
-  private char[] keyStoreKeyPass(NettyProperties properties) throws Exception {
+  private char[] keyStoreKeyPass(NettyOptions properties) throws Exception {
     if (properties.sslKeyStoreKeyPassword() != null) {
       return properties.sslKeyStoreKeyPassword().toCharArray();
     } else {

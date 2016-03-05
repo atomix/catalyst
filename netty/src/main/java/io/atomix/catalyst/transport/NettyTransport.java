@@ -39,18 +39,18 @@ public class NettyTransport implements Transport {
     return new Builder();
   }
 
-  private final NettyProperties properties;
+  private final NettyOptions properties;
   private final EventLoopGroup eventLoopGroup;
 
   public NettyTransport() {
-    this(new NettyProperties(new Properties()));
+    this(new NettyOptions(new Properties()));
   }
 
   public NettyTransport(Properties properties) {
-    this(new NettyProperties(properties));
+    this(new NettyOptions(properties));
   }
 
-  public NettyTransport(NettyProperties properties) {
+  public NettyTransport(NettyOptions properties) {
     this.properties = Assert.notNull(properties, "properties");
     ThreadFactory threadFactory = new CatalystThreadFactory("catalyst-event-loop-%d");
     eventLoopGroup = new NioEventLoopGroup(properties.threads(), threadFactory);
@@ -61,7 +61,7 @@ public class NettyTransport implements Transport {
    *
    * @return The Netty transport properties.
    */
-  public NettyProperties properties() {
+  public NettyOptions properties() {
     return properties;
   }
 
@@ -108,7 +108,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withThreads(int threads) {
-      properties.setProperty(NettyProperties.THREADS, String.valueOf(Assert.argNot(threads, threads <= 0, "threads must be positive")));
+      properties.setProperty(NettyOptions.THREADS, String.valueOf(Assert.argNot(threads, threads <= 0, "threads must be positive")));
       return this;
     }
 
@@ -119,7 +119,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withConnectTimeout(int timeout) {
-      properties.setProperty(NettyProperties.CONNECT_TIMEOUT, String.valueOf(Assert.argNot(timeout, timeout <= 0, "timeout must be positive")));
+      properties.setProperty(NettyOptions.CONNECT_TIMEOUT, String.valueOf(Assert.argNot(timeout, timeout <= 0, "timeout must be positive")));
       return this;
     }
 
@@ -130,7 +130,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withSendBufferSize(int sendBufferSize) {
-      properties.setProperty(NettyProperties.SEND_BUFFER_SIZE, String.valueOf(Assert.argNot(sendBufferSize, sendBufferSize <= 0, "buffer size must be positive")));
+      properties.setProperty(NettyOptions.SEND_BUFFER_SIZE, String.valueOf(Assert.argNot(sendBufferSize, sendBufferSize <= 0, "buffer size must be positive")));
       return this;
     }
 
@@ -141,7 +141,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withReceiveBufferSize(int receiveBufferSize) {
-      properties.setProperty(NettyProperties.RECEIVE_BUFFER_SIZE, String.valueOf(Assert.argNot(receiveBufferSize, receiveBufferSize <= 0, "buffer size must be positive")));
+      properties.setProperty(NettyOptions.RECEIVE_BUFFER_SIZE, String.valueOf(Assert.argNot(receiveBufferSize, receiveBufferSize <= 0, "buffer size must be positive")));
       return this;
     }
 
@@ -161,7 +161,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withReuseAddress(boolean reuseAddress) {
-      properties.setProperty(NettyProperties.REUSE_ADDRESS, String.valueOf(reuseAddress));
+      properties.setProperty(NettyOptions.REUSE_ADDRESS, String.valueOf(reuseAddress));
       return this;
     }
 
@@ -181,7 +181,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withTcpKeepAlive(boolean tcpKeepAlive) {
-      properties.setProperty(NettyProperties.TCP_KEEP_ALIVE, String.valueOf(tcpKeepAlive));
+      properties.setProperty(NettyOptions.TCP_KEEP_ALIVE, String.valueOf(tcpKeepAlive));
       return this;
     }
 
@@ -201,7 +201,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withTcpNoDelay(boolean tcpNoDelay) {
-      properties.setProperty(NettyProperties.TCP_NO_DELAY, String.valueOf(tcpNoDelay));
+      properties.setProperty(NettyOptions.TCP_NO_DELAY, String.valueOf(tcpNoDelay));
       return this;
     }
 
@@ -212,7 +212,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withAcceptBacklog(int acceptBacklog) {
-      properties.setProperty(NettyProperties.ACCEPT_BACKLOG, String.valueOf(Assert.argNot(acceptBacklog, acceptBacklog <= 0, "accept backlog must be positive")));
+      properties.setProperty(NettyOptions.ACCEPT_BACKLOG, String.valueOf(Assert.argNot(acceptBacklog, acceptBacklog <= 0, "accept backlog must be positive")));
       return this;
     }
 
@@ -232,7 +232,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withSsl(boolean sslEnabled) {
-      properties.setProperty(NettyProperties.SSL_ENABLED, String.valueOf(sslEnabled));
+      properties.setProperty(NettyOptions.SSL_ENABLED, String.valueOf(sslEnabled));
       return this;
     }
 
@@ -243,7 +243,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withSslProtocol(SslProtocol sslProtocol) {
-      properties.setProperty(NettyProperties.SSL_PROTOCOL, Assert.notNull(sslProtocol, "sslProtocol").name().replace("_", "."));
+      properties.setProperty(NettyOptions.SSL_PROTOCOL, Assert.notNull(sslProtocol, "sslProtocol").name().replace("_", "."));
       return this;
     }
 
@@ -254,7 +254,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withTrustStorePath(String trustStorePath) {
-      properties.setProperty(NettyProperties.SSL_TRUST_STORE_PATH, Assert.notNull(trustStorePath, "trustStorePath"));
+      properties.setProperty(NettyOptions.SSL_TRUST_STORE_PATH, Assert.notNull(trustStorePath, "trustStorePath"));
       return this;
     }
 
@@ -265,7 +265,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withTrustStorePassword(String trustStorePassword) {
-      properties.setProperty(NettyProperties.SSL_TRUST_STORE_PASSWORD, Assert.notNull(trustStorePassword, "trustStorePassword"));
+      properties.setProperty(NettyOptions.SSL_TRUST_STORE_PASSWORD, Assert.notNull(trustStorePassword, "trustStorePassword"));
       return this;
     }
 
@@ -276,7 +276,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withKeyStorePath(String keyStorePath) {
-      properties.setProperty(NettyProperties.SSL_KEY_STORE_PATH, Assert.notNull(keyStorePath, "keyStorePath"));
+      properties.setProperty(NettyOptions.SSL_KEY_STORE_PATH, Assert.notNull(keyStorePath, "keyStorePath"));
       return this;
     }
 
@@ -287,7 +287,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withKeyStorePassword(String trustStorePassword) {
-      properties.setProperty(NettyProperties.SSL_KEY_STORE_PASSWORD, Assert.notNull(trustStorePassword, "trustStorePassword"));
+      properties.setProperty(NettyOptions.SSL_KEY_STORE_PASSWORD, Assert.notNull(trustStorePassword, "trustStorePassword"));
       return this;
     }
 
@@ -298,7 +298,7 @@ public class NettyTransport implements Transport {
      * @return The Netty transport builder.
      */
     public Builder withKeyStoreKeyPassword(String keyStoreKeyPassword) {
-      properties.setProperty(NettyProperties.SSL_KEY_STORE_KEY_PASSWORD, Assert.notNull(keyStoreKeyPassword, "trustStorePassword"));
+      properties.setProperty(NettyOptions.SSL_KEY_STORE_KEY_PASSWORD, Assert.notNull(keyStoreKeyPassword, "trustStorePassword"));
       return this;
     }
 

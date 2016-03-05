@@ -21,11 +21,11 @@ import io.atomix.catalyst.util.PropertiesReader;
 import java.util.Properties;
 
 /**
- * Netty transport properties.
+ * Netty transport options.
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-public final class NettyProperties {
+public final class NettyOptions {
   public static final String THREADS = "threads";
   public static final String CONNECT_TIMEOUT = "connectTimeout";
   public static final String SEND_BUFFER_SIZE = "sendBufferSize";
@@ -57,7 +57,7 @@ public final class NettyProperties {
 
   private final PropertiesReader reader;
 
-  public NettyProperties(Properties properties) {
+  public NettyOptions(Properties properties) {
     this.reader = new PropertiesReader(properties);
   }
 
