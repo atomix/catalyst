@@ -479,7 +479,7 @@ public final class PropertiesReader {
   public Duration getDuration(String property, Duration defaultValue) {
     return getProperty(property, defaultValue, value -> {
       try {
-        return Duration.ofMillis(Long.valueOf(value));
+        return Durations.of(value);
       } catch (NumberFormatException e) {
         throw new ConfigurationException("malformed property value: " + property + " must be a number");
       }
