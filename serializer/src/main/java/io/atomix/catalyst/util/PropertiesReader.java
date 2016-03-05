@@ -35,7 +35,7 @@ import java.util.function.Function;
 public final class PropertiesReader {
 
   /**
-   * Loads a properties reader for the given properties file.
+   * Loads a properties reader for the given properties file on the local filesystem.
    *
    * @param propertiesFile The properties file for which to load the reader.
    * @return A new properties reader.
@@ -45,7 +45,7 @@ public final class PropertiesReader {
   }
 
   /**
-   * Loads a properties reader for the given properties file.
+   * Loads a properties reader for the given properties file on the classpath.
    *
    * @param propertiesFile The properties file for which to load the reader.
    * @return A new properties reader.
@@ -55,7 +55,7 @@ public final class PropertiesReader {
   }
 
   /**
-   * Loads properties from a properties file.
+   * Loads properties from a properties file on the local filesystem.
    */
   private static Properties loadProperties(String propertiesFile) {
     Properties properties = new Properties();
@@ -68,7 +68,7 @@ public final class PropertiesReader {
   }
 
   /**
-   * Loads properties from a properties file.
+   * Loads properties from a properties file on the classpath.
    */
   private static Properties loadPropertiesFromClasspath(String propertiesFile) {
     Properties properties = new Properties();
