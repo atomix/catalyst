@@ -16,10 +16,15 @@
 package io.atomix.catalyst.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.function.Function;
 
 /**
@@ -40,14 +45,37 @@ public final class PropertiesReader {
   }
 
   /**
+   * Loads a properties reader for the given properties file.
+   *
+   * @param propertiesFile The properties file for which to load the reader.
+   * @return A new properties reader.
+   */
+  public static PropertiesReader loadFromClasspath(String propertiesFile) {
+    return new PropertiesReader(loadPropertiesFromClasspath(propertiesFile));
+  }
+
+  /**
    * Loads properties from a properties file.
    */
   private static Properties loadProperties(String propertiesFile) {
     Properties properties = new Properties();
+    try (InputStream is = new FileInputStream(propertiesFile)) {
+      properties.load(is);
+    } catch (IOException e) {
+      throw new RuntimeException("failed to load properties", e);
+    }
+    return properties;
+  }
+
+  /**
+   * Loads properties from a properties file.
+   */
+  private static Properties loadPropertiesFromClasspath(String propertiesFile) {
+    Properties properties = new Properties();
     try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(propertiesFile)) {
       properties.load(is);
     } catch (IOException e) {
-      throw new RuntimeException("failed to load default transport properties", e);
+      throw new RuntimeException("failed to load properties", e);
     }
     return properties;
   }
@@ -99,7 +127,8 @@ public final class PropertiesReader {
     Map<K, V> map = new HashMap<>();
     for (String property : properties.stringPropertyNames()) {
       if (property.startsWith(prefix + ".")) {
-        map.put(keyFactory.apply(property.substring(prefix.length() + 1)), valueFactory.apply(properties.getProperty(property)));
+        map.put(keyFactory.apply(property.substring(prefix.length() + 1)),
+            valueFactory.apply(properties.getProperty(property)));
       }
     }
     return map;
