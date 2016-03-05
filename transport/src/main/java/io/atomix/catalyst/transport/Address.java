@@ -36,6 +36,20 @@ public class Address implements CatalystSerializable {
   public Address() {
   }
 
+  public Address(String address) {
+    Assert.notNull(address, "address");
+    String[] components = address.split(":");
+    Assert.arg(components.length == 2, "%s must contain address:port", address);
+
+    this.host = components[0];
+    try {
+      this.port = Integer.parseInt(components[1]);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(components[1] + " is not a number");
+    }
+    this.address = new InetSocketAddress(host, port);
+  }
+
   public Address(Address address) {
     this(address.host, address.port, Assert.notNull(address, "address").address);
   }
