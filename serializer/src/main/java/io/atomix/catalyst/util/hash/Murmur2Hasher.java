@@ -123,4 +123,11 @@ public class Murmur2Hasher implements Hasher {
     return h;
   }
 
+  @Override
+  public int hashCode() {
+    int hashCode = 86028157;
+    hashCode = 37 * hashCode + seed;
+    return hashCode;
+  }
+
 }

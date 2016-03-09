@@ -42,4 +42,9 @@ public class StringHasher implements Hasher {
     return h;
   }
 
+  @Override
+  public int hashCode() {
+    return 15485867;
+  }
+
 }
