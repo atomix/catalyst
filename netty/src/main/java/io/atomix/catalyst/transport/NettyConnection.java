@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.Listener;
 import io.atomix.catalyst.util.Listeners;
@@ -84,14 +85,20 @@ public class NettyConnection implements Connection {
    */
   void handleRequest(ByteBuf buffer) {
     long requestId = buffer.readLong();
-    Object request = readRequest(buffer);
-    HandlerHolder handler = handlers.get(request.getClass());
-    if (handler != null) {
-      handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
-    } else {
-      handleRequestFailure(requestId, new IllegalStateException("unknown message type: " + request.getClass()));
+
+    try {
+      Object request = readRequest(buffer);
+      HandlerHolder handler = handlers.get(request.getClass());
+      if (handler != null) {
+        handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
+      } else {
+        handleRequestFailure(requestId, new IllegalStateException("unknown message type: " + request.getClass()));
+      }
+    } catch (SerializationException e) {
+      handleRequestFailure(requestId, e);
+    } finally {
+      buffer.release();
     }
-    buffer.release();
   }
 
   /**
@@ -117,7 +124,15 @@ public class NettyConnection implements Connection {
       .writeByte(RESPONSE)
       .writeLong(requestId)
       .writeByte(SUCCESS);
-    channel.writeAndFlush(writeResponse(buffer, response), channel.voidPromise());
+
+    try {
+      writeResponse(buffer, response);
+    } catch (SerializationException e) {
+      handleRequestFailure(requestId, e);
+      return;
+    }
+
+    channel.writeAndFlush(buffer, channel.voidPromise());
 
     if (response instanceof ReferenceCounted) {
       ((ReferenceCounted) response).release();
@@ -132,7 +147,14 @@ public class NettyConnection implements Connection {
       .writeByte(RESPONSE)
       .writeLong(requestId)
       .writeByte(FAILURE);
-    channel.writeAndFlush(writeError(buffer, error), channel.voidPromise());
+
+    try {
+      writeError(buffer, error);
+    } catch (SerializationException e) {
+      return;
+    }
+
+    channel.writeAndFlush(buffer, channel.voidPromise());
   }
 
   /**
@@ -143,10 +165,18 @@ public class NettyConnection implements Connection {
     byte status = response.readByte();
     switch (status) {
       case SUCCESS:
-        handleResponseSuccess(requestId, readResponse(response));
+        try {
+          handleResponseSuccess(requestId, readResponse(response));
+        } catch (SerializationException e) {
+          handleResponseFailure(requestId, e);
+        }
         break;
       case FAILURE:
-        handleResponseFailure(requestId, readError(response));
+        try {
+          handleResponseFailure(requestId, readError(response));
+        } catch (SerializationException e) {
+          handleResponseFailure(requestId, e);
+        }
         break;
     }
     response.release();
@@ -285,12 +315,20 @@ public class NettyConnection implements Connection {
 
     long requestId = ++this.requestId;
 
-    ByteBuf buffer = this.channel.alloc().buffer(9);
-    buffer.writeByte(REQUEST)
+    ByteBuf buffer = this.channel.alloc().buffer(9)
+      .writeByte(REQUEST)
       .writeLong(requestId);
 
+    try {
+      writeRequest(buffer, request);
+    } catch (SerializationException e) {
+      future.completeExceptionally(e);
+      return future;
+    }
+
     responseFutures.put(requestId, future);
-    writeFuture = channel.writeAndFlush(writeRequest(buffer, request)).addListener((channelFuture) -> {
+
+    writeFuture = channel.writeAndFlush(buffer).addListener((channelFuture) -> {
       if (channelFuture.isSuccess()) {
         if (closed) {
           ContextualFuture responseFuture = responseFutures.remove(requestId);
