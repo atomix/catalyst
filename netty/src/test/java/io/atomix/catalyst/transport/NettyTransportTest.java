@@ -15,6 +15,7 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.concurrent.SingleThreadContext;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
@@ -83,6 +84,53 @@ public class NettyTransportTest extends ConcurrentTestCase {
     await(1000, 2);
   }
 
+  /**
+   * Tests failing a message that's not serializable.
+   */
+  public void testFailNotSerializable() throws Throwable {
+    Transport transport = NettyTransport.builder().withThreads(2).build();
+
+    Server server = transport.server();
+    Client client = transport.client();
+
+    ThreadContext context = new SingleThreadContext("test-thread-%d", new Serializer());
+
+    context.executor().execute(() -> {
+      try {
+        server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5556)), connection -> {
+          connection.<String, String>handler(String.class, message -> {
+            threadAssertEquals("Hello world!", message);
+            return CompletableFuture.completedFuture("Hello world back!");
+          });
+        }).thenRun(this::resume);
+      } catch (UnknownHostException e) {
+        threadFail(e);
+      }
+    });
+    await(1000);
+
+    context.executor().execute(() -> {
+      try {
+        client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5556))).thenAccept(connection -> {
+          connection.send(new NotSerializable()).whenComplete((result, error) -> {
+            threadAssertNotNull(error);
+            threadAssertTrue(error instanceof SerializationException);
+            resume();
+          });
+        });
+      } catch (UnknownHostException e) {
+        threadFail(e);
+      }
+    });
+    await(1000);
+
+    context.executor().execute(() -> {
+      client.close().thenRun(this::resume);
+      server.close().thenRun(this::resume);
+    });
+    await(1000, 2);
+  }
+
   @Test(enabled=false)
   // This test fails because of cert validation
   // Keeping it in here for own testing and as an example
@@ -133,6 +181,12 @@ public class NettyTransportTest extends ConcurrentTestCase {
       server.close().thenRun(this::resume);
     });
     await(1000, 2);
+  }
+
+  /**
+   * Tests class that's not serializable.
+   */
+  private static class NotSerializable {
   }
 
 }
