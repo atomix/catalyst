@@ -20,6 +20,7 @@ import io.atomix.catalyst.util.concurrent.ComposableFuture;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
+import java.net.ConnectException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -56,7 +57,7 @@ public class LocalClient implements Client {
     ThreadContext context = getContext();
     LocalServer server = registry.get(address);
     if (server == null) {
-      return Futures.exceptionalFutureAsync(new TransportException("failed to connect"), context.executor());
+      return Futures.exceptionalFutureAsync(new ConnectException("failed to connect"), context.executor());
     }
 
     LocalConnection connection = new LocalConnection(context, connections);

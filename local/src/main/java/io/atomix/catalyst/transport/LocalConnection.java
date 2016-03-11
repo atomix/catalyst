@@ -22,6 +22,7 @@ import io.atomix.catalyst.util.ReferenceCounted;
 import io.atomix.catalyst.util.concurrent.Futures;
 import io.atomix.catalyst.util.concurrent.ThreadContext;
 
+import java.net.ConnectException;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -65,7 +66,7 @@ public class LocalConnection implements Connection {
   @Override
   public <T, U> CompletableFuture<U> send(T request) {
     if (!open || !connection.open)
-      return Futures.exceptionalFuture(new IllegalStateException("connection closed"));
+      return Futures.exceptionalFuture(new ConnectException("connection closed"));
 
     Assert.notNull(request, "request");
 
@@ -83,7 +84,7 @@ public class LocalConnection implements Connection {
       futures.put(requestId, future);
       connection.handleRequest(requestId, request);
     } else {
-      future.context.executor().execute(() -> future.completeExceptionally(new IllegalStateException("connection closed")));
+      future.context.executor().execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
     }
 
     if (request instanceof ReferenceCounted) {
@@ -119,7 +120,7 @@ public class LocalConnection implements Connection {
   private void handleRequest(long requestId, Object request) {
     HandlerHolder holder = handlers.get(request.getClass());
     if (holder == null) {
-      connection.handleResponseError(requestId, new TransportException("no handler registered"));
+      connection.handleResponseError(requestId, new ConnectException("no handler registered"));
       return;
     }
 
@@ -130,7 +131,7 @@ public class LocalConnection implements Connection {
         if (open && connection.open) {
           handler.handle(request).whenComplete((response, error) -> {
             if (!open || !connection.open) {
-              connection.handleResponseError(requestId, new IllegalStateException("connection closed"));
+              connection.handleResponseError(requestId, new ConnectException("connection closed"));
             } else if (error == null) {
               connection.handleResponseOk(requestId, response);
             } else {
@@ -138,11 +139,11 @@ public class LocalConnection implements Connection {
             }
           });
         } else {
-          connection.handleResponseError(requestId, new IllegalStateException("connection closed"));
+          connection.handleResponseError(requestId, new ConnectException("connection closed"));
         }
       });
     } catch (RejectedExecutionException e) {
-      connection.handleResponseError(requestId, new IllegalStateException("connection closed"));
+      connection.handleResponseError(requestId, new ConnectException("connection closed"));
     }
   }
 
@@ -186,7 +187,7 @@ public class LocalConnection implements Connection {
     for (Map.Entry<Long, ContextualFuture> entry : futures.entrySet()) {
       ContextualFuture future = entry.getValue();
       try {
-        future.context.executor().execute(() -> future.completeExceptionally(new IllegalStateException("connection closed")));
+        future.context.executor().execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
       } catch (RejectedExecutionException e) {
       }
     }
