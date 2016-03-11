@@ -22,6 +22,7 @@
     <version>1.0.3-SNAPSHOT</version>
   </parent>
 
+  <packaging>bundle</packaging>
   <artifactId>catalyst-netty</artifactId>
   <name>Catalyst Netty Transport</name>
 
