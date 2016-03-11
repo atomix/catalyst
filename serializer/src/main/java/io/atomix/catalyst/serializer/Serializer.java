@@ -46,6 +46,7 @@ public class Serializer {
   private final Map<Class<?>, TypeSerializer<?>> serializers = new HashMap<>();
   private final Map<Class<?>, Integer> ids = new HashMap<>();
   private final Map<String, Class<?>> types = new HashMap<>();
+  private final Map<String, ClassLoader> classLoaders = new HashMap<>();
   private final BufferAllocator allocator;
   private final AtomicBoolean whitelistRequired;
 
@@ -220,10 +221,11 @@ public class Serializer {
     }
   }
 
-  private Serializer(SerializerRegistry registry, BufferAllocator allocator, AtomicBoolean whitelistRequired) {
+  private Serializer(SerializerRegistry registry, BufferAllocator allocator, AtomicBoolean whitelistRequired, Map<String, ClassLoader> classLoaders) {
     this.registry = registry;
     this.allocator = allocator;
     this.whitelistRequired = whitelistRequired;
+    this.classLoaders.putAll(classLoaders);
   }
 
   /**
@@ -327,6 +329,38 @@ public class Serializer {
   public Serializer register(Class<?> type) {
     registry.register(type);
     return this;
+  }
+
+  /**
+   * Registers a ClassLoader for a class.
+   *
+   * @param type The class type.
+   * @return The serializer instance.
+   */
+  public Serializer registerClassLoader(Class<?> type) {
+    return registerClassLoader(type.getName(), type.getClassLoader());
+  }
+
+  /**
+   * Registers a ClassLoader for a class.
+   *
+   * @param className The class name.
+   * @param classLoader The class loader.
+   * @return The serializer instance.
+   */
+  public Serializer registerClassLoader(String className, ClassLoader classLoader) {
+    classLoaders.put(className, classLoader);
+    return this;
+  }
+
+  /**
+   * Returns the ClassLoader for a class.
+   *
+   * @param className The class name.
+   * @return The ClassLoader instance to use for loading the class.
+   */
+  public ClassLoader getClassLoader(String className) {
+    return classLoaders.getOrDefault(className, this.getClass().getClassLoader());
   }
 
   /**
@@ -1036,7 +1070,7 @@ public class Serializer {
    * Clones the object.
    */
   public final Serializer clone() {
-    return new Serializer(registry, allocator, whitelistRequired);
+    return new Serializer(registry, allocator, whitelistRequired, classLoaders);
   }
 
 }
