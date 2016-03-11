@@ -22,6 +22,7 @@
     <version>1.0.4-SNAPSHOT</version>
   </parent>
 
+  <packaging>bundle</packaging>
   <artifactId>catalyst-serializer</artifactId>
   <name>Catalyst Serializer</name>
 
@@ -30,6 +31,13 @@
       <groupId>io.atomix.catalyst</groupId>
       <artifactId>catalyst-buffer</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.framework</artifactId>
+      <version>5.4.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

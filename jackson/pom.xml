@@ -22,6 +22,7 @@
     <version>1.0.4-SNAPSHOT</version>
   </parent>
 
+  <packaging>bundle</packaging>
   <artifactId>catalyst-jackson</artifactId>
   <name>Catalyst Jackson Serializer</name>
 
