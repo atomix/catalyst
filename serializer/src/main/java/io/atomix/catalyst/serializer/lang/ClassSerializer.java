@@ -36,7 +36,8 @@ public class ClassSerializer implements TypeSerializer<Class<?>> {
   @Override
   public Class<?> read(Class<Class<?>> type, BufferInput buffer, Serializer serializer) {
     try {
-      return Class.forName(buffer.readUTF8());
+      String className = buffer.readUTF8();
+      return serializer.getClassLoader(className).loadClass(className);
     } catch (ClassNotFoundException e) {
       throw new SerializationException(e);
     }
