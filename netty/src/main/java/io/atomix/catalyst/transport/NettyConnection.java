@@ -26,6 +26,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 
+import java.net.ConnectException;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
@@ -92,7 +93,7 @@ public class NettyConnection implements Connection {
       if (handler != null) {
         handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
       } else {
-        handleRequestFailure(requestId, new IllegalStateException("unknown message type: " + request.getClass()));
+        handleRequestFailure(requestId, new SerializationException("unknown message type: " + request.getClass()));
       }
     } catch (SerializationException e) {
       handleRequestFailure(requestId, e);
@@ -279,7 +280,7 @@ public class NettyConnection implements Connection {
       closed = true;
 
       for (ContextualFuture<?> responseFuture : responseFutures.values()) {
-        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new IllegalStateException("connection closed")));
+        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
       }
       responseFutures.clear();
 
@@ -333,11 +334,11 @@ public class NettyConnection implements Connection {
         if (closed) {
           ContextualFuture responseFuture = responseFutures.remove(requestId);
           if (responseFuture != null) {
-            responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new TransportException("connection closed")));
+            responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
           }
         }
       } else {
-        future.context.executor().execute(() -> future.completeExceptionally(new TransportException(channelFuture.cause())));
+        future.context.executor().execute(() -> future.completeExceptionally(channelFuture.cause()));
       }
     });
     return future;
