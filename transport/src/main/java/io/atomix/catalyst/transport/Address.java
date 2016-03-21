@@ -97,7 +97,7 @@ public class Address implements CatalystSerializable {
 
   @Override
   public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
-    buffer.writeUTF8(address.getHostName()).writeInt(address.getPort());
+    buffer.writeUTF8(host()).writeInt(port());
   }
 
   @Override
