@@ -17,6 +17,7 @@ package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.buffer.*;
 import io.atomix.catalyst.serializer.util.PooledTypeSerializer;
+import io.atomix.catalyst.util.LRUCache;
 import io.atomix.catalyst.util.ReferenceCounted;
 
 import java.io.InputStream;
@@ -47,6 +48,7 @@ public class Serializer {
   private final Map<Class<?>, Integer> ids = new HashMap<>();
   private final Map<String, Class<?>> types = new HashMap<>();
   private final Map<String, ClassLoader> classLoaders = new HashMap<>();
+  private final Map<Class<?>, Optional<Class<?>>> enclosingClasses = new LRUCache<>(1024);
   private final BufferAllocator allocator;
   private final AtomicBoolean whitelistRequired;
 
@@ -703,7 +705,7 @@ public class Serializer {
   }
 
   /**
-   * Returns the serializer for the given type else {@code null} if no serializer or factory are registered for the 
+   * Returns the serializer for the given type else {@code null} if no serializer or factory are registered for the
    * {@code type}.
    */
   @SuppressWarnings("unchecked")
@@ -844,11 +846,13 @@ public class Serializer {
     }
 
     Class<?> type = object.getClass();
+    // get the enclosing class from a cache.
+    Class<?> enclosingClass = enclosingClasses.computeIfAbsent(type, clazz -> Optional.ofNullable(clazz.getEnclosingClass())).orElse(null);
 
     // Enums that implement interfaces or methods are generated as inner classes. For this reason,
     // we need to get the enclosing class if it's an enum.
-    if (type.getEnclosingClass() != null && type.getEnclosingClass().isEnum())
-      type = type.getEnclosingClass();
+    if (enclosingClass != null && enclosingClass.isEnum())
+      type = enclosingClass;
 
     // Look up the serializer for the given object type.
     TypeSerializer serializer = getSerializer(type);
@@ -1058,7 +1062,7 @@ public class Serializer {
         throw new SerializationException("object class not found: " + name, e);
       }
     }
-    
+
     TypeSerializer<T> serializer = getSerializer(type);
     if (serializer == null)
       throw new SerializationException("cannot deserialize unregistered type: " + name);
@@ -1069,6 +1073,7 @@ public class Serializer {
   /**
    * Clones the object.
    */
+  @Override
   public final Serializer clone() {
     return new Serializer(registry, allocator, whitelistRequired, classLoaders);
   }
