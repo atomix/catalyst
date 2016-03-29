@@ -436,7 +436,7 @@ public class SerializerTest {
    */
   @Test(expectedExceptions=SerializationException.class)
   public void testSerializeUnregisteredFail() {
-    Serializer serializer = new Serializer();
+    Serializer serializer = new Serializer().enableWhitelist();
     serializer.readObject(serializer.writeObject(new TestUnregistered()).flip());
   }
 

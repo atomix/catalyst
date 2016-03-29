@@ -48,7 +48,7 @@ final class SerializerOptions {
    * @return Whether to require whitelisting.
    */
   boolean whitelist() {
-    return reader.getBoolean(WHITELIST, true);
+    return reader.getBoolean(WHITELIST, false);
   }
 
   /**

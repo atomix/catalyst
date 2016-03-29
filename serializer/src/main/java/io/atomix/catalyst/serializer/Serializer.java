@@ -176,7 +176,7 @@ public class Serializer {
     if (allocator == null)
       throw new NullPointerException("allocator cannot be null");
     this.allocator = allocator;
-    this.whitelistRequired = new AtomicBoolean(true);
+    this.whitelistRequired = new AtomicBoolean(false);
     registry = new SerializerRegistry(resolvers);
   }
 
