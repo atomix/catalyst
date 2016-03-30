@@ -93,10 +93,10 @@ public class NettyConnection implements Connection {
       if (handler != null) {
         handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
       } else {
-        handleRequestFailure(requestId, new SerializationException("unknown message type: " + request.getClass()));
+        handleRequestFailure(requestId, new SerializationException("unknown message type: " + request.getClass()), this.context);
       }
     } catch (SerializationException e) {
-      handleRequestFailure(requestId, e);
+      handleRequestFailure(requestId, e, this.context);
     } finally {
       buffer.release();
     }
@@ -108,28 +108,39 @@ public class NettyConnection implements Connection {
   private void handleRequest(long requestId, Object request, HandlerHolder handler) {
     @SuppressWarnings("unchecked")
     CompletableFuture<Object> responseFuture = handler.handler.handle(request);
-    responseFuture.whenCompleteAsync((response, error) -> {
-      if (error == null) {
-        handleRequestSuccess(requestId, response);
+    responseFuture.whenComplete((response, error) -> {
+      ThreadContext context = ThreadContext.currentContext();
+      if (context == null) {
+        this.context.executor().execute(() -> {
+          if (error == null) {
+            handleRequestSuccess(requestId, response, this.context);
+          } else {
+            handleRequestFailure(requestId, error, this.context);
+          }
+        });
       } else {
-        handleRequestFailure(requestId, error);
+        if (error == null) {
+          handleRequestSuccess(requestId, response, context);
+        } else {
+          handleRequestFailure(requestId, error, context);
+        }
       }
-    }, context.executor());
+    });
   }
 
   /**
    * Handles a request response.
    */
-  private void handleRequestSuccess(long requestId, Object response) {
+  private void handleRequestSuccess(long requestId, Object response, ThreadContext context) {
     ByteBuf buffer = channel.alloc().buffer(10)
       .writeByte(RESPONSE)
       .writeLong(requestId)
       .writeByte(SUCCESS);
 
     try {
-      writeResponse(buffer, response);
+      writeResponse(buffer, response, context);
     } catch (SerializationException e) {
-      handleRequestFailure(requestId, e);
+      handleRequestFailure(requestId, e, context);
       return;
     }
 
@@ -143,14 +154,14 @@ public class NettyConnection implements Connection {
   /**
    * Handles a request failure.
    */
-  private void handleRequestFailure(long requestId, Throwable error) {
+  private void handleRequestFailure(long requestId, Throwable error, ThreadContext context) {
     ByteBuf buffer = channel.alloc().buffer(10)
       .writeByte(RESPONSE)
       .writeLong(requestId)
       .writeByte(FAILURE);
 
     try {
-      writeError(buffer, error);
+      writeError(buffer, error, context);
     } catch (SerializationException e) {
       return;
     }
@@ -207,7 +218,7 @@ public class NettyConnection implements Connection {
   /**
    * Writes a request to the given buffer.
    */
-  private ByteBuf writeRequest(ByteBuf buffer, Object request) {
+  private ByteBuf writeRequest(ByteBuf buffer, Object request, ThreadContext context) {
     context.serializer().writeObject(request, OUTPUT.get().setByteBuf(buffer));
     if (request instanceof ReferenceCounted) {
       ((ReferenceCounted) request).release();
@@ -218,7 +229,7 @@ public class NettyConnection implements Connection {
   /**
    * Writes a response to the given buffer.
    */
-  private ByteBuf writeResponse(ByteBuf buffer, Object request) {
+  private ByteBuf writeResponse(ByteBuf buffer, Object request, ThreadContext context) {
     context.serializer().writeObject(request, OUTPUT.get().setByteBuf(buffer));
     return buffer;
   }
@@ -226,7 +237,7 @@ public class NettyConnection implements Connection {
   /**
    * Writes an error to the given buffer.
    */
-  private ByteBuf writeError(ByteBuf buffer, Throwable t) {
+  private ByteBuf writeError(ByteBuf buffer, Throwable t, ThreadContext context) {
     context.serializer().writeObject(t, OUTPUT.get().setByteBuf(buffer));
     return buffer;
   }
@@ -321,7 +332,7 @@ public class NettyConnection implements Connection {
       .writeLong(requestId);
 
     try {
-      writeRequest(buffer, request);
+      writeRequest(buffer, request, context);
     } catch (SerializationException e) {
       future.completeExceptionally(e);
       return future;
