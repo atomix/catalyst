@@ -195,9 +195,14 @@ final class ByteBufOutput implements BufferOutput<ByteBufOutput> {
 
   @Override
   public ByteBufOutput writeUTF8(String s) {
-    byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-    checkWrite(Bytes.SHORT + bytes.length);
-    buffer.writeShort(bytes.length).writeBytes(bytes);
+    if (s == null) {
+      checkWrite(Bytes.BYTE);
+      buffer.writeByte(0);
+    } else {
+      byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+      checkWrite(Bytes.BYTE + Bytes.SHORT + bytes.length);
+      buffer.writeByte(1).writeShort(bytes.length).writeBytes(bytes);
+    }
     return this;
   }
 

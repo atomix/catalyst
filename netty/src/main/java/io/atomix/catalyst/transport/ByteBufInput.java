@@ -162,9 +162,14 @@ final class ByteBufInput implements BufferInput<ByteBufInput> {
 
   @Override
   public String readUTF8() {
-    byte[] bytes = new byte[buffer.readUnsignedShort()];
-    buffer.readBytes(bytes);
-    return new String(bytes, StandardCharsets.UTF_8);
+    int nullByte = buffer.readByte();
+    if (nullByte == 0) {
+      return null;
+    } else {
+      byte[] bytes = new byte[buffer.readUnsignedShort()];
+      buffer.readBytes(bytes);
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
   }
 
   @Override
