@@ -9,7 +9,7 @@
 
   <groupId>io.atomix.catalyst</groupId>
   <artifactId>catalyst-parent</artifactId>
-  <version>1.0.7-SNAPSHOT</version>
+  <version>1.0.7</version>
   <packaging>pom</packaging>
   <name>Catalyst Parent Pom</name>
   <description>Fast I/O and binary serialization framework.</description>
