@@ -17,7 +17,6 @@ package io.atomix.catalyst.util.concurrent;
 
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.util.Assert;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +42,7 @@ public class ThreadPoolContext implements ThreadContext {
   private final Serializer serializer;
   private final Runnable runner;
   private final LinkedList<Runnable> tasks = new LinkedList<>();
+  private volatile boolean blocked;
   private boolean running;
   private final Executor executor = new Executor() {
     @Override
@@ -99,6 +99,21 @@ public class ThreadPoolContext implements ThreadContext {
   @Override
   public Serializer serializer() {
     return serializer;
+  }
+
+  @Override
+  public boolean isBlocked() {
+    return blocked;
+  }
+
+  @Override
+  public void block() {
+    blocked = true;
+  }
+
+  @Override
+  public void unblock() {
+    blocked = false;
   }
 
   @Override
