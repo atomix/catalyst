@@ -65,6 +65,15 @@ public interface ThreadContext extends AutoCloseable {
   }
 
   /**
+   * Returns a boolean indicating whether the current thread is in this context.
+   *
+   * @return Indicates whether the current thread is in this context.
+   */
+  default boolean isCurrentContext() {
+    return currentContext() == this;
+  }
+
+  /**
    * Checks that the current thread is the correct context thread.
    */
   default void checkThread() {
@@ -91,6 +100,23 @@ public interface ThreadContext extends AutoCloseable {
    * @return The underlying executor.
    */
   Executor executor();
+
+  /**
+   * Returns a boolean indicating whether the context state is blocked.
+   *
+   * @return Indicates whether the context state is blocked.
+   */
+  boolean isBlocked();
+
+  /**
+   * Sets the context state to blocked.
+   */
+  void block();
+
+  /**
+   * Sets the context state to unblocked.
+   */
+  void unblock();
 
   /**
    * Executes a callback on the context.
