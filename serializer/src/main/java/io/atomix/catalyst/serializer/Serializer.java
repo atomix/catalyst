@@ -65,8 +65,9 @@ public class Serializer {
    *   }
    * </pre>
    */
+  @SuppressWarnings("unchecked")
   public Serializer() {
-    this(new UnpooledHeapAllocator(), new PrimitiveTypeResolver(), new JdkTypeResolver());
+    this(new UnpooledHeapAllocator(), Collections.EMPTY_LIST);
   }
 
   /**
@@ -87,8 +88,9 @@ public class Serializer {
    *
    * @param allocator The serializer buffer allocator.
    */
+  @SuppressWarnings("unchecked")
   public Serializer(BufferAllocator allocator) {
-    this(allocator, new PrimitiveTypeResolver(), new JdkTypeResolver());
+    this(allocator, Collections.EMPTY_LIST);
   }
 
   /**
