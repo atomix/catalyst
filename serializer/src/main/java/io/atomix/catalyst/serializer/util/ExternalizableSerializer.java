@@ -16,12 +16,12 @@
 package io.atomix.catalyst.serializer.util;
 
 import io.atomix.catalyst.buffer.BufferInput;
-import io.atomix.catalyst.buffer.BufferObjectInput;
-import io.atomix.catalyst.buffer.BufferObjectOutput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
+import io.atomix.catalyst.serializer.buffer.BufferObjectInput;
+import io.atomix.catalyst.serializer.buffer.BufferObjectOutput;
 
 import java.io.Externalizable;
 import java.io.IOException;

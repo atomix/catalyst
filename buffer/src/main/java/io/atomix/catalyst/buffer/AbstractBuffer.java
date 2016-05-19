@@ -16,7 +16,7 @@
 package io.atomix.catalyst.buffer;
 
 import io.atomix.catalyst.buffer.util.Memory;
-import io.atomix.catalyst.util.ReferenceManager;
+import io.atomix.catalyst.util.reference.ReferenceManager;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;

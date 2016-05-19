@@ -15,7 +15,7 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.util.ReferenceCounted;
+import io.atomix.catalyst.util.reference.ReferenceCounted;
 
 import java.nio.ByteOrder;
 

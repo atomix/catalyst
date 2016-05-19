@@ -15,11 +15,11 @@
  */
 package io.atomix.catalyst.transport;
 
+import io.atomix.catalyst.concurrent.CatalystThread;
+import io.atomix.catalyst.concurrent.Listener;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
-import io.atomix.catalyst.util.Listener;
-import io.atomix.catalyst.util.concurrent.CatalystThread;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;

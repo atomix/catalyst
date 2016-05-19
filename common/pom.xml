@@ -10,13 +10,4 @@
   <packaging>bundle</packaging>
   <artifactId>catalyst-common</artifactId>
   <name>Catalyst Common</name>
-
-  <dependencies>
-    <dependency>
-      <groupId>io.atomix.catalyst</groupId>
-      <artifactId>catalyst-serializer</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-  </dependencies>
-
 </project>
