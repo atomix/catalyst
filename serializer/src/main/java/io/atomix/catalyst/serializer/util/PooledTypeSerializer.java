@@ -18,7 +18,7 @@ package io.atomix.catalyst.serializer.util;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
-import io.atomix.catalyst.util.ReferenceCounted;
+import io.atomix.catalyst.util.reference.ReferenceCounted;
 
 /**
  * Provides pooled object serialization.

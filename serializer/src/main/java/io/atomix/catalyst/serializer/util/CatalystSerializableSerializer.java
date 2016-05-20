@@ -19,12 +19,12 @@ import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.serializer.Serializer;
 import io.atomix.catalyst.serializer.TypeSerializer;
-import io.atomix.catalyst.util.ReferenceCounted;
-import io.atomix.catalyst.util.ReferenceFactory;
-import io.atomix.catalyst.util.ReferencePool;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
-import io.atomix.catalyst.util.ReferenceManager;
+import io.atomix.catalyst.util.reference.ReferenceCounted;
+import io.atomix.catalyst.util.reference.ReferenceFactory;
+import io.atomix.catalyst.util.reference.ReferenceManager;
+import io.atomix.catalyst.util.reference.ReferencePool;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

@@ -15,10 +15,18 @@
  */
 package io.atomix.catalyst.serializer;
 
-import io.atomix.catalyst.buffer.*;
+import io.atomix.catalyst.buffer.Buffer;
+import io.atomix.catalyst.buffer.BufferAllocator;
+import io.atomix.catalyst.buffer.BufferInput;
+import io.atomix.catalyst.buffer.BufferOutput;
+import io.atomix.catalyst.buffer.InputStreamBufferInput;
+import io.atomix.catalyst.buffer.OutputStreamBufferOutput;
+import io.atomix.catalyst.buffer.PooledAllocator;
+import io.atomix.catalyst.buffer.UnpooledHeapAllocator;
+import io.atomix.catalyst.serializer.buffer.*;
 import io.atomix.catalyst.serializer.util.PooledTypeSerializer;
 import io.atomix.catalyst.util.LRUCache;
-import io.atomix.catalyst.util.ReferenceCounted;
+import io.atomix.catalyst.util.reference.ReferenceCounted;
 
 import java.io.InputStream;
 import java.io.OutputStream;

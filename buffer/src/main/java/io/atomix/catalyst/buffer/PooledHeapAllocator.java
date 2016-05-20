@@ -16,7 +16,7 @@
 package io.atomix.catalyst.buffer;
 
 import io.atomix.catalyst.buffer.util.HeapMemory;
-import io.atomix.catalyst.util.ReferencePool;
+import io.atomix.catalyst.util.reference.ReferencePool;
 
 /**
  * Pooled heap buffer allocator.

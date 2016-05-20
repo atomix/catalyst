@@ -15,8 +15,8 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.util.ReferenceFactory;
-import io.atomix.catalyst.util.ReferencePool;
+import io.atomix.catalyst.util.reference.ReferenceFactory;
+import io.atomix.catalyst.util.reference.ReferencePool;
 
 /**
  * Buffer pool.

@@ -15,7 +15,7 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.util.ReferenceManager;
+import io.atomix.catalyst.util.reference.ReferenceManager;
 import io.atomix.catalyst.buffer.util.HeapMemory;
 import io.atomix.catalyst.buffer.util.HeapMemoryAllocator;
 import io.atomix.catalyst.buffer.util.Memory;

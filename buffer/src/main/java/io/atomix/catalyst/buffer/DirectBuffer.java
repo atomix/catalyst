@@ -18,7 +18,7 @@ package io.atomix.catalyst.buffer;
 import io.atomix.catalyst.buffer.util.DirectMemoryAllocator;
 import io.atomix.catalyst.buffer.util.DirectMemory;
 import io.atomix.catalyst.buffer.util.Memory;
-import io.atomix.catalyst.util.ReferenceManager;
+import io.atomix.catalyst.util.reference.ReferenceManager;
 
 /**
  * Direct {@link java.nio.ByteBuffer} based buffer.

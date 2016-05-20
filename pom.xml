@@ -64,6 +64,7 @@
     <module>buffer</module>
     <module>serializer</module>
     <module>common</module>
+    <module>concurrent</module>
     <module>transport</module>
     <module>local</module>
     <module>netty</module>

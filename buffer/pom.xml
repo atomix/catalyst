@@ -25,4 +25,12 @@
   <packaging>bundle</packaging>
   <artifactId>catalyst-buffer</artifactId>
   <name>Catalyst Buffer</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.atomix.catalyst</groupId>
+      <artifactId>catalyst-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>
