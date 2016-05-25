@@ -149,6 +149,17 @@ public class NettyTransport implements Transport {
     }
 
     /**
+     * Sets the maximum frame size.
+     *
+     * @param maxFrameSize The maximum frame size.
+     * @return The Netty transport builder.
+     */
+    public Builder withMaxFrameSize(int maxFrameSize) {
+      properties.setProperty(NettyOptions.MAX_FRAME_SIZE, String.valueOf(Assert.argNot(maxFrameSize, maxFrameSize <= 0, "maximum frame size must be positive")));
+      return this;
+    }
+
+    /**
      * Enables the SO_REUSEADDR option.
      *
      * @return The Netty transport builder.
