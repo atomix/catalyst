@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
 public class NettyServer implements Server {
   private static final Logger LOGGER = LoggerFactory.getLogger(NettyServer.class);
   private static final ByteBufAllocator ALLOCATOR = new PooledByteBufAllocator(true);
-  private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
+  private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(4);
 
   private final NettyTransport transport;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
@@ -108,7 +108,7 @@ public class NettyServer implements Server {
             pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).initSslEngine(false)));
           }
           pipeline.addLast(FIELD_PREPENDER);
-          pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
+          pipeline.addLast(new LengthFieldBasedFrameDecoder(transport.properties().maxFrameSize(), 0, 4, 0, 4));
           pipeline.addLast(handler);
         }
       })

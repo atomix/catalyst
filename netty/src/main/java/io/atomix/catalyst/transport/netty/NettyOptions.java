@@ -30,6 +30,7 @@ public final class NettyOptions {
   public static final String CONNECT_TIMEOUT = "connectTimeout";
   public static final String SEND_BUFFER_SIZE = "sendBufferSize";
   public static final String RECEIVE_BUFFER_SIZE = "receiveBufferSize";
+  public static final String MAX_FRAME_SIZE = "maxFrameSize";
   public static final String REUSE_ADDRESS = "reuseAddress";
   public static final String TCP_KEEP_ALIVE = "tcpKeepAlive";
   public static final String TCP_NO_DELAY = "tcpNoDelay";
@@ -47,6 +48,7 @@ public final class NettyOptions {
   private static final int DEFAULT_CONNECT_TIMEOUT = 5000;
   private static final int DEFAULT_SEND_BUFFER_SIZE = -1;
   private static final int DEFAULT_RECEIVE_BUFFER_SIZE = -1;
+  private static final int DEFAULT_MAX_FRAME_SIZE = 64 * 1024 * 1024;
   private static final boolean DEFAULT_REUSE_ADDRESS = true;
   private static final boolean DEFAULT_TCP_KEEP_ALIVE = true;
   private static final boolean DEFAULT_TCP_NO_DELAY = false;
@@ -91,6 +93,13 @@ public final class NettyOptions {
    */
   public int receiveBufferSize() {
     return reader.getInteger(RECEIVE_BUFFER_SIZE, DEFAULT_RECEIVE_BUFFER_SIZE);
+  }
+
+  /**
+   * The maximum frame size.
+   */
+  public int maxFrameSize() {
+    return reader.getInteger(MAX_FRAME_SIZE, DEFAULT_MAX_FRAME_SIZE);
   }
 
   /**

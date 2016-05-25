@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NettyClient implements Client {
   private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
   private static final ByteBufAllocator ALLOCATOR = new PooledByteBufAllocator(true);
-  private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(2);
+  private static final ChannelHandler FIELD_PREPENDER = new LengthFieldPrepender(4);
 
   private final NettyTransport transport;
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
@@ -77,7 +77,7 @@ public class NettyClient implements Client {
             pipeline.addFirst(new SslHandler(new NettyTls(transport.properties()).initSslEngine(true)));
           }
           pipeline.addLast(FIELD_PREPENDER);
-          pipeline.addLast(new LengthFieldBasedFrameDecoder(1024 * 64, 0, 2, 0, 2));
+          pipeline.addLast(new LengthFieldBasedFrameDecoder(transport.properties().maxFrameSize(), 0, 4, 0, 4));
           pipeline.addLast(new NettyHandler(connections, future::complete, context));
         }
       });
