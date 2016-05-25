@@ -48,7 +48,6 @@ public class NettyConnection implements Connection {
   static final byte RESPONSE = 0x02;
   static final byte SUCCESS = 0x03;
   static final byte FAILURE = 0x04;
-  private static final long REQUEST_TIMEOUT = 500;
   private static final ThreadLocal<ByteBufInput> INPUT = new ThreadLocal<ByteBufInput>() {
     @Override
     protected ByteBufInput initialValue() {
@@ -67,6 +66,7 @@ public class NettyConnection implements Connection {
   private final Map<Class, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
+  private final long requestTimeout;
   private volatile long requestId;
   private volatile Throwable failure;
   private volatile boolean closed;
@@ -77,10 +77,11 @@ public class NettyConnection implements Connection {
   /**
    * @throws NullPointerException if any argument is null
    */
-  public NettyConnection(Channel channel, ThreadContext context) {
+  public NettyConnection(Channel channel, ThreadContext context, NettyOptions options) {
     this.channel = channel;
     this.context = context;
-    this.timeout = context.schedule(Duration.ofMillis(250), Duration.ofMillis(250), this::timeout);
+    this.requestTimeout = options.requestTimeout();
+    this.timeout = context.schedule(Duration.ofMillis(requestTimeout / 2), Duration.ofMillis(requestTimeout / 2), this::timeout);
   }
 
   /**
@@ -312,7 +313,7 @@ public class NettyConnection implements Connection {
     Iterator<Map.Entry<Long, ContextualFuture>> iterator = responseFutures.entrySet().iterator();
     while (iterator.hasNext()) {
       ContextualFuture future = iterator.next().getValue();
-      if (future.time + REQUEST_TIMEOUT < time) {
+      if (future.time + requestTimeout < time) {
         iterator.remove();
         future.context.executor().execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
       } else {

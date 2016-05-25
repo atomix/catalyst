@@ -15,12 +15,12 @@
  */
 package io.atomix.catalyst.transport.netty;
 
+import io.atomix.catalyst.concurrent.ComposableFuture;
+import io.atomix.catalyst.concurrent.ThreadContext;
 import io.atomix.catalyst.transport.Address;
 import io.atomix.catalyst.transport.Client;
 import io.atomix.catalyst.transport.Connection;
 import io.atomix.catalyst.util.Assert;
-import io.atomix.catalyst.concurrent.ComposableFuture;
-import io.atomix.catalyst.concurrent.ThreadContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -30,7 +30,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.ssl.SslHandler;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +77,7 @@ public class NettyClient implements Client {
           }
           pipeline.addLast(FIELD_PREPENDER);
           pipeline.addLast(new LengthFieldBasedFrameDecoder(transport.properties().maxFrameSize(), 0, 4, 0, 4));
-          pipeline.addLast(new NettyHandler(connections, future::complete, context));
+          pipeline.addLast(new NettyHandler(connections, future::complete, context, transport.properties()));
         }
       });
 

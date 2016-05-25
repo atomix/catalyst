@@ -35,6 +35,7 @@ public final class NettyOptions {
   public static final String TCP_KEEP_ALIVE = "tcpKeepAlive";
   public static final String TCP_NO_DELAY = "tcpNoDelay";
   public static final String ACCEPT_BACKLOG = "acceptBacklog";
+  public static final String REQUEST_TIMEOUT = "requestTimeout";
 
   public static final String SSL_ENABLED = "ssl.enabled";
   public static final String SSL_PROTOCOL = "ssl.protocol";
@@ -53,6 +54,7 @@ public final class NettyOptions {
   private static final boolean DEFAULT_TCP_KEEP_ALIVE = true;
   private static final boolean DEFAULT_TCP_NO_DELAY = false;
   private static final int DEFAULT_ACCEPT_BACKLOG = 1024;
+  private static final int DEFAULT_REQUEST_TIMEOUT = 500;
 
   private static final boolean DEFAULT_SSL_ENABLED = false;
   private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
@@ -128,6 +130,13 @@ public final class NettyOptions {
    */
   public int acceptBacklog() {
     return reader.getInteger(ACCEPT_BACKLOG, DEFAULT_ACCEPT_BACKLOG);
+  }
+
+  /**
+   * The request timeout.
+   */
+  public int requestTimeout() {
+    return reader.getInteger(REQUEST_TIMEOUT, DEFAULT_REQUEST_TIMEOUT);
   }
 
   /**
