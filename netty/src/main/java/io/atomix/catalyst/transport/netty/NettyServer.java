@@ -23,13 +23,7 @@ import io.atomix.catalyst.util.Assert;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -40,14 +34,13 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Netty server.
@@ -94,7 +87,7 @@ public class NettyServer implements Server {
   private void listen(Address address, Consumer<Connection> listener, ThreadContext context) {
     channelGroup = new DefaultChannelGroup("catalyst-acceptor-channels", GlobalEventExecutor.INSTANCE);
 
-    handler = new ServerHandler(connections, listener, context);
+    handler = new ServerHandler(connections, listener, context, transport.properties());
 
     final ServerBootstrap bootstrap = new ServerBootstrap();
     bootstrap.group(transport.eventLoopGroup())
@@ -164,8 +157,8 @@ public class NettyServer implements Server {
    */
   @ChannelHandler.Sharable
   private static class ServerHandler extends NettyHandler {
-    private ServerHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
-      super(connections, listener, context);
+    private ServerHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context, NettyOptions options) {
+      super(connections, listener, context, options);
     }
   }
 

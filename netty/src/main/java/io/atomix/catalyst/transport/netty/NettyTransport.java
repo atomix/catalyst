@@ -231,6 +231,17 @@ public class NettyTransport implements Transport {
     }
 
     /**
+     * Sets the request timeout.
+     *
+     * @param requestTimeout The request timeout.
+     * @return The Netty transport builder.
+     */
+    public Builder withRequestTimeout(int requestTimeout) {
+      properties.setProperty(NettyOptions.REQUEST_TIMEOUT, String.valueOf(Assert.argNot(requestTimeout, requestTimeout <= 0, "request timeout must be positive")));
+      return this;
+    }
+
+    /**
      * Enables SSL.
      *
      * @return The Netty transport builder.

@@ -38,11 +38,13 @@ class NettyHandler extends ChannelInboundHandlerAdapter {
   private final Map<Channel, NettyConnection> connections;
   private final Consumer<Connection> listener;
   private final ThreadContext context;
+  private final NettyOptions options;
 
-  protected NettyHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context) {
+  protected NettyHandler(Map<Channel, NettyConnection> connections, Consumer<Connection> listener, ThreadContext context, NettyOptions options) {
     this.connections = connections;
     this.listener = listener;
     this.context = context;
+    this.options = options;
   }
 
   /**
@@ -89,7 +91,7 @@ class NettyHandler extends ChannelInboundHandlerAdapter {
   @Override
   public void channelActive(ChannelHandlerContext context) throws Exception {
     Channel channel = context.channel();
-    NettyConnection connection = new NettyConnection(channel, getOrCreateContext(channel));
+    NettyConnection connection = new NettyConnection(channel, getOrCreateContext(channel), options);
     setConnection(channel, connection);
     // synchronously notify listeners in order to ensure message handlers
     // are registered before messages are handled.
