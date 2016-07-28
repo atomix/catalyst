@@ -56,7 +56,6 @@ public class NettyServer implements Server {
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
   private ServerHandler handler;
   private ChannelGroup channelGroup;
-  private NettyTls nettytls;
   private volatile boolean listening;
   private CompletableFuture<Void> listenFuture;
 
