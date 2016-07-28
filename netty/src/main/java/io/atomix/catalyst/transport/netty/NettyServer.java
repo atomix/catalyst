@@ -56,6 +56,7 @@ public class NettyServer implements Server {
   private final Map<Channel, NettyConnection> connections = new ConcurrentHashMap<>();
   private ServerHandler handler;
   private ChannelGroup channelGroup;
+  private final Object listenLock = new Object();
   private volatile boolean listening;
   private CompletableFuture<Void> listenFuture;
 
@@ -71,7 +72,7 @@ public class NettyServer implements Server {
       return CompletableFuture.completedFuture(null);
 
     ThreadContext context = ThreadContext.currentContextOrThrow();
-    synchronized (this) {
+    synchronized (listenLock) {
       if (listenFuture == null) {
         listenFuture = new CompletableFuture<>();
         listen(address, listener, context);
