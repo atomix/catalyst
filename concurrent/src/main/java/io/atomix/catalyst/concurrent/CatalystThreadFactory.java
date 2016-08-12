@@ -36,8 +36,8 @@ public class CatalystThreadFactory implements ThreadFactory {
   }
 
   @Override
-  public Thread newThread(Runnable r) {
-    return new CatalystThread(r, String.format(nameFormat, threadNumber.getAndIncrement()));
+  public Thread newThread(Runnable runnable) {
+    return new Thread(runnable, String.format(nameFormat, threadNumber.getAndIncrement()));
   }
 
 }

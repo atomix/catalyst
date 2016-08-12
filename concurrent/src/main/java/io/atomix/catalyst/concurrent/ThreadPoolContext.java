@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.LinkedList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -38,57 +37,19 @@ import java.util.concurrent.TimeUnit;
  */
 public class ThreadPoolContext implements ThreadContext {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolContext.class);
-  private final ScheduledExecutorService parent;
+  private final ScheduledExecutorService executor;
   private final Serializer serializer;
-  private final Runnable runner;
-  private final LinkedList<Runnable> tasks = new LinkedList<>();
   private volatile boolean blocked;
-  private boolean running;
-  private final Executor executor = new Executor() {
-    @Override
-    public void execute(Runnable command) {
-      synchronized (tasks) {
-        tasks.add(command);
-        if (!running) {
-          running = true;
-          parent.execute(runner);
-        }
-      }
-    }
-  };
 
   /**
    * Creates a new thread pool context.
    *
-   * @param parent The thread pool on which to execute events.
+   * @param executor The thread pool on which to execute events.
    * @param serializer The context serializer.
    */
-  public ThreadPoolContext(ScheduledExecutorService parent, Serializer serializer) {
-    this.parent = Assert.notNull(parent, "parent");
+  public ThreadPoolContext(ScheduledExecutorService executor, Serializer serializer) {
+    this.executor = new CatalystScheduledExecutorService(Assert.notNull(executor, "executor"), this);
     this.serializer = Assert.notNull(serializer, "serializer");
-
-    // This code was shamelessly stolededed from Vert.x:
-    // https://github.com/eclipse/vert.x/blob/master/src/main/java/io/vertx/core/impl/OrderedExecutorFactory.java
-    runner = () -> {
-      ((CatalystThread) Thread.currentThread()).setContext(this);
-      for (;;) {
-        final Runnable task;
-        synchronized (tasks) {
-          task = tasks.poll();
-          if (task == null) {
-            running = false;
-            return;
-          }
-        }
-
-        try {
-          task.run();
-        } catch (Throwable t) {
-          LOGGER.error("An uncaught exception occurred", t);
-          throw t;
-        }
-      }
-    };
   }
 
   @Override
@@ -123,13 +84,13 @@ public class ThreadPoolContext implements ThreadContext {
 
   @Override
   public Scheduled schedule(Duration delay, Runnable runnable) {
-    ScheduledFuture<?> future = parent.schedule(() -> executor.execute(Runnables.logFailure(runnable, LOGGER)), delay.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.schedule(() -> executor.execute(runnable), delay.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
   @Override
   public Scheduled schedule(Duration delay, Duration interval, Runnable runnable) {
-    ScheduledFuture<?> future = parent.scheduleAtFixedRate(() -> executor.execute(Runnables.logFailure(runnable, LOGGER)), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.scheduleAtFixedRate(() -> executor.execute(runnable), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 

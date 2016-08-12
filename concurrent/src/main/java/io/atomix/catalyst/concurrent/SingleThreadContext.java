@@ -26,7 +26,7 @@ public class SingleThreadContext implements ThreadContext {
     @Override
     public void execute(Runnable command) {
       try {
-        executor.execute(Runnables.logFailure(command, LOGGER));
+        executor.execute(command);
       } catch (RejectedExecutionException e) {
       }
     }
@@ -62,29 +62,8 @@ public class SingleThreadContext implements ThreadContext {
    * @param serializer The context serializer.
    */
   public SingleThreadContext(ScheduledExecutorService executor, Serializer serializer) {
-    this(getThread(executor), executor, serializer);
-  }
-
-  public SingleThreadContext(Thread thread, ScheduledExecutorService executor, Serializer serializer) {
-    this.executor = executor;
+    this.executor = new CatalystScheduledExecutorService(executor, this);
     this.serializer = serializer;
-    Assert.state(thread instanceof CatalystThread, "not a Catalyst thread");
-    ((CatalystThread) thread).setContext(this);
-  }
-
-  /**
-   * Gets the thread from a single threaded executor service.
-   */
-  protected static CatalystThread getThread(ExecutorService executor) {
-    final AtomicReference<CatalystThread> thread = new AtomicReference<>();
-    try {
-      executor.submit(() -> {
-        thread.set((CatalystThread) Thread.currentThread());
-      }).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IllegalStateException("failed to initialize thread state", e);
-    }
-    return thread.get();
   }
 
   @Override
@@ -119,13 +98,13 @@ public class SingleThreadContext implements ThreadContext {
 
   @Override
   public Scheduled schedule(Duration delay, Runnable runnable) {
-    ScheduledFuture<?> future = executor.schedule(Runnables.logFailure(runnable, LOGGER), delay.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.schedule(runnable, delay.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
   @Override
   public Scheduled schedule(Duration delay, Duration interval, Runnable runnable) {
-    ScheduledFuture<?> future = executor.scheduleAtFixedRate(Runnables.logFailure(runnable, LOGGER), delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = executor.scheduleAtFixedRate(runnable, delay.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     return () -> future.cancel(false);
   }
 
