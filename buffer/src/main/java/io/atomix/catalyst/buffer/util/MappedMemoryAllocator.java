@@ -107,16 +107,20 @@ public class MappedMemoryAllocator implements MemoryAllocator<MappedMemory> {
     return newMemory;
   }
 
+  public void close() {
+    try {
+      file.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
   /**
    * Releases a reference from the allocator.
    */
   void release() {
     if (referenceCount.decrementAndGet() == 0) {
-      try {
-        file.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      close();
     }
   }
 

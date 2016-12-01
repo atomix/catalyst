@@ -639,6 +639,7 @@ public class FileBytes extends AbstractBytes {
    */
   public void delete() {
     try {
+      close();
       Files.delete(file.toPath());
     } catch (IOException e) {
       throw new RuntimeException(e);
