@@ -16,6 +16,7 @@
 package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.serializer.lang.*;
+import io.atomix.catalyst.serializer.resolver.SerializableTypeResolver;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

@@ -46,4 +46,33 @@ public interface TypeSerializer<T> {
    */
   T read(Class<T> type, BufferInput buffer, Serializer serializer);
 
+  /**
+   * Serializer scope.
+   */
+  enum Scope {
+
+    /**
+     * The concrete serializer scope is for serializers that serialize concrete types like {@link java.util.ArrayList}.
+     */
+    CONCRETE,
+
+    /**
+     * The abstract serializer scope is for serializers that serialize abstract base classes and interfaces
+     * like {@link java.util.List}.
+     */
+    ABSTRACT,
+
+    /**
+     * The default serializer scope is for serializers that operate on serializable type interfaces like
+     * {@link java.io.Serializable} and {@link CatalystSerializable}.
+     */
+    DEFAULT,
+
+    /**
+     * The none serializer scope is the default scope which has no impact on serializers.
+     */
+    NONE,
+
+  }
+
 }

@@ -20,6 +20,7 @@ import io.atomix.catalyst.serializer.collection.ArrayListSerializer;
 import io.atomix.catalyst.serializer.collection.HashMapSerializer;
 import io.atomix.catalyst.serializer.collection.HashSetSerializer;
 import io.atomix.catalyst.serializer.collection.MapEntrySerializer;
+import io.atomix.catalyst.serializer.resolver.SerializableTypeResolver;
 import io.atomix.catalyst.serializer.util.*;
 
 import java.io.Externalizable;

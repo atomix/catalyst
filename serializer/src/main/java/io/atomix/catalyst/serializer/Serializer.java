@@ -23,7 +23,7 @@ import io.atomix.catalyst.buffer.InputStreamBufferInput;
 import io.atomix.catalyst.buffer.OutputStreamBufferOutput;
 import io.atomix.catalyst.buffer.PooledAllocator;
 import io.atomix.catalyst.buffer.UnpooledHeapAllocator;
-import io.atomix.catalyst.serializer.buffer.*;
+import io.atomix.catalyst.serializer.resolver.SerializableTypeResolver;
 import io.atomix.catalyst.serializer.util.PooledTypeSerializer;
 import io.atomix.catalyst.util.LRUCache;
 import io.atomix.catalyst.util.reference.ReferenceCounted;

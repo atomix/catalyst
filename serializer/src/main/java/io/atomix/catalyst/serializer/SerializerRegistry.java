@@ -15,9 +15,13 @@
  */
 package io.atomix.catalyst.serializer;
 
+import io.atomix.catalyst.CatalystException;
+import io.atomix.catalyst.serializer.resolver.SerializableTypeResolver;
 import io.atomix.catalyst.util.hash.Hasher;
 import io.atomix.catalyst.util.hash.StringHasher;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -93,20 +97,183 @@ public class SerializerRegistry {
   }
 
   /**
-   * Registers the given class for serialization.
+   * Returns the scope for the given type.
+   */
+  private TypeSerializer.Scope scopeFor(Class<?> type) {
+    if (isTypeSerializerClass(type)) {
+      SerializerInfo info = findSerializerInfo(type);
+      if (info != null && info.scope() != TypeSerializer.Scope.NONE) {
+        return info.scope();
+      }
+
+      if (ConcreteSerializer.class.isAssignableFrom(type)) {
+        return TypeSerializer.Scope.CONCRETE;
+      } else if (AbstractSerializer.class.isAssignableFrom(type)) {
+        return TypeSerializer.Scope.ABSTRACT;
+      } else if (DefaultSerializer.class.isAssignableFrom(type)) {
+        return TypeSerializer.Scope.DEFAULT;
+      }
+      return TypeSerializer.Scope.CONCRETE;
+    } else {
+      SerializableTypeInfo info = findSerializableTypeInfo(type);
+      if (info != null && info.serializer() != SerializableTypeInfo.None.class) {
+        Class<?> serializer = info.serializer();
+        SerializerInfo serializerInfo = findSerializerInfo(serializer);
+        if (serializerInfo != null && serializerInfo.scope() != TypeSerializer.Scope.NONE) {
+          return serializerInfo.scope();
+        }
+
+        if (ConcreteSerializer.class.isAssignableFrom(serializer)) {
+          return TypeSerializer.Scope.CONCRETE;
+        } else if (AbstractSerializer.class.isAssignableFrom(serializer)) {
+          return TypeSerializer.Scope.ABSTRACT;
+        } else if (DefaultSerializer.class.isAssignableFrom(serializer)) {
+          return TypeSerializer.Scope.DEFAULT;
+        }
+      }
+
+      if (Modifier.isAbstract(type.getModifiers()) || Modifier.isInterface(type.getModifiers())) {
+        return TypeSerializer.Scope.ABSTRACT;
+      }
+      return TypeSerializer.Scope.CONCRETE;
+    }
+  }
+
+  /**
+   * Registers a concrete class for serialization.
    *
    * @param type The type class.
    * @return The serializer registry.
    * @throws RegistrationException If the given {@code type} is already registered
    */
   public SerializerRegistry register(Class<?> type) {
-    if (type == null)
-      throw new NullPointerException("type cannot be null");
-    return register(type, calculateTypeId(type));
+    return register(type, calculateTypeId(type), findTypeSerializerFactory(type), scopeFor(type));
   }
 
   /**
-   * Registers the given class for serialization.
+   * Registers a concrete class for serialization.
+   *
+   * @param type The serializable class.
+   * @param typeId The serialization ID.
+   * @return The serializer registry.
+   * @throws RegistrationException If the given {@code type} is already registered or if no default
+   *         serializer could be found for the given type.
+   */
+  public SerializerRegistry register(Class<?> type, int typeId) {
+    return register(type, typeId, findTypeSerializerFactory(type), scopeFor(type));
+  }
+
+  /**
+   * Registers a concrete class for serialization.
+   *
+   * @param type The serializable class.
+   * @param serializer The serializer.
+   * @return The serializer registry.
+   * @throws RegistrationException If the given {@code type} is already registered
+   */
+  public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
+    return register(type, serializer, scopeFor(serializer));
+  }
+
+  /**
+   * Registers a concrete class for serialization.
+   *
+   * @param type The serializable class.
+   * @param typeId The serializable type ID.
+   * @param serializer The serializer.
+   * @return The serializer registry.
+   * @throws RegistrationException If the given {@code type} is already registered
+   */
+  public SerializerRegistry register(Class<?> type, int typeId, Class<? extends TypeSerializer> serializer) {
+    return register(type, typeId, serializer, scopeFor(serializer));
+  }
+
+  /**
+   * Registers a concrete class for serialization.
+   *
+   * @param type The serializable class.
+   * @param factory The serializer factory.
+   * @param typeId The serializable type ID.
+   * @return The serializer registry.
+   * @throws RegistrationException If the given {@code type} or {@code id} is already registered
+   */
+  public SerializerRegistry register(Class<?> type, int typeId, TypeSerializerFactory factory) {
+    return registerConcrete(type, typeId, factory);
+  }
+
+  public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer, TypeSerializer.Scope scope) {
+    return register(type, new DefaultTypeSerializerFactory(serializer), scope);
+  }
+
+  public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory, TypeSerializer.Scope scope) {
+    if (scope == null)
+      throw new NullPointerException("scope cannot be null");
+
+    switch (scope) {
+      case DEFAULT:
+        return registerDefault(type, factory);
+      default:
+        return register(type, calculateTypeId(type), factory, scope);
+    }
+  }
+
+  public SerializerRegistry register(Class<?> type, int typeId, Class<? extends TypeSerializer> serializer, TypeSerializer.Scope scope) {
+    return register(type, typeId, new DefaultTypeSerializerFactory(serializer), scope);
+  }
+
+  public SerializerRegistry register(Class<?> type, int typeId, TypeSerializerFactory factory, TypeSerializer.Scope scope) {
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+    if (scope == null)
+      throw new NullPointerException("scope cannot be null");
+
+    switch (scope) {
+      case CONCRETE:
+        return registerConcrete(type, typeId, factory);
+      case ABSTRACT:
+        return registerAbstract(type, typeId, factory);
+      default:
+        throw new IllegalArgumentException("cannot register DEFAULT serializer with type ID");
+    }
+  }
+
+  /**
+   * Registers a concrete class for serialization.
+   *
+   * @param type The type class.
+   * @return The serializer registry.
+   * @throws RegistrationException If the given {@code type} is already registered
+   */
+  public SerializerRegistry registerConcrete(Class<?> type) {
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+
+    if (isTypeSerializerClass(type)) {
+      return registerConcreteSerializer(type);
+    } else {
+      return registerConcrete(type, calculateTypeId(type));
+    }
+  }
+
+  /**
+   * Registers a concrete serializer class.
+   */
+  private SerializerRegistry registerConcreteSerializer(Class<?> type) {
+    validateConcreteSerializer(type);
+    SerializerInfo info = findSerializerInfo(type);
+    TypeSerializerFactory factory = findTypeSerializerFactory(type, info);
+    for (SerializableTypeReference reference : info.value()) {
+      if (reference.id() != 0) {
+        registerConcrete(reference.value(), reference.id(), factory);
+      } else {
+        registerConcrete(reference.value(), calculateTypeId(reference.value()), factory);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Registers a concrete class for serialization.
    *
    * @param type The serializable class.
    * @param id The serialization ID.
@@ -114,88 +281,83 @@ public class SerializerRegistry {
    * @throws RegistrationException If the given {@code type} is already registered or if no default
    *         serializer could be found for the given type.
    */
-  public synchronized SerializerRegistry register(Class<?> type, int id) {
+  public synchronized SerializerRegistry registerConcrete(Class<?> type, int id) {
     if (type == null)
       throw new NullPointerException("type cannot be null");
-
-    // Search for a default serializer for the type.
-    Class<?> baseType = findBaseType(type, defaultFactories);
-    if (baseType == null) {
-      throw new RegistrationException("no default serializer found for type: " + type);
-    }
-    return register(type, id, defaultFactories.get(baseType));
+    return registerConcrete(type, id, findTypeSerializerFactory(type));
   }
 
-  /**
-   * Registers a serializer for the given class.
-   *
-   * @param type The serializable class.
-   * @param serializer The serializer.
-   * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} is already registered
-   */
-  @SuppressWarnings("rawtypes")
-  public SerializerRegistry register(Class<?> type, Class<? extends TypeSerializer> serializer) {
-    return register(type, calculateTypeId(type), new DefaultTypeSerializerFactory(serializer));
+  public SerializerRegistry registerConcrete(Class<?> concreteType, Class<? extends TypeSerializer> serializer) {
+    return registerConcrete(concreteType, calculateTypeId(concreteType), new DefaultTypeSerializerFactory(serializer));
   }
 
-  /**
-   * Registers a serializer for the given class.
-   *
-   * @param type The serializable class.
-   * @param factory The serializer factory.
-   * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} is already registered
-   */
-  public SerializerRegistry register(Class<?> type, TypeSerializerFactory factory) {
-    return register(type, calculateTypeId(type), factory);
+  public SerializerRegistry registerConcrete(Class<?> concreteType, TypeSerializerFactory factory) {
+    return registerConcrete(concreteType, calculateTypeId(concreteType), factory);
   }
 
-  /**
-   * Registers the given class for serialization.
-   *
-   * @param type The serializable class.
-   * @param id The serializable type ID.
-   * @param serializer The serializer.
-   * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} is already registered
-   */
-  @SuppressWarnings("rawtypes")
-  public SerializerRegistry register(Class<?> type, int id, Class<? extends TypeSerializer> serializer) {
-    return register(type, id, new DefaultTypeSerializerFactory(serializer));
+  public SerializerRegistry registerConcrete(Class<?> concreteType, int typeId, Class<? extends TypeSerializer> serializer) {
+    return registerConcrete(concreteType, typeId, new DefaultTypeSerializerFactory(serializer));
   }
 
-  /**
-   * Registers the given class for serialization.
-   *
-   * @param type The serializable class.
-   * @param factory The serializer factory.
-   * @param id The serializable type ID.
-   * @return The serializer registry.
-   * @throws RegistrationException If the given {@code type} or {@code id} is already registered
-   */
-  public synchronized SerializerRegistry register(Class<?> type, int id, TypeSerializerFactory factory) {
-    if (type == null)
+  public synchronized SerializerRegistry registerConcrete(Class<?> concreteType, int typeId, TypeSerializerFactory factory) {
+    if (concreteType == null)
       throw new NullPointerException("type cannot be null");
 
     // If the type ID has already been registered, throw an exception.
-    if (types.containsKey(id) && types.get(id) != type) {
-      throw new RegistrationException("serializable type ID already registered: " + id);
+    if (types.containsKey(typeId) && types.get(typeId) != concreteType) {
+      throw new RegistrationException("serializable type ID already registered: " + typeId);
     }
 
     // If the type has already been registered, throw an exception if the IDs don't match.
-    if (ids.containsKey(type)) {
-      if (ids.get(type) != id) {
-        throw new RegistrationException("type registered with a different ID: " + type);
+    if (ids.containsKey(concreteType)) {
+      if (ids.get(concreteType) != typeId) {
+        throw new RegistrationException("type registered with a different ID: " + concreteType);
       }
       return this;
     }
 
-    factories.put(type, factory);
-    types.put(id, type);
-    ids.put(type, id);
+    factories.put(concreteType, factory);
+    types.put(typeId, concreteType);
+    ids.put(concreteType, typeId);
 
     return this;
+  }
+
+  /**
+   * Registers the given class as an abstract type or serializer.
+   *
+   * @param type
+   * @return
+   */
+  public SerializerRegistry registerAbstract(Class<?> type) {
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+    if (isTypeSerializerClass(type)) {
+      return registerAbstractSerializer(type);
+    } else {
+      return registerAbstract(type, calculateTypeId(type), findTypeSerializerFactory(type));
+    }
+  }
+
+  /**
+   * Registers an abstract serializer class.
+   */
+  private SerializerRegistry registerAbstractSerializer(Class<?> type) {
+    validateAbstractSerializer(type);
+    SerializerInfo info = findSerializerInfo(type);
+    TypeSerializerFactory factory = findTypeSerializerFactory(type, info);
+    for (SerializableTypeReference reference : info.value()) {
+      if (reference.id() != 0) {
+        registerAbstract(reference.value(), reference.id(), factory);
+      } else {
+        registerAbstract(reference.value(), calculateTypeId(reference.value()), factory);
+      }
+    }
+    return this;
+  }
+
+  public SerializerRegistry registerAbstract(Class<?> abstractType, int typeId) {
+    return registerAbstract(abstractType, typeId, findTypeSerializerFactory(abstractType));
   }
 
   /**
@@ -244,6 +406,29 @@ public class SerializerRegistry {
     abstractFactories.put(abstractType, factory);
     types.put(id, abstractType);
     ids.put(abstractType, id);
+    return this;
+  }
+
+  public SerializerRegistry registerDefault(Class<?> type) {
+    if (type == null)
+      throw new NullPointerException("type cannot be null");
+    if (isTypeSerializerClass(type)) {
+      return registerDefaultSerializer(type);
+    } else {
+      return registerDefault(type, findTypeSerializerFactory(type));
+    }
+  }
+
+  /**
+   * Registers a default serializer class.
+   */
+  private SerializerRegistry registerDefaultSerializer(Class<?> type) {
+    validateDefaultSerializer(type);
+    SerializerInfo info = findSerializerInfo(type);
+    TypeSerializerFactory factory = findTypeSerializerFactory(type, info);
+    for (SerializableTypeReference reference : info.value()) {
+      registerDefault(reference.value(), factory);
+    }
     return this;
   }
 
@@ -341,6 +526,136 @@ public class SerializerRegistry {
    */
   Class<?> type(int id) {
     return types.get(id);
+  }
+
+  /**
+   * Returns a boolean indicating whether the given class is a type serializer class.
+   */
+  private boolean isTypeSerializerClass(Class<?> type) {
+    return TypeSerializer.class.isAssignableFrom(type);
+  }
+
+  /**
+   * Returns a type serializer factory for the given type serializer class.
+   */
+  @SuppressWarnings("unchecked")
+  private TypeSerializerFactory findTypeSerializerFactory(Class<?> type, SerializerInfo info) {
+    if (info != null) {
+      if (info.factory() != DefaultTypeSerializerFactory.class) {
+        try {
+          return info.factory().newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+          throw new CatalystException(e);
+        }
+      } else {
+        return new DefaultTypeSerializerFactory((Class<? extends TypeSerializer>) type);
+      }
+    }
+    return new DefaultTypeSerializerFactory((Class<? extends TypeSerializer>) type);
+  }
+
+  /**
+   * Returns serializer info for the given type serializer class.
+   */
+  private SerializerInfo findSerializerInfo(Class<?> type) {
+    return findAnnotation(type, SerializerInfo.class);
+  }
+
+  /**
+   * Finds serializable type info for the given serializable type.
+   */
+  private SerializableTypeInfo findSerializableTypeInfo(Class<?> type) {
+    return findAnnotation(type, SerializableTypeInfo.class);
+  }
+
+  /**
+   * Finds the given annotation on the given type.
+   */
+  @SuppressWarnings("unchecked")
+  private <T> T findAnnotation(Class<?> type, Class<? extends Annotation> annotation) {
+    while (type != Object.class) {
+      Annotation info = type.getAnnotation(annotation);
+      if (info != null) {
+        return (T) info;
+      }
+      for (Class<?> iface : type.getInterfaces()) {
+        info = iface.getAnnotation(annotation);
+        if (info != null) {
+          return (T) info;
+        }
+      }
+      type = type.getSuperclass();
+    }
+    return null;
+  }
+
+  /**
+   * Finds a type serializer factory for the given serializable type.
+   */
+  private TypeSerializerFactory findTypeSerializerFactory(Class<?> type) {
+    SerializableTypeInfo typeInfo = findSerializableTypeInfo(type);
+    if (typeInfo == null || typeInfo.serializer() == SerializableTypeInfo.None.class) {
+      Class<?> baseType = findBaseType(type, defaultFactories);
+      if (baseType == null) {
+        throw new RegistrationException("no default serializer found for type: " + type);
+      }
+      return defaultFactories.get(baseType);
+    }
+
+    Class<? extends TypeSerializer<?>> serializer = typeInfo.serializer();
+    SerializerInfo serializerInfo = findSerializerInfo(serializer);
+    if (serializerInfo == null) {
+      return new DefaultTypeSerializerFactory(serializer);
+    }
+    return findTypeSerializerFactory(serializer, serializerInfo);
+  }
+
+  /**
+   * Validates that a serializer class is a valid concrete serializer class.
+   */
+  private void validateConcreteSerializer(Class<?> serializer) {
+    if (DefaultSerializer.class.isAssignableFrom(serializer) && !ConcreteSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register default serializer as concrete");
+    } else if (AbstractSerializer.class.isAssignableFrom(serializer) && !ConcreteSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register abstract serializer as concrete");
+    }
+
+    SerializerInfo info = findSerializerInfo(serializer);
+    if (info != null && info.scope() != TypeSerializer.Scope.NONE && info.scope() != TypeSerializer.Scope.CONCRETE) {
+      throw new RegistrationException("cannot register " + info.scope() + " serializer as concrete");
+    }
+  }
+
+  /**
+   * Validates that a serializer class is a valid abstract serializer class.
+   */
+  private void validateAbstractSerializer(Class<?> serializer) {
+    if (DefaultSerializer.class.isAssignableFrom(serializer) && !AbstractSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register default serializer as abstract");
+    } else if (ConcreteSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register concrete serializer as abstract");
+    }
+
+    SerializerInfo info = findSerializerInfo(serializer);
+    if (info != null && info.scope() != TypeSerializer.Scope.NONE && info.scope() != TypeSerializer.Scope.ABSTRACT) {
+      throw new RegistrationException("cannot register " + info.scope() + " serializer as abstract");
+    }
+  }
+
+  /**
+   * Validates that a serializer class is a valid default serializer class.
+   */
+  private void validateDefaultSerializer(Class<?> serializer) {
+    if (AbstractSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register abstract serializer as default");
+    } else if (ConcreteSerializer.class.isAssignableFrom(serializer)) {
+      throw new RegistrationException("cannot register concrete serializer as default");
+    }
+
+    SerializerInfo info = findSerializerInfo(serializer);
+    if (info != null && info.scope() != TypeSerializer.Scope.NONE && info.scope() != TypeSerializer.Scope.DEFAULT) {
+      throw new RegistrationException("cannot register " + info.scope() + " serializer as default");
+    }
   }
 
 }

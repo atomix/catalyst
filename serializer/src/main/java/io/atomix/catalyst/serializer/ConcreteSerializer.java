@@ -11,25 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
 package io.atomix.catalyst.serializer;
 
 /**
- * The serializer type resolver is responsible for locating serializable types and their serializers.
- * <p>
- * Users can implement custom type resolvers to automatically register serializers. See {@link JdkTypeResolver}
- * for an example implementation.
+ * Concrete type serializer.
  *
- * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
+ * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
-public interface SerializableTypeResolver {
-
-  /**
-   * Registers serializable types on the given {@link SerializerRegistry} instance.
-   *
-   * @param registry The serializer registry.
-   */
-  void resolve(SerializerRegistry registry);
-
+public interface ConcreteSerializer<T> extends TypeSerializer<T> {
 }
