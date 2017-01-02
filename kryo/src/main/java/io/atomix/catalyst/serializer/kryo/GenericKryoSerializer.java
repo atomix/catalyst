@@ -18,7 +18,6 @@ package io.atomix.catalyst.serializer.kryo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferInputStream;
 import io.atomix.catalyst.buffer.BufferOutput;
@@ -37,14 +36,14 @@ public class GenericKryoSerializer implements TypeSerializer {
   @Override
   public void write(Object object, BufferOutput buffer, Serializer serializer) {
     Output output = new Output(new BufferOutputStream(buffer));
-    kryo.writeClassAndObject(output, object);
+    kryo.writeObject(output, object);
     output.flush();
   }
 
   @Override
   public Object read(Class type, BufferInput buffer, Serializer serializer) {
     Input input = new Input(new BufferInputStream(buffer));
-    return kryo.readClassAndObject(input);
+    return kryo.readObject(input, type);
   }
 
 }

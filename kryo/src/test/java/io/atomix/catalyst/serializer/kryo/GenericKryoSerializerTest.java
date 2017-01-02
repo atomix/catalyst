@@ -44,6 +44,20 @@ public class GenericKryoSerializerTest {
     assertEquals(result.bar, 1234);
   }
 
+  /**
+   * Tests that the Kryo serializer is used when registered with the Serializer.
+   */
+  public void testRegisteredSerializer() {
+    Serializer serializer = new Serializer();
+    serializer.register(Foo.class, 1, t -> new GenericKryoSerializer());
+    HeapBuffer buffer = HeapBuffer.allocate();
+    Foo foo = new Foo(1234);
+    serializer.writeObject(foo, buffer);
+    buffer.flip();
+    Foo result = serializer.readObject(buffer);
+    assertEquals(result.bar, 1234);
+  }
+
   public static class Foo {
     private long bar;
     private Foo() {
