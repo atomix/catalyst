@@ -45,7 +45,7 @@ public class GenericKryoSerializerTest {
   }
 
   /**
-   * Tests tha
+   * Tests that the Kryo serializer is used when registered with the Serializer.
    */
   public void testRegisteredSerializer() {
     Serializer serializer = new Serializer();
