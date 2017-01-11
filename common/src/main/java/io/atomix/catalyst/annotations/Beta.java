@@ -21,10 +21,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that an API is stable and will remain unchanged within the scope of a major release.
+ * Indicates that an interface, class or method is considered to be complete but not yet stable.
  * <p>
- * APIs annotated with the {@code &#064;Stable} annotation are considered to be stable and are
- * guaranteed to remain unchanged throughout the lifetime of a major release.
+ * Types and methods annotated with the {@code &#064;Beta} annotation are considered complete but
+ * not yet stable.
  *
  * @author <a href="http://github.com/kuujo>Jordan Halterman</a>
  */
@@ -34,5 +34,5 @@ import java.lang.annotation.Target;
   ElementType.METHOD
 })
 @Retention(RetentionPolicy.CLASS)
-public @interface Stable {
+public @interface Beta {
 }

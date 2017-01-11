@@ -30,6 +30,7 @@ import java.lang.annotation.Target;
  */
 @Target({
   ElementType.TYPE,
+  ElementType.ANNOTATION_TYPE,
   ElementType.METHOD
 })
 @Retention(RetentionPolicy.CLASS)
