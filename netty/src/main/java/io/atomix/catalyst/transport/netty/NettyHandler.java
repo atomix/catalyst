@@ -85,7 +85,7 @@ class NettyHandler extends ChannelInboundHandlerAdapter {
     if (context != null) {
       return context;
     }
-    return new SingleThreadContext(Thread.currentThread(), channel.eventLoop(), this.context.serializer().clone());
+    return new SingleThreadContext(channel.eventLoop(), this.context.serializer().clone());
   }
 
   @Override

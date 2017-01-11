@@ -15,7 +15,6 @@
  */
 package io.atomix.catalyst.transport;
 
-import io.atomix.catalyst.concurrent.CatalystThread;
 import io.atomix.catalyst.concurrent.Listener;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
@@ -52,7 +51,6 @@ public interface Connection {
    * <p>
    * {@link Connection} implementations must guarantee that all reply
    * {@link java.util.concurrent.CompletableFuture futures} will be completed in the same
-   * {@link CatalystThread Catalyst thread}.
    *
    * @param message The message to send.
    * @param <T> The message type.
