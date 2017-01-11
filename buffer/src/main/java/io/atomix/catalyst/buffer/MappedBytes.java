@@ -112,11 +112,17 @@ public class MappedBytes extends NativeBytes {
     return this;
   }
 
+  @Override
+  public void close() {
+    ((MappedMemory) memory).close();
+  }
+  
   /**
    * Deletes the underlying file.
    */
   public void delete() {
     try {
+      close();
       Files.delete(file.toPath());
     } catch (IOException e) {
       throw new RuntimeException(e);

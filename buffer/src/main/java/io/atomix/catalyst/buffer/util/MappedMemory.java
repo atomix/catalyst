@@ -84,4 +84,9 @@ public class MappedMemory extends NativeMemory {
     ((MappedMemoryAllocator) allocator).release();
   }
 
+  public void close() {
+    free();
+    ((MappedMemoryAllocator) allocator).close();
+  }
+  
 }
