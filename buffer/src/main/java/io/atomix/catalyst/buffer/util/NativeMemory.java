@@ -30,7 +30,7 @@ import java.nio.ByteOrder;
 public class NativeMemory implements Memory {
   static final Unsafe UNSAFE;
   private static final boolean UNALIGNED;
-  private static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
+  static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
 
   /**
    * Allocates native memory via {@link DirectMemoryAllocator}.
@@ -78,7 +78,7 @@ public class NativeMemory implements Memory {
 
   @Override
   @SuppressWarnings("unchecked")
-  public MemoryAllocator<NativeMemory> allocator() {
+  public MemoryAllocator allocator() {
     return allocator;
   }
 

@@ -18,6 +18,8 @@ package io.atomix.catalyst.buffer;
 import org.testng.annotations.AfterTest;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 
 import static org.testng.Assert.*;
@@ -52,6 +54,16 @@ public class FileBufferTest extends BufferTest {
       buffer.writeLong(10).writeLong(11).flip();
       assertEquals(buffer.readLong(), 10);
       assertEquals(buffer.readLong(), 11);
+      buffer.rewind();
+      byte[] bytes = new byte[(int) buffer.remaining()];
+      buffer.read(bytes);
+      ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+      assertEquals(byteBuffer.getLong(), 10);
+      assertEquals(byteBuffer.getLong(), 11);
+      HeapBuffer heapBuffer = HeapBuffer.wrap(bytes);
+      ByteOrder order = heapBuffer.order();
+      assertEquals(heapBuffer.readLong(), 10);
+      assertEquals(heapBuffer.readLong(), 11);
     }
     try (FileBuffer buffer = FileBuffer.allocate(file, 16)) {
       assertEquals(buffer.readLong(), 10);

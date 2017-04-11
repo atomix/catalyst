@@ -15,13 +15,15 @@
  */
 package io.atomix.catalyst.buffer;
 
-import org.testng.annotations.Test;
-
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteOrder;
 
-import static org.testng.Assert.*;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Base buffer test.
