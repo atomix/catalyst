@@ -15,9 +15,8 @@
  */
 package io.atomix.catalyst.serializer.jackson;
 
-import io.atomix.catalyst.buffer.HeapBuffer;
+import io.atomix.catalyst.buffer.UnsafeHeapBuffer;
 import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.serializer.jackson.GenericJacksonSerializer;
 
 import org.testng.annotations.Test;
 
@@ -38,7 +37,7 @@ public class GenericJacksonSerializerTest {
     Serializer serializer = new Serializer();
     GenericJacksonSerializer jacksonSerializer = new GenericJacksonSerializer();
     Foo foo = new Foo(1234);
-    HeapBuffer buffer = HeapBuffer.allocate();
+    UnsafeHeapBuffer buffer = UnsafeHeapBuffer.allocate();
     jacksonSerializer.write(foo, buffer, serializer);
     Foo result = (Foo) jacksonSerializer.read(Foo.class, buffer.flip(), serializer);
     assertEquals(result.bar, 1234);

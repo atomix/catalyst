@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.buffer;
 
+import java.nio.charset.Charset;
+
 /**
  * Readable bytes.
  * <p>
@@ -157,6 +159,15 @@ public interface BytesInput<T extends BytesInput<T>> {
    * @return The read string.
    */
   String readString(long offset);
+
+  /**
+   * Reads a string from the buffer at the given offset.
+   *
+   * @param offset The offset at which to read the string.
+   * @param charset The character set with which to decode the string.
+   * @return The read string.
+   */
+  String readString(long offset, Charset charset);
 
   /**
    * Reads a UTF-8 string from the buffer at the given offset.

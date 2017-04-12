@@ -18,6 +18,8 @@ package io.atomix.catalyst.buffer;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Input stream buffer input.
@@ -63,9 +65,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public BufferInput<?> read(Bytes bytes) {
-    if (bytes instanceof HeapBytes) {
+    if (bytes instanceof UnsafeHeapBytes) {
       try {
-        is.read(((HeapBytes) bytes).array());
+        is.read(((UnsafeHeapBytes) bytes).array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -95,9 +97,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public BufferInput<?> read(Bytes bytes, long offset, long length) {
-    if (bytes instanceof HeapBytes) {
+    if (bytes instanceof UnsafeHeapBytes) {
       try {
-        is.read(((HeapBytes) bytes).array(), (int) offset, (int) length);
+        is.read(((UnsafeHeapBytes) bytes).array(), (int) offset, (int) length);
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -131,9 +133,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public BufferInput<?> read(Buffer buffer) {
-    if (buffer instanceof HeapBuffer) {
+    if (buffer instanceof UnsafeHeapBuffer) {
       try {
-        is.read(((HeapBuffer) buffer).array());
+        is.read(((UnsafeHeapBuffer) buffer).array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -274,20 +276,22 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public String readString() {
-    try {
-      return is.readUTF();
-    } catch (IOException e) {
-      throw new CatalystIOException(e);
+    return readString(Charset.defaultCharset());
+  }
+
+  @Override
+  public String readString(Charset charset) {
+    if (readBoolean()) {
+      byte[] bytes = new byte[readUnsignedShort()];
+      read(bytes, 0, bytes.length);
+      return new String(bytes, charset);
     }
+    return null;
   }
 
   @Override
   public String readUTF8() {
-    try {
-      return is.readUTF();
-    } catch (IOException e) {
-      throw new CatalystIOException(e);
-    }
+    return readString(StandardCharsets.UTF_8);
   }
 
   @Override

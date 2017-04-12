@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.buffer;
 
+import java.nio.charset.Charset;
+
 /**
  * Readable buffer.
  * <p>
@@ -186,6 +188,14 @@ public interface BufferInput<T extends BufferInput<?>> extends AutoCloseable {
    * @return The read string.
    */
   String readString();
+
+  /**
+   * Reads a string from the buffer at the current position.
+   *
+   * @param charset The character set with which to decode the string.
+   * @return The read string.
+   */
+  String readString(Charset charset);
 
   /**
    * Reads a UTF-8 string from the buffer at the current position.

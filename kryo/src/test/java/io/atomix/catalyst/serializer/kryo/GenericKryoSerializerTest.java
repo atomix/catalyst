@@ -15,9 +15,8 @@
  */
 package io.atomix.catalyst.serializer.kryo;
 
-import io.atomix.catalyst.buffer.HeapBuffer;
+import io.atomix.catalyst.buffer.UnsafeHeapBuffer;
 import io.atomix.catalyst.serializer.Serializer;
-import io.atomix.catalyst.serializer.kryo.GenericKryoSerializer;
 
 import org.testng.annotations.Test;
 
@@ -38,7 +37,7 @@ public class GenericKryoSerializerTest {
     Serializer serializer = new Serializer();
     GenericKryoSerializer kryoSerializer = new GenericKryoSerializer();
     Foo foo = new Foo(1234);
-    HeapBuffer buffer = HeapBuffer.allocate();
+    UnsafeHeapBuffer buffer = UnsafeHeapBuffer.allocate();
     kryoSerializer.write(foo, buffer, serializer);
     Foo result = (Foo) kryoSerializer.read(Foo.class, buffer.flip(), serializer);
     assertEquals(result.bar, 1234);
@@ -50,7 +49,7 @@ public class GenericKryoSerializerTest {
   public void testRegisteredSerializer() {
     Serializer serializer = new Serializer();
     serializer.register(Foo.class, 1, t -> new GenericKryoSerializer());
-    HeapBuffer buffer = HeapBuffer.allocate();
+    UnsafeHeapBuffer buffer = UnsafeHeapBuffer.allocate();
     Foo foo = new Foo(1234);
     serializer.writeObject(foo, buffer);
     buffer.flip();

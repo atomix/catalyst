@@ -16,15 +16,16 @@
 package io.atomix.catalyst.buffer;
 
 import io.atomix.catalyst.buffer.util.DirectMemoryAllocator;
-import io.atomix.catalyst.buffer.util.HeapMemory;
+import io.atomix.catalyst.buffer.util.DirectMemory;
 import io.atomix.catalyst.buffer.util.Memory;
+import io.atomix.catalyst.util.reference.ReferenceManager;
 
 /**
  * Direct {@link java.nio.ByteBuffer} based buffer.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class DirectBuffer extends ByteBufferBuffer {
+public class UnsafeDirectBuffer extends NativeBuffer {
 
   /**
    * Allocates a direct buffer with an initial capacity of {@code 4096} and a maximum capacity of {@link Long#MAX_VALUE}.
@@ -36,11 +37,11 @@ public class DirectBuffer extends ByteBufferBuffer {
    *
    * @return The direct buffer.
    *
-   * @see DirectBuffer#allocate(long)
-   * @see DirectBuffer#allocate(long, long)
+   * @see UnsafeDirectBuffer#allocate(long)
+   * @see UnsafeDirectBuffer#allocate(long, long)
    */
-  public static DirectBuffer allocate() {
-    return allocate(DEFAULT_INITIAL_CAPACITY, HeapMemory.MAX_SIZE);
+  public static UnsafeDirectBuffer allocate() {
+    return allocate(DEFAULT_INITIAL_CAPACITY, Long.MAX_VALUE);
   }
 
   /**
@@ -55,11 +56,11 @@ public class DirectBuffer extends ByteBufferBuffer {
    * @throws IllegalArgumentException If {@code capacity} is greater than the maximum allowed count for
    *         a {@link java.nio.ByteBuffer} - {@code Integer.MAX_VALUE - 5}
    *
-   * @see DirectBuffer#allocate()
-   * @see DirectBuffer#allocate(long, long)
+   * @see UnsafeDirectBuffer#allocate()
+   * @see UnsafeDirectBuffer#allocate(long, long)
    */
-  public static DirectBuffer allocate(long initialCapacity) {
-    return allocate(initialCapacity, HeapMemory.MAX_SIZE);
+  public static UnsafeDirectBuffer allocate(long initialCapacity) {
+    return allocate(initialCapacity, Long.MAX_VALUE);
   }
 
   /**
@@ -76,17 +77,21 @@ public class DirectBuffer extends ByteBufferBuffer {
    * @throws IllegalArgumentException If {@code capacity} or {@code maxCapacity} is greater than the maximum
    *         allowed count for a {@link java.nio.ByteBuffer} - {@code Integer.MAX_VALUE - 5}
    *
-   * @see DirectBuffer#allocate()
-   * @see DirectBuffer#allocate(long)
+   * @see UnsafeDirectBuffer#allocate()
+   * @see UnsafeDirectBuffer#allocate(long)
    */
-  public static DirectBuffer allocate(long initialCapacity, long maxCapacity) {
+  public static UnsafeDirectBuffer allocate(long initialCapacity, long maxCapacity) {
     if (initialCapacity > maxCapacity)
       throw new IllegalArgumentException("initial capacity cannot be greater than maximum capacity");
-    return new DirectBuffer(DirectBytes.allocate((int) Math.min(Memory.Util.toPow2(initialCapacity), HeapMemory.MAX_SIZE)), 0, initialCapacity, maxCapacity);
+    return new UnsafeDirectBuffer(new UnsafeDirectBytes(DirectMemory.allocate(Memory.Util.toPow2(initialCapacity))), 0, initialCapacity, maxCapacity);
   }
 
-  protected DirectBuffer(DirectBytes bytes, long offset, long initialCapacity, long maxCapacity) {
-    super(bytes, offset, initialCapacity, maxCapacity, null);
+  protected UnsafeDirectBuffer(UnsafeDirectBytes bytes, long offset, long initialCapacity, long maxCapacity) {
+    super(bytes, offset, initialCapacity, maxCapacity);
+  }
+
+  protected UnsafeDirectBuffer(UnsafeDirectBytes bytes, ReferenceManager<Buffer> referenceManager) {
+    super(bytes, referenceManager);
   }
 
 }

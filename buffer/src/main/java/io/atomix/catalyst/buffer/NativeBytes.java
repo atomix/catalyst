@@ -45,7 +45,7 @@ public abstract class NativeBytes extends AbstractBytes {
 
   @Override
   public Bytes resize(long newSize) {
-    this.memory = (NativeMemory) memory.allocator().reallocate(memory, newSize);
+    this.memory = memory.allocator().reallocate(memory, newSize);
     return this;
   }
 
@@ -79,8 +79,8 @@ public abstract class NativeBytes extends AbstractBytes {
 
     if (bytes instanceof NativeBytes) {
       memory.unsafe().copyMemory(memory.address(position), ((NativeBytes) bytes).memory.address(), length);
-    } else if (bytes instanceof HeapBytes) {
-      memory.unsafe().copyMemory(null, memory.address(position), ((HeapBytes) bytes).memory.array(), ((HeapBytes) bytes).memory.address(offset), length);
+    } else if (bytes instanceof UnsafeHeapBytes) {
+      memory.unsafe().copyMemory(null, memory.address(position), ((UnsafeHeapBytes) bytes).memory.array(), ((UnsafeHeapBytes) bytes).memory.address(offset), length);
     } else {
       for (int i = 0; i < length; i++) {
         bytes.writeByte(offset + i, memory.getByte(position + i));
@@ -103,11 +103,6 @@ public abstract class NativeBytes extends AbstractBytes {
   }
 
   @Override
-  public int readUnsignedByte(long offset) {
-    return readByte(offset) & 0xFF;
-  }
-
-  @Override
   public char readChar(long offset) {
     checkRead(offset, CHARACTER);
     return NATIVE_ORDER ? memory.getChar(offset) : Character.reverseBytes(memory.getChar(offset));
@@ -117,11 +112,6 @@ public abstract class NativeBytes extends AbstractBytes {
   public short readShort(long offset) {
     checkRead(offset, SHORT);
     return NATIVE_ORDER ? memory.getShort(offset) : Short.reverseBytes(memory.getShort(offset));
-  }
-
-  @Override
-  public int readUnsignedShort(long offset) {
-    return readShort(offset) & 0xFFFF;
   }
 
   @Override
@@ -155,11 +145,6 @@ public abstract class NativeBytes extends AbstractBytes {
   }
 
   @Override
-  public long readUnsignedInt(long offset) {
-    return readInt(offset) & 0xFFFFFFFFL;
-  }
-
-  @Override
   public long readLong(long offset) {
     checkRead(offset, LONG);
     return NATIVE_ORDER ? memory.getLong(offset) : Long.reverseBytes(memory.getLong(offset));
@@ -176,32 +161,6 @@ public abstract class NativeBytes extends AbstractBytes {
   }
 
   @Override
-  public boolean readBoolean(long offset) {
-    checkRead(offset, BYTE);
-    return memory.getByte(offset) == (byte) 1;
-  }
-
-  @Override
-  public String readString(long offset) {
-    if (readByte(offset) != 0) {
-      byte[] bytes = new byte[readUnsignedShort(offset + BYTE)];
-      read(offset + BYTE + SHORT, bytes, 0, bytes.length);
-      return new String(bytes);
-    }
-    return null;
-  }
-
-  @Override
-  public String readUTF8(long offset) {
-    if (readByte(offset) != 0) {
-      byte[] bytes = new byte[readUnsignedShort(offset + BYTE)];
-      read(offset + BYTE + SHORT, bytes, 0, bytes.length);
-      return new String(bytes, StandardCharsets.UTF_8);
-    }
-    return null;
-  }
-
-  @Override
   public Bytes write(long position, Bytes bytes, long offset, long length) {
     checkWrite(position, length);
     if (bytes.size() < length)
@@ -212,8 +171,8 @@ public abstract class NativeBytes extends AbstractBytes {
 
     if (bytes instanceof NativeBytes) {
       memory.unsafe().copyMemory(((NativeBytes) bytes).memory.address(offset), memory.address(position), length);
-    } else if (bytes instanceof HeapBytes) {
-      memory.unsafe().copyMemory(((HeapBytes) bytes).memory.array(), ((HeapBytes) bytes).memory.address(offset), null, memory.address(position), length);
+    } else if (bytes instanceof UnsafeHeapBytes) {
+      memory.unsafe().copyMemory(((UnsafeHeapBytes) bytes).memory.array(), ((UnsafeHeapBytes) bytes).memory.address(offset), null, memory.address(position), length);
     } else {
       for (int i = 0; i < length; i++) {
         memory.putByte(position + i, (byte) bytes.readByte(offset + i));
@@ -239,13 +198,6 @@ public abstract class NativeBytes extends AbstractBytes {
   }
 
   @Override
-  public Bytes writeUnsignedByte(long offset, int b) {
-    checkWrite(offset, BYTE);
-    memory.putByte(offset, (byte) b);
-    return this;
-  }
-
-  @Override
   public Bytes writeChar(long offset, char c) {
     checkWrite(offset, CHARACTER);
     memory.putChar(offset, NATIVE_ORDER ? c : Character.reverseBytes(c));
@@ -257,11 +209,6 @@ public abstract class NativeBytes extends AbstractBytes {
     checkWrite(offset, SHORT);
     memory.putShort(offset, NATIVE_ORDER ? s : Short.reverseBytes(s));
     return this;
-  }
-
-  @Override
-  public Bytes writeUnsignedShort(long offset, int s) {
-    return writeShort(offset, (short) s);
   }
 
   @Override
@@ -291,11 +238,6 @@ public abstract class NativeBytes extends AbstractBytes {
   }
 
   @Override
-  public Bytes writeUnsignedInt(long offset, long i) {
-    return writeInt(offset, (int) i);
-  }
-
-  @Override
   public Bytes writeLong(long offset, long l) {
     checkWrite(offset, LONG);
     memory.putLong(offset, NATIVE_ORDER ? l : Long.reverseBytes(l));
@@ -310,30 +252,6 @@ public abstract class NativeBytes extends AbstractBytes {
   @Override
   public Bytes writeDouble(long offset, double d) {
     return writeLong(offset, Double.doubleToRawLongBits(d));
-  }
-
-  @Override
-  public Bytes writeBoolean(long offset, boolean b) {
-    return writeByte(offset, b ? (byte) 1 : (byte) 0);
-  }
-
-  @Override
-  public Bytes writeString(long offset, String s) {
-    byte[] bytes = s.getBytes();
-    return writeUnsignedShort(offset, bytes.length)
-      .write(offset + SHORT, bytes, 0, bytes.length);
-  }
-
-  @Override
-  public Bytes writeUTF8(long offset, String s) {
-    byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-    return writeUnsignedShort(offset, bytes.length)
-      .write(offset + SHORT, bytes, 0, bytes.length);
-  }
-
-  @Override
-  public Bytes flush() {
-    return this;
   }
 
   @Override

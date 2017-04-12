@@ -15,15 +15,25 @@
  */
 package io.atomix.catalyst.buffer;
 
+import io.atomix.catalyst.buffer.util.MappedMemory;
+import io.atomix.catalyst.buffer.util.MappedMemoryAllocator;
+import io.atomix.catalyst.buffer.util.Memory;
+import io.atomix.catalyst.util.reference.ReferenceManager;
+
 import java.io.File;
 import java.nio.channels.FileChannel;
 
 /**
- * Direct {@link java.nio.ByteBuffer} based buffer.
+ * Memory mapped file buffer.
+ * <p>
+ * Mapped buffers provide direct access to memory from allocated by a {@link java.nio.MappedByteBuffer}. Memory is allocated
+ * by opening and expanding the given {@link java.io.File} to the desired {@code count} and mapping the file contents into memory
+ * via {@link java.nio.channels.FileChannel#map(java.nio.channels.FileChannel.MapMode, long, long)}.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class MappedBuffer extends ByteBufferBuffer {
+public class UnsafeMappedBuffer extends NativeBuffer {
+  private static final long DEFAULT_INITIAL_CAPACITY = 1024 * 1024 * 16;
 
   /**
    * Allocates a dynamic capacity mapped buffer in {@link java.nio.channels.FileChannel.MapMode#READ_WRITE} mode with an initial capacity
@@ -38,14 +48,14 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @return The mapped buffer.
    * @throws NullPointerException If {@code file} is {@code null}
    *
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
-   * @see #allocate(java.io.File, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
-   * @see #allocate(java.io.File, long, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
    */
-  public static MappedBuffer allocate(File file) {
-    return allocate(file, FileChannel.MapMode.READ_WRITE, DEFAULT_INITIAL_CAPACITY, Long.MAX_VALUE);
+  public static UnsafeMappedBuffer allocate(File file) {
+    return allocate(file, MappedMemoryAllocator.DEFAULT_MAP_MODE, DEFAULT_INITIAL_CAPACITY, Long.MAX_VALUE);
   }
 
   /**
@@ -63,13 +73,13 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @return The mapped buffer.
    * @throws NullPointerException If {@code file} is {@code null}
    *
-   * @see #allocate(java.io.File)
-   * @see #allocate(java.io.File, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
-   * @see #allocate(java.io.File, long, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
    */
-  public static MappedBuffer allocate(File file, FileChannel.MapMode mode) {
+  public static UnsafeMappedBuffer allocate(File file, FileChannel.MapMode mode) {
     return allocate(file, mode, DEFAULT_INITIAL_CAPACITY, Long.MAX_VALUE);
   }
 
@@ -88,14 +98,14 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @throws NullPointerException If {@code file} is {@code null}
    * @throws IllegalArgumentException If the {@code capacity} is greater than {@link Integer#MAX_VALUE}.
    *
-   * @see #allocate(java.io.File)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
-   * @see #allocate(java.io.File, long, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
    */
-  public static MappedBuffer allocate(File file, long capacity) {
-    return allocate(file, FileChannel.MapMode.READ_WRITE, capacity, capacity);
+  public static UnsafeMappedBuffer allocate(File file, long capacity) {
+    return allocate(file, MappedMemoryAllocator.DEFAULT_MAP_MODE, capacity, capacity);
   }
 
   /**
@@ -114,13 +124,13 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @throws NullPointerException If {@code file} is {@code null}
    * @throws IllegalArgumentException If the {@code capacity} is greater than {@link Integer#MAX_VALUE}.
    *
-   * @see #allocate(java.io.File)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
-   * @see #allocate(java.io.File, long)
-   * @see #allocate(java.io.File, long, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
    */
-  public static MappedBuffer allocate(File file, FileChannel.MapMode mode, long capacity) {
+  public static UnsafeMappedBuffer allocate(File file, FileChannel.MapMode mode, long capacity) {
     return allocate(file, mode, capacity, capacity);
   }
 
@@ -142,14 +152,14 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @throws IllegalArgumentException If the {@code capacity} or {@code maxCapacity} is greater than
    *         {@link Integer#MAX_VALUE}.
    *
-   * @see #allocate(java.io.File)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
-   * @see #allocate(java.io.File, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long, long)
    */
-  public static MappedBuffer allocate(File file, long initialCapacity, long maxCapacity) {
-    return allocate(file, FileChannel.MapMode.READ_WRITE, initialCapacity, maxCapacity);
+  public static UnsafeMappedBuffer allocate(File file, long initialCapacity, long maxCapacity) {
+    return allocate(file, MappedMemoryAllocator.DEFAULT_MAP_MODE, initialCapacity, maxCapacity);
   }
 
   /**
@@ -171,35 +181,39 @@ public class MappedBuffer extends ByteBufferBuffer {
    * @throws IllegalArgumentException If the {@code capacity} or {@code maxCapacity} is greater than
    *         {@link Integer#MAX_VALUE}.
    *
-   * @see #allocate(java.io.File)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
-   * @see #allocate(java.io.File, long)
-   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
-   * @see #allocate(java.io.File, long, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see UnsafeMappedBuffer#allocate(java.io.File, long, long)
    */
-  public static MappedBuffer allocate(File file, FileChannel.MapMode mode, long initialCapacity, long maxCapacity) {
+  public static UnsafeMappedBuffer allocate(File file, FileChannel.MapMode mode, long initialCapacity, long maxCapacity) {
     if (file == null)
       throw new NullPointerException("file cannot be null");
     if (mode == null)
-      mode = FileChannel.MapMode.READ_WRITE;
+      mode = MappedMemoryAllocator.DEFAULT_MAP_MODE;
     if (initialCapacity > maxCapacity)
       throw new IllegalArgumentException("initial capacity cannot be greater than maximum capacity");
-    if (initialCapacity > Integer.MAX_VALUE)
-      throw new IllegalArgumentException("initial capacity for MappedBuffer cannot be greater than " + Integer.MAX_VALUE);
-    if (maxCapacity > Integer.MAX_VALUE)
-      throw new IllegalArgumentException("maximum capacity for MappedBuffer cannot be greater than " + Integer.MAX_VALUE);
-    return new MappedBuffer(MappedBytes.allocate(file, initialCapacity), 0, initialCapacity, maxCapacity);
+    if (initialCapacity > MappedMemory.MAX_SIZE)
+      throw new IllegalArgumentException("initial capacity for MappedBuffer cannot be greater than " + MappedMemory.MAX_SIZE);
+    if (maxCapacity > MappedMemory.MAX_SIZE)
+      throw new IllegalArgumentException("maximum capacity for MappedBuffer cannot be greater than " + MappedMemory.MAX_SIZE);
+    return new UnsafeMappedBuffer(new UnsafeMappedBytes(file, MappedMemory.allocate(file, mode, Memory.Util.toPow2(initialCapacity))), 0, initialCapacity, maxCapacity);
   }
 
-  protected MappedBuffer(MappedBytes bytes, long offset, long initialCapacity, long maxCapacity) {
-    super(bytes, offset, initialCapacity, maxCapacity, null);
+  protected UnsafeMappedBuffer(UnsafeMappedBytes bytes, ReferenceManager<Buffer> referenceManager) {
+    super(bytes, referenceManager);
+  }
+
+  UnsafeMappedBuffer(UnsafeMappedBytes bytes, long offset, long initialCapacity, long maxCapacity) {
+    super(bytes, offset, initialCapacity, maxCapacity);
   }
 
   /**
    * Deletes the underlying file.
    */
   public void delete() {
-    ((MappedBytes) bytes).delete();
+    ((UnsafeMappedBytes) bytes).delete();
   }
 
 }

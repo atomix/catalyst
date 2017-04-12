@@ -34,6 +34,16 @@ public interface Bytes extends BytesInput<Bytes>, BytesOutput<Bytes>, AutoClosea
   int DOUBLE = 8;
 
   /**
+   * Returns the underlying byte array.
+   *
+   * @return the underlying byte array
+   * @throws UnsupportedOperationException if a heap array is not supported
+   */
+  default byte[] array() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Returns the count of the bytes.
    *
    * @return The count of the bytes.

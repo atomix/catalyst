@@ -15,35 +15,23 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.util.reference.ReferenceFactory;
-import io.atomix.catalyst.util.reference.ReferenceManager;
+import io.atomix.catalyst.buffer.util.HeapMemory;
 
 /**
- * Direct buffer pool.
+ * Unpooled heap allocator.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class DirectBufferPool extends BufferPool {
-  public DirectBufferPool() {
-    super(new DirectBufferFactory());
+public class UnpooledUnsafeHeapAllocator extends UnpooledAllocator {
+
+  @Override
+  protected long maxCapacity() {
+    return HeapMemory.MAX_SIZE;
   }
 
   @Override
-  public void release(Buffer reference) {
-    reference.rewind();
-    super.release(reference);
-  }
-
-  /**
-   * Direct buffer factory.
-   */
-  private static class DirectBufferFactory implements ReferenceFactory<Buffer> {
-    @Override
-    public Buffer createReference(ReferenceManager<Buffer> manager) {
-      DirectBuffer buffer = new DirectBuffer(DirectBytes.allocate(1024), manager);
-      buffer.reset(0, 1024, Long.MAX_VALUE);
-      return buffer;
-    }
+  public Buffer allocate(long initialCapacity, long maxCapacity) {
+    return UnsafeHeapBuffer.allocate(initialCapacity, maxCapacity);
   }
 
 }

@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.buffer;
 
+import java.nio.charset.Charset;
+
 /**
  * Writable bytes.
  * <p>
@@ -195,6 +197,16 @@ public interface BytesOutput<T extends BytesOutput<T>> {
    * @return The written buffer.
    */
   T writeString(long offset, String s);
+
+  /**
+   * Writes a string to the buffer at the given offset.
+   *
+   * @param offset The offset at which to write the string.
+   * @param s The string to write.
+   * @param charset The character set with which to encode the string.
+   * @return The written buffer.
+   */
+  T writeString(long offset, String s, Charset charset);
 
   /**
    * Writes a UTF-8 string to the buffer at the given offset.

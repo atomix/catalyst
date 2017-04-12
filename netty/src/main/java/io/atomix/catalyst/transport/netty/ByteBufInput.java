@@ -15,11 +15,12 @@
  */
 package io.atomix.catalyst.transport.netty;
 
-import io.netty.buffer.ByteBuf;
 import io.atomix.catalyst.buffer.Buffer;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.Bytes;
+import io.netty.buffer.ByteBuf;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -157,19 +158,22 @@ final class ByteBufInput implements BufferInput<ByteBufInput> {
 
   @Override
   public String readString() {
-    return readUTF8();
+    return readString(Charset.defaultCharset());
+  }
+
+  @Override
+  public String readString(Charset charset) {
+    if (readBoolean()) {
+      byte[] bytes = new byte[readUnsignedShort()];
+      read(bytes, 0, bytes.length);
+      return new String(bytes, charset);
+    }
+    return null;
   }
 
   @Override
   public String readUTF8() {
-    int nullByte = buffer.readByte();
-    if (nullByte == 0) {
-      return null;
-    } else {
-      byte[] bytes = new byte[buffer.readUnsignedShort()];
-      buffer.readBytes(bytes);
-      return new String(bytes, StandardCharsets.UTF_8);
-    }
+    return readString(StandardCharsets.UTF_8);
   }
 
   @Override

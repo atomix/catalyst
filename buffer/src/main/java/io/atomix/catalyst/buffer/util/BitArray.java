@@ -15,14 +15,14 @@
  */
 package io.atomix.catalyst.buffer.util;
 
-import io.atomix.catalyst.buffer.HeapBytes;
-import io.atomix.catalyst.buffer.MappedBytes;
+import io.atomix.catalyst.buffer.UnsafeHeapBytes;
+import io.atomix.catalyst.buffer.UnsafeMappedBytes;
 
 /**
  * Direct memory bit set.
  * <p>
- * The direct bit set performs bitwise operations on a fixed count {@link HeapBytes} instance.
- * Currently, all bytes are {@link HeapBytes}, but theoretically {@link MappedBytes}
+ * The direct bit set performs bitwise operations on a fixed count {@link UnsafeHeapBytes} instance.
+ * Currently, all bytes are {@link UnsafeHeapBytes}, but theoretically {@link UnsafeMappedBytes}
  * could be used for durability as well.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
@@ -38,18 +38,18 @@ public class BitArray implements AutoCloseable {
   public static BitArray allocate(long bits) {
     if (!(bits > 0 & (bits & (bits - 1)) == 0))
       throw new IllegalArgumentException("size must be a power of 2");
-    return new BitArray(HeapBytes.allocate(Math.max(bits / 8 + 8, 8)), bits);
+    return new BitArray(UnsafeHeapBytes.allocate(Math.max(bits / 8 + 8, 8)), bits);
   }
 
-  private final HeapBytes bytes;
+  private final UnsafeHeapBytes bytes;
   private long size;
   private long count;
 
-  private BitArray(HeapBytes bytes, long size) {
+  private BitArray(UnsafeHeapBytes bytes, long size) {
     this(bytes, 0, size);
   }
 
-  private BitArray(HeapBytes bytes, long count, long size) {
+  private BitArray(UnsafeHeapBytes bytes, long count, long size) {
     this.bytes = bytes;
     this.size = size;
     this.count = count;

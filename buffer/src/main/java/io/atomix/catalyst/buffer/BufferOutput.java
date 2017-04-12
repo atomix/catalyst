@@ -15,6 +15,8 @@
  */
 package io.atomix.catalyst.buffer;
 
+import java.nio.charset.Charset;
+
 /**
  * Writable buffer.
  * <p>
@@ -180,6 +182,15 @@ public interface BufferOutput<T extends BufferOutput<?>> extends AutoCloseable {
    * @return The written buffer.
    */
   T writeString(String s);
+
+  /**
+   * Writes a string to the buffer.
+   *
+   * @param s The string to write.
+   * @param charset The character set with which to encode the string.
+   * @return The written buffer.
+   */
+  T writeString(String s, Charset charset);
 
   /**
    * Writes a UTF-8 string to the buffer.
