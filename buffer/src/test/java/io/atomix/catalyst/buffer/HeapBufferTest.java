@@ -15,11 +15,18 @@
  */
 package io.atomix.catalyst.buffer;
 
+import java.nio.ByteBuffer;
+
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+
 /**
  * Heap buffer test.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
+@Test
 public class HeapBufferTest extends BufferTest {
 
   @Override
@@ -30,6 +37,46 @@ public class HeapBufferTest extends BufferTest {
   @Override
   protected Buffer createBuffer(long capacity, long maxCapacity) {
     return HeapBuffer.allocate(capacity, maxCapacity);
+  }
+
+  public void testByteBufferToHeapBuffer() {
+    ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+    byteBuffer.putLong(10);
+    byteBuffer.flip();
+
+    DirectBuffer directBuffer = DirectBuffer.allocate(8);
+    directBuffer.write(byteBuffer.array());
+    directBuffer.flip();
+    assertEquals(directBuffer.readLong(), byteBuffer.getLong());
+
+    byteBuffer.rewind();
+    HeapBuffer heapBuffer = HeapBuffer.wrap(byteBuffer.array());
+    assertEquals(heapBuffer.readLong(), byteBuffer.getLong());
+  }
+
+  public void testDirectToHeapBuffer() {
+    DirectBuffer directBuffer = DirectBuffer.allocate(8);
+    directBuffer.writeLong(10);
+    directBuffer.flip();
+
+    byte[] bytes = new byte[8];
+    directBuffer.read(bytes);
+    directBuffer.rewind();
+
+    HeapBuffer heapBuffer = HeapBuffer.wrap(bytes);
+    assertEquals(directBuffer.readLong(), heapBuffer.readLong());
+  }
+
+  public void testHeapToDirectBuffer() {
+    HeapBuffer heapBuffer = HeapBuffer.allocate(8);
+    heapBuffer.writeLong(10);
+    heapBuffer.flip();
+
+    DirectBuffer directBuffer = DirectBuffer.allocate(8);
+    directBuffer.write(heapBuffer.array());
+    directBuffer.flip();
+
+    assertEquals(directBuffer.readLong(), heapBuffer.readLong());
   }
 
 }

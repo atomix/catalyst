@@ -45,7 +45,7 @@ public abstract class NativeBytes extends AbstractBytes {
 
   @Override
   public Bytes resize(long newSize) {
-    this.memory = memory.allocator().reallocate(memory, newSize);
+    this.memory = (NativeMemory) memory.allocator().reallocate(memory, newSize);
     return this;
   }
 

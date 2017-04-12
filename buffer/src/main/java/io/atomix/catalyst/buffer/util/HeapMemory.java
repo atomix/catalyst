@@ -134,32 +134,56 @@ public class HeapMemory implements Memory {
 
   @Override
   public char getChar(long offset) {
-    return NativeMemory.UNSAFE.getChar(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getChar(array, address(offset));
+    } else {
+      return Character.reverseBytes(NativeMemory.UNSAFE.getChar(array, address(offset)));
+    }
   }
 
   @Override
   public short getShort(long offset) {
-    return NativeMemory.UNSAFE.getShort(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getShort(array, address(offset));
+    } else {
+      return Short.reverseBytes(NativeMemory.UNSAFE.getShort(array, address(offset)));
+    }
   }
 
   @Override
   public int getInt(long offset) {
-    return NativeMemory.UNSAFE.getInt(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getInt(array, address(offset));
+    } else {
+      return Integer.reverseBytes(NativeMemory.UNSAFE.getInt(array, address(offset)));
+    }
   }
 
   @Override
   public long getLong(long offset) {
-    return NativeMemory.UNSAFE.getLong(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getLong(array, address(offset));
+    } else {
+      return Long.reverseBytes(NativeMemory.UNSAFE.getLong(array, address(offset)));
+    }
   }
 
   @Override
   public float getFloat(long offset) {
-    return NativeMemory.UNSAFE.getFloat(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getFloat(array, address(offset));
+    } else {
+      return Float.intBitsToFloat(NativeMemory.UNSAFE.getInt(array, address(offset)));
+    }
   }
 
   @Override
   public double getDouble(long offset) {
-    return NativeMemory.UNSAFE.getDouble(array, address(offset));
+    if (NativeMemory.BIG_ENDIAN) {
+      return NativeMemory.UNSAFE.getDouble(array, address(offset));
+    } else {
+      return Double.longBitsToDouble(NativeMemory.UNSAFE.getLong(array, address(offset)));
+    }
   }
 
   @Override
@@ -169,32 +193,56 @@ public class HeapMemory implements Memory {
 
   @Override
   public void putChar(long offset, char c) {
-    NativeMemory.UNSAFE.putChar(array, address(offset), c);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putChar(array, address(offset), c);
+    } else {
+      NativeMemory.UNSAFE.putChar(array, address(offset), Character.reverseBytes(c));
+    }
   }
 
   @Override
   public void putShort(long offset, short s) {
-    NativeMemory.UNSAFE.putShort(array, address(offset), s);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putShort(array, address(offset), s);
+    } else {
+      NativeMemory.UNSAFE.putShort(array, address(offset), Short.reverseBytes(s));
+    }
   }
 
   @Override
   public void putInt(long offset, int i) {
-    NativeMemory.UNSAFE.putInt(array, address(offset), i);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putInt(array, address(offset), i);
+    } else {
+      NativeMemory.UNSAFE.putInt(array, address(offset), Integer.reverseBytes(i));
+    }
   }
 
   @Override
   public void putLong(long offset, long l) {
-    NativeMemory.UNSAFE.putLong(array, address(offset), l);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putLong(array, address(offset), l);
+    } else {
+      NativeMemory.UNSAFE.putLong(array, address(offset), Long.reverseBytes(l));
+    }
   }
 
   @Override
   public void putFloat(long offset, float f) {
-    NativeMemory.UNSAFE.putFloat(array, address(offset), f);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putFloat(array, address(offset), f);
+    } else {
+      NativeMemory.UNSAFE.putInt(array, address(offset), Float.floatToIntBits(f));
+    }
   }
 
   @Override
   public void putDouble(long offset, double d) {
-    NativeMemory.UNSAFE.putDouble(array, address(offset), d);
+    if (NativeMemory.BIG_ENDIAN) {
+      NativeMemory.UNSAFE.putDouble(array, address(offset), d);
+    } else {
+      NativeMemory.UNSAFE.putLong(array, address(offset), Double.doubleToLongBits(d));
+    }
   }
 
   @Override
