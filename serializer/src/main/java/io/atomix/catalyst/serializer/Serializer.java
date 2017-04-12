@@ -487,7 +487,7 @@ public class Serializer {
    * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
    * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
    * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
-   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * without a specific {@link TypeSerializer} do not inherit from abstract serializers.
    * <pre>
    *   {@code
    *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
@@ -512,7 +512,7 @@ public class Serializer {
    * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
    * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
    * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
-   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * without a specific {@link TypeSerializer} do not inherit from abstract serializers.
    * <pre>
    *   {@code
    *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
@@ -537,7 +537,7 @@ public class Serializer {
    * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
    * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
    * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
-   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * without a specific {@link TypeSerializer} do not inherit from abstract serializers.
    * <pre>
    *   {@code
    *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
@@ -563,7 +563,7 @@ public class Serializer {
    * Abstract serializers allow abstract types to be serialized without explicitly registering a concrete type.
    * The concept of abstract serializers differs from {@link #registerDefault(Class, TypeSerializerFactory) default serializers}
    * in that abstract serializers can be registered with a serializable type ID, and types {@link #register(Class) registered}
-   * without a specific {@link TypeSerializer} do not inheret from abstract serializers.
+   * without a specific {@link TypeSerializer} do not inherit from abstract serializers.
    * <pre>
    *   {@code
    *   serializer.registerAbstract(List.class, AbstractListSerializer.class);
