@@ -135,7 +135,7 @@ public class FileBuffer extends AbstractBuffer {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBuffer map(long size) {
+  public UnsafeMappedBuffer map(long size) {
     return map(position(), size, FileChannel.MapMode.READ_WRITE);
   }
 
@@ -148,7 +148,7 @@ public class FileBuffer extends AbstractBuffer {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBuffer map(long size, FileChannel.MapMode mode) {
+  public UnsafeMappedBuffer map(long size, FileChannel.MapMode mode) {
     return map(position(), size, mode);
   }
 
@@ -162,7 +162,7 @@ public class FileBuffer extends AbstractBuffer {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBuffer map(long offset, long size) {
+  public UnsafeMappedBuffer map(long offset, long size) {
     return map(offset, size, FileChannel.MapMode.READ_WRITE);
   }
 
@@ -176,8 +176,8 @@ public class FileBuffer extends AbstractBuffer {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBuffer map(long offset, long size, FileChannel.MapMode mode) {
-    return new MappedBuffer(((FileBytes) bytes).map(offset, size, mode), 0, size, size);
+  public UnsafeMappedBuffer map(long offset, long size, FileChannel.MapMode mode) {
+    return new UnsafeMappedBuffer(((FileBytes) bytes).map(offset, size, mode), 0, size, size);
   }
 
   @Override

@@ -16,7 +16,7 @@
 package io.atomix.catalyst.serializer;
 
 import io.atomix.catalyst.buffer.BufferAllocator;
-import io.atomix.catalyst.buffer.UnpooledHeapAllocator;
+import io.atomix.catalyst.buffer.UnpooledUnsafeHeapAllocator;
 import io.atomix.catalyst.util.ConfigurationException;
 import io.atomix.catalyst.util.PropertiesReader;
 
@@ -57,7 +57,7 @@ final class SerializerOptions {
    * @return The serializer buffer allocator.
    */
   BufferAllocator allocator() {
-    Class<?> allocator = reader.getClass(ALLOCATOR, UnpooledHeapAllocator.class);
+    Class<?> allocator = reader.getClass(ALLOCATOR, UnpooledUnsafeHeapAllocator.class);
     try {
       return (BufferAllocator) allocator.newInstance();
     } catch (InstantiationException | IllegalAccessException e) {

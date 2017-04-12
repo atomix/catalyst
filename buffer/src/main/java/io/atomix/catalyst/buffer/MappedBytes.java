@@ -1,41 +1,17 @@
-/*
- * Copyright 2015 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.atomix.catalyst.buffer;
-
-import io.atomix.catalyst.buffer.util.MappedMemory;
-import io.atomix.catalyst.buffer.util.MappedMemoryAllocator;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 
 /**
- * Mapped bytes.
- * <p>
- * Mapped bytes provide direct access to memory from allocated by a {@link java.nio.MappedByteBuffer}. Memory is allocated
- * by opening and expanding the given {@link java.io.File} to the desired {@code count} and mapping the file contents into memory
- * via {@link java.nio.channels.FileChannel#map(java.nio.channels.FileChannel.MapMode, long, long)}.
- * <p>
- * Closing the bytes via {@link Bytes#close()} will result in {@link Bytes#flush()}
- * being automatically called.
- *
- * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
+ * {@link ByteBuffer} based mapped bytes.
  */
-public class MappedBytes extends NativeBytes {
+public class MappedBytes extends ByteBufferBytes {
 
   /**
    * Allocates a mapped buffer in {@link java.nio.channels.FileChannel.MapMode#READ_WRITE} mode.
@@ -49,10 +25,10 @@ public class MappedBytes extends NativeBytes {
    * @throws NullPointerException If {@code file} is {@code null}
    * @throws IllegalArgumentException If {@code count} is greater than {@link MappedMemory#MAX_SIZE}
    *
-   * @see MappedBytes#allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
+   * @see #allocate(java.io.File, java.nio.channels.FileChannel.MapMode, long)
    */
   public static MappedBytes allocate(File file, long size) {
-    return allocate(file, MappedMemoryAllocator.DEFAULT_MAP_MODE, size);
+    return allocate(file, FileChannel.MapMode.READ_WRITE, size);
   }
 
   /**
@@ -66,34 +42,45 @@ public class MappedBytes extends NativeBytes {
    * @param size The count of the buffer to allocate (in bytes).
    * @return The mapped buffer.
    * @throws NullPointerException If {@code file} is {@code null}
-   * @throws IllegalArgumentException If {@code count} is greater than {@link MappedMemory#MAX_SIZE}
+   * @throws IllegalArgumentException If {@code count} is greater than {@link Integer#MAX_VALUE}
    *
-   * @see MappedBytes#allocate(java.io.File, long)
+   * @see #allocate(java.io.File, long)
    */
   public static MappedBytes allocate(File file, FileChannel.MapMode mode, long size) {
     if (file == null)
       throw new NullPointerException("file cannot be null");
     if (mode == null)
-      mode = MappedMemoryAllocator.DEFAULT_MAP_MODE;
-    if (size > MappedMemory.MAX_SIZE)
-      throw new IllegalArgumentException("size for MappedBytes cannot be greater than " + MappedMemory.MAX_SIZE);
-    return new MappedBytes(file, MappedMemory.allocate(file, mode, size));
+      mode = FileChannel.MapMode.READ_WRITE;
+    if (size > Integer.MAX_VALUE)
+      throw new IllegalArgumentException("size for MappedBytes cannot be greater than " + Integer.MAX_VALUE);
+
+    RandomAccessFile randomAccessFile = createFile(file, mode);
+    try {
+      MappedByteBuffer buffer = randomAccessFile.getChannel().map(mode, 0, size);
+      return new MappedBytes(file, randomAccessFile, buffer, mode);
+    } catch (IOException e) {
+      throw new CatalystIOException(e);
+    }
   }
 
   private final File file;
+  private final RandomAccessFile randomAccessFile;
+  private final FileChannel.MapMode mode;
 
-  protected MappedBytes(File file, MappedMemory memory) {
-    super(memory);
+  protected MappedBytes(File file, RandomAccessFile randomAccessFile, MappedByteBuffer buffer, FileChannel.MapMode mode) {
+    super(buffer);
     this.file = file;
+    this.randomAccessFile = randomAccessFile;
+    this.mode = mode;
   }
 
-  /**
-   * Copies the bytes to a new byte array.
-   *
-   * @return A new {@link MappedBytes} instance backed by a copy of this instance's memory.
-   */
-  public MappedBytes copy() {
-    throw new UnsupportedOperationException("copy");
+  @Override
+  protected ByteBuffer newByteBuffer(long size) {
+    try {
+      return randomAccessFile.getChannel().map(mode, 0, size);
+    } catch (IOException e) {
+      throw new CatalystIOException(e);
+    }
   }
 
   @Override
@@ -102,21 +89,21 @@ public class MappedBytes extends NativeBytes {
   }
 
   @Override
-  public boolean isFile() {
-    return true;
-  }
-
-  @Override
   public Bytes flush() {
-    ((MappedMemory) memory).flush();
+    ((MappedByteBuffer) buffer).force();
     return this;
   }
 
   @Override
   public void close() {
-    ((MappedMemory) memory).close();
+    try {
+      randomAccessFile.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    super.close();
   }
-  
+
   /**
    * Deletes the underlying file.
    */
@@ -127,6 +114,27 @@ public class MappedBytes extends NativeBytes {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static RandomAccessFile createFile(File file, FileChannel.MapMode mode) {
+    if (file == null)
+      throw new NullPointerException("file cannot be null");
+    if (mode == null)
+      mode = FileChannel.MapMode.READ_WRITE;
+    try {
+      return new RandomAccessFile(file, parseMode(mode));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static String parseMode(FileChannel.MapMode mode) {
+    if (mode == FileChannel.MapMode.READ_ONLY) {
+      return "r";
+    } else if (mode == FileChannel.MapMode.READ_WRITE) {
+      return "rw";
+    }
+    throw new IllegalArgumentException("unsupported map mode");
   }
 
 }

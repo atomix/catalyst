@@ -78,7 +78,7 @@ public class NativeMemory implements Memory {
 
   @Override
   @SuppressWarnings("unchecked")
-  public MemoryAllocator allocator() {
+  public MemoryAllocator<NativeMemory> allocator() {
     return allocator;
   }
 

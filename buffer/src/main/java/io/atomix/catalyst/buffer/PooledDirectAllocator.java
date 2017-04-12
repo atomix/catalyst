@@ -26,7 +26,7 @@ public class PooledDirectAllocator extends PooledAllocator {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public PooledDirectAllocator() {
-    super((ReferencePool) new DirectBufferPool());
+    super((ReferencePool) new UnsafeDirectBufferPool());
   }
 
   @Override

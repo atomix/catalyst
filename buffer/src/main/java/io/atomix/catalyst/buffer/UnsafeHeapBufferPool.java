@@ -23,9 +23,9 @@ import io.atomix.catalyst.util.reference.ReferenceManager;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class HeapBufferPool extends BufferPool {
+public class UnsafeHeapBufferPool extends BufferPool {
 
-  public HeapBufferPool() {
+  public UnsafeHeapBufferPool() {
     super(new HeapBufferFactory());
   }
 
@@ -41,7 +41,7 @@ public class HeapBufferPool extends BufferPool {
   private static class HeapBufferFactory implements ReferenceFactory<Buffer> {
     @Override
     public Buffer createReference(ReferenceManager<Buffer> manager) {
-      HeapBuffer buffer = new HeapBuffer(HeapBytes.allocate(1024), manager);
+      UnsafeHeapBuffer buffer = new UnsafeHeapBuffer(UnsafeHeapBytes.allocate(1024), manager);
       buffer.reset(0, 1024, Long.MAX_VALUE);
       return buffer;
     }

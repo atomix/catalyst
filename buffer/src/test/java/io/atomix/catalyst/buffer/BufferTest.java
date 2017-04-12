@@ -206,6 +206,40 @@ public abstract class BufferTest {
     assertTrue(createBuffer(16).writeBoolean(4, true).readBoolean(4));
   }
 
+  public void testWriteReadStringRelative() {
+    Buffer buffer = createBuffer(38)
+        .writeString("Hello world!")
+        .writeString("Hello world again!")
+        .flip();
+    assertEquals(buffer.readString(), "Hello world!");
+    assertEquals(buffer.readString(), "Hello world again!");
+  }
+
+  public void testWriteReadStringAbsolute() {
+    Buffer buffer = createBuffer(46)
+        .writeString(4, "Hello world!")
+        .writeString(20, "Hello world again!");
+    assertEquals(buffer.readString(4), "Hello world!");
+    assertEquals(buffer.readString(20), "Hello world again!");
+  }
+
+  public void testWriteReadUTF8Relative() {
+    Buffer buffer = createBuffer(38)
+        .writeUTF8("Hello world!")
+        .writeUTF8("Hello world again!")
+        .flip();
+    assertEquals(buffer.readUTF8(), "Hello world!");
+    assertEquals(buffer.readUTF8(), "Hello world again!");
+  }
+
+  public void testWriteReadUTF8Absolute() {
+    Buffer buffer = createBuffer(46)
+        .writeUTF8(4, "Hello world!")
+        .writeUTF8(20, "Hello world again!");
+    assertEquals(buffer.readUTF8(4), "Hello world!");
+    assertEquals(buffer.readUTF8(20), "Hello world again!");
+  }
+
   public void testReadWriter() {
     Buffer writeBuffer = createBuffer(8).writeLong(10).flip();
     Buffer readBuffer = createBuffer(8);

@@ -15,11 +15,12 @@
  */
 package io.atomix.catalyst.transport.netty;
 
-import io.netty.buffer.ByteBuf;
 import io.atomix.catalyst.buffer.Buffer;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.buffer.Bytes;
+import io.netty.buffer.ByteBuf;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -190,20 +191,24 @@ final class ByteBufOutput implements BufferOutput<ByteBufOutput> {
 
   @Override
   public ByteBufOutput writeString(String s) {
-    return writeUTF8(s);
+    return writeString(s, Charset.defaultCharset());
+  }
+
+  @Override
+  public ByteBufOutput writeString(String s, Charset charset) {
+    if (s == null) {
+      return writeBoolean(Boolean.FALSE);
+    } else {
+      byte[] bytes = s.getBytes(charset);
+      writeBoolean(Boolean.TRUE);
+      return writeUnsignedShort(bytes.length)
+          .write(bytes, 0, bytes.length);
+    }
   }
 
   @Override
   public ByteBufOutput writeUTF8(String s) {
-    if (s == null) {
-      checkWrite(Bytes.BYTE);
-      buffer.writeByte(0);
-    } else {
-      byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-      checkWrite(Bytes.BYTE + Bytes.SHORT + bytes.length);
-      buffer.writeByte(1).writeShort(bytes.length).writeBytes(bytes);
-    }
-    return this;
+    return writeString(s, StandardCharsets.UTF_8);
   }
 
   @Override

@@ -15,9 +15,9 @@
  */
 package io.atomix.catalyst.buffer;
 
-import org.testng.annotations.Test;
-
 import java.nio.ByteBuffer;
+
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
@@ -27,24 +27,26 @@ import static org.testng.Assert.assertEquals;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 @Test
-public class HeapBufferTest extends BufferTest {
+public class UnsafeHeapBufferTest extends BufferTest {
 
   @Override
   protected Buffer createBuffer(long capacity) {
-    return HeapBuffer.allocate(capacity);
+    return UnsafeHeapBuffer.allocate(capacity);
   }
 
   @Override
   protected Buffer createBuffer(long capacity, long maxCapacity) {
-    return HeapBuffer.allocate(capacity, maxCapacity);
+    return UnsafeHeapBuffer.allocate(capacity, maxCapacity);
   }
 
   public void testByteBufferToHeapBuffer() {
     ByteBuffer byteBuffer = ByteBuffer.allocate(8);
     byteBuffer.putLong(10);
-    byteBuffer.rewind();
+    byteBuffer.flip();
 
-    HeapBuffer directBuffer = HeapBuffer.wrap(byteBuffer.array());
+    UnsafeDirectBuffer directBuffer = UnsafeDirectBuffer.allocate(8);
+    directBuffer.write(byteBuffer.array());
+    directBuffer.flip();
     assertEquals(directBuffer.readLong(), byteBuffer.getLong());
 
     byteBuffer.rewind();
@@ -53,7 +55,7 @@ public class HeapBufferTest extends BufferTest {
   }
 
   public void testDirectToHeapBuffer() {
-    DirectBuffer directBuffer = DirectBuffer.allocate(8);
+    UnsafeDirectBuffer directBuffer = UnsafeDirectBuffer.allocate(8);
     directBuffer.writeLong(10);
     directBuffer.flip();
 
@@ -61,7 +63,7 @@ public class HeapBufferTest extends BufferTest {
     directBuffer.read(bytes);
     directBuffer.rewind();
 
-    HeapBuffer heapBuffer = HeapBuffer.wrap(bytes);
+    UnsafeHeapBuffer heapBuffer = UnsafeHeapBuffer.wrap(bytes);
     assertEquals(directBuffer.readLong(), heapBuffer.readLong());
   }
 

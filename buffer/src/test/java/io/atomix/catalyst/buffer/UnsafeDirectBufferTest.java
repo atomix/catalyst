@@ -15,24 +15,24 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.buffer.util.HeapMemory;
-import io.atomix.catalyst.util.reference.ReferencePool;
+import org.testng.annotations.Test;
 
 /**
- * Pooled heap buffer allocator.
+ * Direct buffer test.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class PooledHeapAllocator extends PooledAllocator {
+@Test
+public class UnsafeDirectBufferTest extends BufferTest {
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public PooledHeapAllocator() {
-    super((ReferencePool) new UnsafeHeapBufferPool());
+  @Override
+  protected Buffer createBuffer(long capacity) {
+    return UnsafeDirectBuffer.allocate(capacity);
   }
 
   @Override
-  protected long maxCapacity() {
-    return HeapMemory.MAX_SIZE;
+  protected Buffer createBuffer(long capacity, long maxCapacity) {
+    return UnsafeDirectBuffer.allocate(capacity, maxCapacity);
   }
 
 }

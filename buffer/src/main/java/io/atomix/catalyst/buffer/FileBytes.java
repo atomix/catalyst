@@ -141,7 +141,7 @@ public class FileBytes extends AbstractBytes {
 
   /**
    * Maps a portion of the randomAccessFile into memory in {@link java.nio.channels.FileChannel.MapMode#READ_WRITE} mode and returns
-   * a {@link MappedBytes} instance.
+   * a {@link UnsafeMappedBytes} instance.
    *
    * @param offset The offset from which to map the randomAccessFile into memory.
    * @param size The count of the bytes to map into memory.
@@ -149,12 +149,12 @@ public class FileBytes extends AbstractBytes {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBytes map(long offset, long size) {
+  public UnsafeMappedBytes map(long offset, long size) {
     return map(offset, size, FileChannel.MapMode.READ_WRITE);
   }
 
   /**
-   * Maps a portion of the randomAccessFile into memory and returns a {@link MappedBytes} instance.
+   * Maps a portion of the randomAccessFile into memory and returns a {@link UnsafeMappedBytes} instance.
    *
    * @param offset The offset from which to map the randomAccessFile into memory.
    * @param size The count of the bytes to map into memory.
@@ -163,8 +163,8 @@ public class FileBytes extends AbstractBytes {
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed
    *         {@link java.nio.MappedByteBuffer} count: {@link Integer#MAX_VALUE}
    */
-  public MappedBytes map(long offset, long size, FileChannel.MapMode mode) {
-    return new MappedBytes(file, new MappedMemoryAllocator(randomAccessFile, mode, offset).allocate(size));
+  public UnsafeMappedBytes map(long offset, long size, FileChannel.MapMode mode) {
+    return new UnsafeMappedBytes(file, new MappedMemoryAllocator(randomAccessFile, mode, offset).allocate(size));
   }
 
   @Override
@@ -249,17 +249,6 @@ public class FileBytes extends AbstractBytes {
   }
 
   @Override
-  public int readUnsignedByte(long offset) {
-    checkRead(offset, BYTE);
-    try {
-      seekToOffset(offset);
-      return randomAccessFile.readUnsignedByte();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
   public char readChar(long offset) {
     checkRead(offset, CHARACTER);
     try {
@@ -282,59 +271,11 @@ public class FileBytes extends AbstractBytes {
   }
 
   @Override
-  public int readUnsignedShort(long offset) {
-    checkRead(offset, SHORT);
-    try {
-      seekToOffset(offset);
-      return randomAccessFile.readUnsignedShort();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public int readMedium(long offset) {
-    checkRead(offset, MEDIUM);
-    try {
-      seekToOffset(offset);
-      return (randomAccessFile.readByte()) << 16
-        | (randomAccessFile.readByte() & 0xff) << 8
-        | (randomAccessFile.readByte() & 0xff);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public int readUnsignedMedium(long offset) {
-    checkRead(offset, MEDIUM);
-    try {
-      seekToOffset(offset);
-      return (randomAccessFile.readByte() & 0xff) << 16
-        | (randomAccessFile.readByte() & 0xff) << 8
-        | (randomAccessFile.readByte() & 0xff);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
   public int readInt(long offset) {
     checkRead(offset, INTEGER);
     try {
       seekToOffset(offset);
       return randomAccessFile.readInt();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public long readUnsignedInt(long offset) {
-    checkRead(offset, INTEGER);
-    try {
-      seekToOffset(offset);
-      return randomAccessFile.readInt() & 0xFFFFFFFFL;
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -374,43 +315,12 @@ public class FileBytes extends AbstractBytes {
   }
 
   @Override
-  public boolean readBoolean(long offset) {
-    checkRead(offset, BOOLEAN);
-    try {
-      seekToOffset(offset);
-      return randomAccessFile.readBoolean();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String readString(long offset) {
-    if (readByte(offset) != 0) {
-      byte[] bytes = new byte[readUnsignedShort(offset + BYTE)];
-      read(offset + BYTE + SHORT, bytes, 0, bytes.length);
-      return new String(bytes);
-    }
-    return null;
-  }
-
-  @Override
-  public String readUTF8(long offset) {
-    if (readByte(offset) != 0) {
-      byte[] bytes = new byte[readUnsignedShort(offset + BYTE)];
-      read(offset + BYTE + SHORT, bytes, 0, bytes.length);
-      return new String(bytes, StandardCharsets.UTF_8);
-    }
-    return null;
-  }
-
-  @Override
   public Bytes write(long position, Bytes bytes, long offset, long length) {
     checkWrite(position, length);
-    if (bytes instanceof HeapBytes) {
+    if (bytes instanceof UnsafeHeapBytes) {
       try {
         seekToOffset(position);
-        randomAccessFile.write(((HeapBytes) bytes).array(), (int) offset, (int) length);
+        randomAccessFile.write(((UnsafeHeapBytes) bytes).array(), (int) offset, (int) length);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -452,18 +362,6 @@ public class FileBytes extends AbstractBytes {
   }
 
   @Override
-  public Bytes writeUnsignedByte(long offset, int b) {
-    checkWrite(offset, BYTE);
-    try {
-      seekToOffset(offset);
-      randomAccessFile.writeByte((byte) b);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return this;
-  }
-
-  @Override
   public Bytes writeChar(long offset, char c) {
     checkWrite(offset, CHARACTER);
     try {
@@ -488,54 +386,11 @@ public class FileBytes extends AbstractBytes {
   }
 
   @Override
-  public Bytes writeUnsignedShort(long offset, int s) {
-    checkWrite(offset, SHORT);
-    try {
-      seekToOffset(offset);
-      randomAccessFile.writeShort((short) s);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return this;
-  }
-
-  @Override
-  public Bytes writeMedium(long offset, int m) {
-    checkWrite(offset, SHORT);
-    try {
-      seekToOffset(offset);
-      randomAccessFile.writeByte((byte) (m >>> 16));
-      randomAccessFile.writeByte((byte) (m >>> 8));
-      randomAccessFile.writeByte((byte) m);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return this;
-  }
-
-  @Override
-  public Bytes writeUnsignedMedium(long offset, int m) {
-    return writeMedium(offset, m);
-  }
-
-  @Override
   public Bytes writeInt(long offset, int i) {
     checkWrite(offset, INTEGER);
     try {
       seekToOffset(offset);
       randomAccessFile.writeInt(i);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return this;
-  }
-
-  @Override
-  public Bytes writeUnsignedInt(long offset, long i) {
-    checkWrite(offset, INTEGER);
-    try {
-      seekToOffset(offset);
-      randomAccessFile.writeInt((int) i);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -576,42 +431,6 @@ public class FileBytes extends AbstractBytes {
       throw new RuntimeException(e);
     }
     return this;
-  }
-
-  @Override
-  public Bytes writeBoolean(long offset, boolean b) {
-    checkWrite(offset, BOOLEAN);
-    try {
-      seekToOffset(offset);
-      randomAccessFile.writeBoolean(b);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return this;
-  }
-
-  @Override
-  public Bytes writeString(long offset, String s) {
-    if (s == null) {
-      return writeByte(offset, 0);
-    } else {
-      writeByte(offset, 1);
-      byte[] bytes = s.getBytes();
-      return writeUnsignedShort(offset + BYTE, bytes.length)
-        .write(offset + BYTE + SHORT, bytes, 0, bytes.length);
-    }
-  }
-
-  @Override
-  public Bytes writeUTF8(long offset, String s) {
-    if (s == null) {
-      return writeByte(offset, 0);
-    } else {
-      writeByte(offset, 1);
-      byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-      return writeUnsignedShort(offset + BYTE, bytes.length)
-        .write(offset + BYTE + SHORT, bytes, 0, bytes.length);
-    }
   }
 
   @Override

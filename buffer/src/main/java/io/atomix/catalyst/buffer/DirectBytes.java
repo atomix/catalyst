@@ -1,56 +1,40 @@
-/*
- * Copyright 2015 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.buffer.util.DirectMemoryAllocator;
-import io.atomix.catalyst.buffer.util.DirectMemory;
+import io.atomix.catalyst.buffer.util.HeapMemory;
+
+import java.nio.ByteBuffer;
 
 /**
- * Direct byte buffer bytes.
- *
- * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
+ * {@link ByteBuffer} based direct bytes.
  */
-public class DirectBytes extends NativeBytes {
+public class DirectBytes extends ByteBufferBytes {
 
   /**
-   * Allocates a direct {@link java.nio.ByteBuffer} based byte array.
-   * <p>
-   * When the array is constructed, {@link DirectMemoryAllocator} will be used to allocate
-   * {@code count} bytes of off-heap memory. Memory is accessed by the buffer directly via {@link sun.misc.Unsafe}.
+   * Allocates a new direct byte array.
    *
    * @param size The count of the buffer to allocate (in bytes).
-   * @return The native buffer.
+   * @return The direct buffer.
    * @throws IllegalArgumentException If {@code count} is greater than the maximum allowed count for
-   *         a {@link java.nio.ByteBuffer} - {@code Integer.MAX_VALUE - 5}
+   *         an array on the Java heap - {@code Integer.MAX_VALUE - 5}
    */
   public static DirectBytes allocate(long size) {
-    return new DirectBytes(DirectMemory.allocate(size));
+    if (size > HeapMemory.MAX_SIZE)
+      throw new IllegalArgumentException("size cannot for DirectBytes cannot be greater than " + HeapMemory.MAX_SIZE);
+    return new DirectBytes(ByteBuffer.allocate((int) size));
   }
 
-  protected DirectBytes(DirectMemory memory) {
-    super(memory);
+  protected DirectBytes(ByteBuffer buffer) {
+    super(buffer);
   }
 
-  /**
-   * Copies the bytes to a new byte array.
-   *
-   * @return A new {@link HeapBytes} instance backed by a copy of this instance's array.
-   */
-  public DirectBytes copy() {
-    return new DirectBytes((DirectMemory) memory.copy());
+  @Override
+  protected ByteBuffer newByteBuffer(long size) {
+    return ByteBuffer.allocateDirect((int) size);
+  }
+
+  @Override
+  public boolean isDirect() {
+    return true;
   }
 
 }

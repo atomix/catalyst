@@ -18,6 +18,8 @@ package io.atomix.catalyst.buffer;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Output stream output.
@@ -39,9 +41,9 @@ public class OutputStreamBufferOutput implements BufferOutput<BufferOutput<?>> {
 
   @Override
   public BufferOutput<?> write(Bytes bytes) {
-    if (bytes instanceof HeapBytes) {
+    if (bytes instanceof UnsafeHeapBytes) {
       try {
-        os.write(((HeapBytes) bytes).array());
+        os.write(bytes.array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -69,9 +71,9 @@ public class OutputStreamBufferOutput implements BufferOutput<BufferOutput<?>> {
 
   @Override
   public BufferOutput<?> write(Bytes bytes, long offset, long length) {
-    if (bytes instanceof HeapBytes) {
+    if (bytes instanceof UnsafeHeapBytes) {
       try {
-        os.write(((HeapBytes) bytes).array(), (int) offset, (int) length);
+        os.write(((UnsafeHeapBytes) bytes).array(), (int) offset, (int) length);
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -99,9 +101,9 @@ public class OutputStreamBufferOutput implements BufferOutput<BufferOutput<?>> {
 
   @Override
   public BufferOutput<?> write(Buffer buffer) {
-    if (buffer instanceof HeapBuffer) {
+    if (buffer instanceof UnsafeHeapBuffer) {
       try {
-        os.write(((HeapBuffer) buffer).array());
+        os.write(((UnsafeHeapBuffer) buffer).array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -246,22 +248,24 @@ public class OutputStreamBufferOutput implements BufferOutput<BufferOutput<?>> {
 
   @Override
   public BufferOutput<?> writeString(String s) {
-    try {
-      os.writeUTF(s);
-    } catch (IOException e) {
-      throw new CatalystIOException(e);
+    return writeString(s, Charset.defaultCharset());
+  }
+
+  @Override
+  public BufferOutput<?> writeString(String s, Charset charset) {
+    if (s == null) {
+      return writeBoolean(Boolean.FALSE);
+    } else {
+      byte[] bytes = s.getBytes(charset);
+      writeBoolean(Boolean.TRUE);
+      return writeUnsignedShort(bytes.length)
+          .write(bytes, 0, bytes.length);
     }
-    return this;
   }
 
   @Override
   public BufferOutput<?> writeUTF8(String s) {
-    try {
-      os.writeUTF(s);
-    } catch (IOException e) {
-      throw new CatalystIOException(e);
-    }
-    return this;
+    return writeString(s, StandardCharsets.UTF_8);
   }
 
   @Override

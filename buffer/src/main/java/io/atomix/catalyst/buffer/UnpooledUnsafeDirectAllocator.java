@@ -15,24 +15,21 @@
  */
 package io.atomix.catalyst.buffer;
 
-import io.atomix.catalyst.buffer.util.HeapMemory;
-import io.atomix.catalyst.util.reference.ReferencePool;
-
 /**
- * Pooled heap buffer allocator.
+ * Unpooled direct allocator.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class PooledHeapAllocator extends PooledAllocator {
+public class UnpooledUnsafeDirectAllocator extends UnpooledAllocator {
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public PooledHeapAllocator() {
-    super((ReferencePool) new UnsafeHeapBufferPool());
+  @Override
+  public Buffer allocate(long initialCapacity, long maxCapacity) {
+    return UnsafeDirectBuffer.allocate(initialCapacity, maxCapacity);
   }
 
   @Override
   protected long maxCapacity() {
-    return HeapMemory.MAX_SIZE;
+    return Long.MAX_VALUE;
   }
 
 }

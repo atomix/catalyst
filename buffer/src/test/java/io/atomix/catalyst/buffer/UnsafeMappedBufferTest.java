@@ -15,44 +15,36 @@
  */
 package io.atomix.catalyst.buffer;
 
-import org.testng.annotations.AfterTest;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
 
-import static org.testng.Assert.*;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.Test;
 
 /**
- * File buffer test.
+ * Mapped buffer test.
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public class FileBufferTest extends BufferTest {
+@Test
+public class UnsafeMappedBufferTest extends BufferTest {
   @AfterTest
   protected void afterTest() {
     FileTesting.cleanFiles();
   }
-
+  
   @Override
   protected Buffer createBuffer(long capacity) {
-    return FileBuffer.allocate(FileTesting.createFile(), capacity);
+    return UnsafeMappedBuffer.allocate(FileTesting.createFile(), capacity);
   }
 
   @Override
   protected Buffer createBuffer(long capacity, long maxCapacity) {
-    return FileBuffer.allocate(FileTesting.createFile(), capacity, maxCapacity);
-  }
-
-  public void testFileToHeapBuffer() {
-    File file = FileTesting.createFile();
-    try (FileBuffer buffer = FileBuffer.allocate(file, 16)) {
-      buffer.writeLong(10).writeLong(11).flip();
-      byte[] bytes = new byte[16];
-      buffer.read(bytes).rewind();
-      HeapBuffer heapBuffer = HeapBuffer.wrap(bytes);
-      assertEquals(buffer.readLong(), heapBuffer.readLong());
-      assertEquals(buffer.readLong(), heapBuffer.readLong());
-    }
+    return UnsafeMappedBuffer.allocate(FileTesting.createFile(), capacity, maxCapacity);
   }
 
   /**
@@ -60,12 +52,12 @@ public class FileBufferTest extends BufferTest {
    */
   public void testPersist() {
     File file = FileTesting.createFile();
-    try (FileBuffer buffer = FileBuffer.allocate(file, 16)) {
+    try (UnsafeMappedBuffer buffer = UnsafeMappedBuffer.allocate(file, 16)) {
       buffer.writeLong(10).writeLong(11).flip();
       assertEquals(buffer.readLong(), 10);
       assertEquals(buffer.readLong(), 11);
     }
-    try (FileBuffer buffer = FileBuffer.allocate(file, 16)) {
+    try (UnsafeMappedBuffer buffer = UnsafeMappedBuffer.allocate(file, 16)) {
       assertEquals(buffer.readLong(), 10);
       assertEquals(buffer.readLong(), 11);
     }
@@ -76,7 +68,7 @@ public class FileBufferTest extends BufferTest {
    */
   public void testDelete() {
     File file = FileTesting.createFile();
-    FileBuffer buffer = FileBuffer.allocate(file, 16);
+    UnsafeMappedBuffer buffer = UnsafeMappedBuffer.allocate(file, 16);
     buffer.writeLong(10).writeLong(11).flip();
     assertEquals(buffer.readLong(), 10);
     assertEquals(buffer.readLong(), 11);

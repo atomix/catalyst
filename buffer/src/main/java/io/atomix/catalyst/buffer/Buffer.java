@@ -60,6 +60,16 @@ import java.nio.ByteOrder;
 public interface Buffer extends BytesInput<Buffer>, BufferInput<Buffer>, BytesOutput<Buffer>, BufferOutput<Buffer>, ReferenceCounted<Buffer> {
 
   /**
+   * Returns the underlying byte array.
+   *
+   * @return the underlying byte array
+   * @throws UnsupportedOperationException if a heap array is not supported
+   */
+  default byte[] array() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Returns the byte order.
    * <p>
    * For consistency with {@link java.nio.ByteBuffer}, all buffer implementations are initially in {@link java.nio.ByteOrder#BIG_ENDIAN} order.
