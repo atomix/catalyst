@@ -131,15 +131,18 @@ public class LocalConnection implements Connection {
     try {
       holder.context.executor().execute(() -> {
         if (open && connection.open) {
-          handler.apply(request).whenComplete((response, error) -> {
-            if (!open || !connection.open) {
-              connection.handleResponseError(requestId, new ConnectException("connection closed"));
-            } else if (error == null) {
-              connection.handleResponseOk(requestId, response);
-            } else {
-              connection.handleResponseError(requestId, error);
-            }
-          });
+          CompletableFuture<Object> responseFuture = handler.apply(request);
+          if (responseFuture != null) {
+            responseFuture.whenComplete((response, error) -> {
+              if (!open || !connection.open) {
+                connection.handleResponseError(requestId, new ConnectException("connection closed"));
+              } else if (error == null) {
+                connection.handleResponseOk(requestId, response);
+              } else {
+                connection.handleResponseError(requestId, error);
+              }
+            });
+          }
         } else {
           connection.handleResponseError(requestId, new ConnectException("connection closed"));
         }
