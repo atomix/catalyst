@@ -21,7 +21,6 @@ import io.atomix.catalyst.concurrent.Scheduled;
 import io.atomix.catalyst.concurrent.ThreadContext;
 import io.atomix.catalyst.serializer.SerializationException;
 import io.atomix.catalyst.transport.Connection;
-import io.atomix.catalyst.transport.MessageHandler;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.reference.ReferenceCounted;
 import io.netty.buffer.ByteBuf;
@@ -37,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Netty connection.
@@ -110,25 +110,27 @@ public class NettyConnection implements Connection {
    */
   private void handleRequest(long requestId, Object request, HandlerHolder handler) {
     @SuppressWarnings("unchecked")
-    CompletableFuture<Object> responseFuture = handler.handler.handle(request);
-    responseFuture.whenComplete((response, error) -> {
-      ThreadContext context = ThreadContext.currentContext();
-      if (context == null) {
-        this.context.executor().execute(() -> {
-          if (error == null) {
-            handleRequestSuccess(requestId, response, this.context);
-          } else {
-            handleRequestFailure(requestId, error, this.context);
-          }
-        });
-      } else {
-        if (error == null) {
-          handleRequestSuccess(requestId, response, context);
+    CompletableFuture<Object> responseFuture = handler.handler.apply(request);
+    if (responseFuture != null) {
+      responseFuture.whenComplete((response, error) -> {
+        ThreadContext context = ThreadContext.currentContext();
+        if (context == null) {
+          this.context.executor().execute(() -> {
+            if (error == null) {
+              handleRequestSuccess(requestId, response, this.context);
+            } else {
+              handleRequestFailure(requestId, error, this.context);
+            }
+          });
         } else {
-          handleRequestFailure(requestId, error, context);
+          if (error == null) {
+            handleRequestSuccess(requestId, response, context);
+          } else {
+            handleRequestFailure(requestId, error, context);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -323,7 +325,38 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public <T, U> CompletableFuture<U> send(T request) {
+  public CompletableFuture<Void> send(Object request) {
+    Assert.notNull(request, "request");
+    ThreadContext context = ThreadContext.currentContextOrThrow();
+    ContextualFuture<Void> future = new ContextualFuture<>(System.currentTimeMillis(), context);
+
+    long requestId = ++this.requestId;
+
+    ByteBuf buffer = this.channel.alloc().buffer(9)
+      .writeByte(REQUEST)
+      .writeLong(requestId);
+
+    try {
+      writeRequest(buffer, request, context);
+    } catch (SerializationException e) {
+      future.completeExceptionally(e);
+      return future;
+    }
+
+    responseFutures.put(requestId, future);
+
+    writeFuture = channel.writeAndFlush(buffer).addListener((channelFuture) -> {
+      if (channelFuture.isSuccess()) {
+        future.context.executor().execute(() -> future.complete(null));
+      } else {
+        future.context.executor().execute(() -> future.completeExceptionally(channelFuture.cause()));
+      }
+    });
+    return future;
+  }
+
+  @Override
+  public <T, U> CompletableFuture<U> sendAndReceive(T request) {
     Assert.notNull(request, "request");
     ThreadContext context = ThreadContext.currentContextOrThrow();
     ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), context);
@@ -359,14 +392,22 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
+  public <T, U> Connection handler(Class<T> type, Consumer<T> handler) {
+    return handler(type, r -> {
+      handler.accept(r);
+      return null;
+    });
+  }
+
+  @Override
+  public <T, U> Connection handler(Class<T> type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;
   }
 
   @Override
-  public Listener<Throwable> exceptionListener(Consumer<Throwable> listener) {
+  public Listener<Throwable> onException(Consumer<Throwable> listener) {
     if (failure != null) {
       listener.accept(failure);
     }
@@ -374,7 +415,7 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public Listener<Connection> closeListener(Consumer<Connection> listener) {
+  public Listener<Connection> onClose(Consumer<Connection> listener) {
     if (closed) {
       listener.accept(this);
     }
@@ -421,10 +462,11 @@ public class NettyConnection implements Connection {
    * Holds message handler and thread context.
    */
   protected static class HandlerHolder {
-    private final MessageHandler handler;
+    private final Function<Object, CompletableFuture<Object>> handler;
     private final ThreadContext context;
 
-    private HandlerHolder(MessageHandler handler, ThreadContext context) {
+    @SuppressWarnings("unchecked")
+    private HandlerHolder(Function handler, ThreadContext context) {
       this.handler = handler;
       this.context = context;
     }

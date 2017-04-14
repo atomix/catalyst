@@ -46,7 +46,7 @@ public interface Server {
   /**
    * Closes the server.
    * <p>
-   * When the server is closed, any {@link Connection#closeListener(Consumer) close listeners} registered
+   * When the server is closed, any {@link Connection#onClose(Consumer) close listeners} registered
    * on the server's {@link Connection}s will be invoked prior to shutdown.
    *
    * @return A completable future to be completed once the server is closed.
