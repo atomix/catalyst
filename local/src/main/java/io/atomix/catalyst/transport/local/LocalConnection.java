@@ -15,12 +15,8 @@
  */
 package io.atomix.catalyst.transport.local;
 
-import io.atomix.catalyst.concurrent.Futures;
-import io.atomix.catalyst.concurrent.Listener;
-import io.atomix.catalyst.concurrent.Listeners;
-import io.atomix.catalyst.concurrent.ThreadContext;
+import io.atomix.catalyst.concurrent.*;
 import io.atomix.catalyst.transport.Connection;
-import io.atomix.catalyst.transport.MessageHandler;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.util.reference.ReferenceCounted;
 
@@ -32,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Local connection.
@@ -39,8 +36,6 @@ import java.util.function.Consumer;
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
 public class LocalConnection implements Connection {
-  private static final int RESPONSE_ERROR = 0x00;
-  private static final int RESPONSE_OK = 0x01;
   private final UUID id = UUID.randomUUID();
   private final ThreadContext context;
   private final Set<LocalConnection> connections;
@@ -66,7 +61,12 @@ public class LocalConnection implements Connection {
   }
 
   @Override
-  public <T, U> CompletableFuture<U> send(T request) {
+  public CompletableFuture<Void> send(Object message) {
+    return sendAndReceive(message);
+  }
+
+  @Override
+  public <T, U> CompletableFuture<U> sendAndReceive(T request) {
     if (!open || !connection.open)
       return Futures.exceptionalFuture(new ConnectException("connection closed"));
 
@@ -126,12 +126,12 @@ public class LocalConnection implements Connection {
       return;
     }
 
-    MessageHandler<Object, Object> handler = (MessageHandler<Object, Object>) holder.handler;
+    Function<Object, CompletableFuture<Object>> handler = (Function<Object, CompletableFuture<Object>>) holder.handler;
 
     try {
       holder.context.executor().execute(() -> {
         if (open && connection.open) {
-          handler.handle(request).whenComplete((response, error) -> {
+          handler.apply(request).whenComplete((response, error) -> {
             if (!open || !connection.open) {
               connection.handleResponseError(requestId, new ConnectException("connection closed"));
             } else if (error == null) {
@@ -150,7 +150,15 @@ public class LocalConnection implements Connection {
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, MessageHandler<T, U> handler) {
+  public <T, U> Connection handler(Class<T> type, Consumer<T> handler) {
+    return handler(type, r -> {
+      handler.accept(r);
+      return ComposableFuture.completedFuture(null);
+    });
+  }
+
+  @Override
+  public <T, U> Connection handler(Class<T> type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     if (handler != null) {
       handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
@@ -161,12 +169,12 @@ public class LocalConnection implements Connection {
   }
 
   @Override
-  public Listener<Throwable> exceptionListener(Consumer<Throwable> listener) {
+  public Listener<Throwable> onException(Consumer<Throwable> listener) {
     return exceptionListeners.add(Assert.notNull(listener, "listener"));
   }
 
   @Override
-  public Listener<Connection> closeListener(Consumer<Connection> listener) {
+  public Listener<Connection> onClose(Consumer<Connection> listener) {
     return closeListeners.add(Assert.notNull(listener, "listener"));
   }
 
@@ -218,10 +226,10 @@ public class LocalConnection implements Connection {
    * Holds message handler and thread context.
    */
   protected static class HandlerHolder {
-    private final MessageHandler<?, ?> handler;
+    private final Function handler;
     private final ThreadContext context;
 
-    private HandlerHolder(MessageHandler<?, ?> handler, ThreadContext context) {
+    private HandlerHolder(Function handler, ThreadContext context) {
       this.handler = handler;
       this.context = context;
     }
