@@ -67,7 +67,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       try {
@@ -81,13 +81,13 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       client.close().thenRun(this::resume);
       server.close().thenRun(this::resume);
     });
-    await(1000, 2);
+    await(10000, 2);
   }
 
   /**
@@ -113,7 +113,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       try {
@@ -128,13 +128,13 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       client.close().thenRun(this::resume);
       server.close().thenRun(this::resume);
     });
-    await(1000, 2);
+    await(10000, 2);
   }
 
   @Test(enabled=false)
@@ -166,7 +166,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       try {
@@ -180,13 +180,13 @@ public class NettyTransportTest extends ConcurrentTestCase {
         threadFail(e);
       }
     });
-    await(1000);
+    await(10000);
 
     context.executor().execute(() -> {
       client.close().thenRun(this::resume);
       server.close().thenRun(this::resume);
     });
-    await(1000, 2);
+    await(10000, 2);
   }
 
   /**
