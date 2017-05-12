@@ -122,6 +122,11 @@ public class UnsafeHeapBuffer extends AbstractBuffer {
   }
 
   @Override
+  public boolean hasArray() {
+    return true;
+  }
+
+  @Override
   public byte[] array() {
     return bytes.memory.array();
   }

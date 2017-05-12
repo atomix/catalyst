@@ -45,4 +45,8 @@ public class HeapBytes extends ByteBufferBytes {
     return ByteBuffer.allocate((int) size);
   }
 
+  @Override
+  public boolean hasArray() {
+    return true;
+  }
 }

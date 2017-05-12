@@ -71,6 +71,11 @@ public class UnsafeHeapBytes extends AbstractBytes {
   }
 
   @Override
+  public boolean hasArray() {
+    return true;
+  }
+
+  @Override
   public byte[] array() {
     return memory.array();
   }

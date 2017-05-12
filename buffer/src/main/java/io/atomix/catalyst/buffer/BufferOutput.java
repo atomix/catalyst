@@ -72,6 +72,18 @@ public interface BufferOutput<T extends BufferOutput<?>> extends AutoCloseable {
   T write(Buffer buffer);
 
   /**
+   * Writes a byte array.
+   *
+   * @param bytes The byte array to write.
+   * @return The written buffer.
+   */
+  @SuppressWarnings("unchecked")
+  default T writeBytes(byte[] bytes) {
+    write(bytes);
+    return (T) this;
+  }
+
+  /**
    * Writes a byte to the buffer.
    *
    * @param b The byte to write.

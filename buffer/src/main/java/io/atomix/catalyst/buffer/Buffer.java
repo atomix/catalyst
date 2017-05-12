@@ -60,6 +60,15 @@ import java.nio.ByteOrder;
 public interface Buffer extends BytesInput<Buffer>, BufferInput<Buffer>, BytesOutput<Buffer>, BufferOutput<Buffer>, ReferenceCounted<Buffer> {
 
   /**
+   * Returns whether the buffer has an array.
+   *
+   * @return Whether the buffer has an underlying array.
+   */
+  default boolean hasArray() {
+    return false;
+  }
+
+  /**
    * Returns the underlying byte array.
    *
    * @return the underlying byte array
