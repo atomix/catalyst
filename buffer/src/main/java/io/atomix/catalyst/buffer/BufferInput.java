@@ -92,6 +92,18 @@ public interface BufferInput<T extends BufferInput<?>> extends AutoCloseable {
   T read(Buffer buffer);
 
   /**
+   * Reads a byte array.
+   *
+   * @param length The byte array length
+   * @return The read byte array.
+   */
+  default byte[] readBytes(int length) {
+    byte[] bytes = new byte[length];
+    read(bytes);
+    return bytes;
+  }
+
+  /**
    * Reads a byte from the buffer at the current position.
    *
    * @return The read byte.

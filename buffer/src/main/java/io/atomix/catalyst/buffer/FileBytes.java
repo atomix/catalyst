@@ -212,15 +212,25 @@ public class FileBytes extends AbstractBytes {
   @Override
   public Bytes read(long position, Bytes bytes, long offset, long length) {
     checkRead(position, length);
-    if (bytes instanceof WrappedBytes)
+    if (bytes instanceof WrappedBytes) {
       bytes = ((WrappedBytes) bytes).root();
-    try {
-      seekToOffset(position);
-      for (long i = 0; i < length; i++) {
-        bytes.writeByte(offset + i, randomAccessFile.readByte());
+    }
+    if (bytes.hasArray()) {
+      try {
+        seekToOffset(position);
+        randomAccessFile.read(bytes.array(), (int) offset, (int) length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } else {
+      try {
+        seekToOffset(position);
+        byte[] readBytes = new byte[(int) length];
+        randomAccessFile.read(readBytes);
+        bytes.write(offset, readBytes, 0, length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     return this;
   }
@@ -317,19 +327,22 @@ public class FileBytes extends AbstractBytes {
   @Override
   public Bytes write(long position, Bytes bytes, long offset, long length) {
     checkWrite(position, length);
-    if (bytes instanceof UnsafeHeapBytes) {
+    if (bytes instanceof WrappedBytes) {
+      bytes = ((WrappedBytes) bytes).root();
+    }
+    if (bytes.hasArray()) {
       try {
         seekToOffset(position);
-        randomAccessFile.write(((UnsafeHeapBytes) bytes).array(), (int) offset, (int) length);
+        randomAccessFile.write(bytes.array(), (int) offset, (int) length);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     } else {
       try {
         seekToOffset(position);
-        for (long i = 0; i < length; i++) {
-          randomAccessFile.writeByte(bytes.readByte(offset + i));
-        }
+        byte[] writeBytes = new byte[(int) length];
+        bytes.read(offset, writeBytes, 0, length);
+        randomAccessFile.write(writeBytes);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

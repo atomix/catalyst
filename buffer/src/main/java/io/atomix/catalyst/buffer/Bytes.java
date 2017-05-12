@@ -34,6 +34,15 @@ public interface Bytes extends BytesInput<Bytes>, BytesOutput<Bytes>, AutoClosea
   int DOUBLE = 8;
 
   /**
+   * Returns whether the bytes has an array.
+   *
+   * @return Whether the bytes has an underlying array.
+   */
+  default boolean hasArray() {
+    return false;
+  }
+
+  /**
    * Returns the underlying byte array.
    *
    * @return the underlying byte array

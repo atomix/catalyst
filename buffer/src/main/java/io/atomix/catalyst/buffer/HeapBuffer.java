@@ -101,4 +101,8 @@ public class HeapBuffer extends ByteBufferBuffer {
     super(bytes, offset, initialCapacity, maxCapacity, null);
   }
 
+  @Override
+  public boolean hasArray() {
+    return true;
+  }
 }
