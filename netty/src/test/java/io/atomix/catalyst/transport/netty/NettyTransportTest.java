@@ -58,7 +58,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555)), connection -> {
-          connection.<String, String>handler(String.class, message -> {
+          connection.<String, String>handler("test", message -> {
             threadAssertEquals("Hello world!", message);
             return CompletableFuture.completedFuture("Hello world back!");
           });
@@ -72,7 +72,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555))).thenAccept(connection -> {
-          connection.sendAndReceive("Hello world!").thenAccept(response -> {
+          connection.sendAndReceive("test", "Hello world!").thenAccept(response -> {
             threadAssertEquals("Hello world back!", response);
             resume();
           });
@@ -104,7 +104,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5556)), connection -> {
-          connection.<String, String>handler(String.class, message -> {
+          connection.<String, String>handler("test", message -> {
             threadAssertEquals("Hello world!", message);
             return CompletableFuture.completedFuture("Hello world back!");
           });
@@ -118,7 +118,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5556))).thenAccept(connection -> {
-          connection.sendAndReceive(new NotSerializable()).whenComplete((result, error) -> {
+          connection.sendAndReceive("test", new NotSerializable()).whenComplete((result, error) -> {
             threadAssertNotNull(error);
             threadAssertTrue(error instanceof SerializationException);
             resume();
@@ -157,7 +157,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555)), connection -> {
-          connection.<String, String>handler(String.class, message -> {
+          connection.<String, String>handler("test", message -> {
             threadAssertEquals("Hello world!", message);
             return CompletableFuture.completedFuture("Hello world back!");
           });
@@ -171,7 +171,7 @@ public class NettyTransportTest extends ConcurrentTestCase {
     context.executor().execute(() -> {
       try {
         client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555))).thenAccept(connection -> {
-          connection.send("Hello world!").thenAccept(response -> {
+          connection.send("test", "Hello world!").thenAccept(response -> {
             threadAssertEquals("Hello world back!", response);
             resume();
           });

@@ -28,6 +28,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class NettyConnection implements Connection {
 
   private final Channel channel;
   private final ThreadContext context;
-  private final Map<Class, HandlerHolder> handlers = new ConcurrentHashMap<>();
+  private final Map<String, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
   private final long requestTimeout;
@@ -91,8 +92,9 @@ public class NettyConnection implements Connection {
     long requestId = buffer.readLong();
 
     try {
+      String type = readType(buffer);
       Object request = readRequest(buffer);
-      HandlerHolder handler = handlers.get(request.getClass());
+      HandlerHolder handler = handlers.get(type);
       if (handler != null) {
         handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
       } else {
@@ -223,7 +225,10 @@ public class NettyConnection implements Connection {
   /**
    * Writes a request to the given buffer.
    */
-  private ByteBuf writeRequest(ByteBuf buffer, Object request, ThreadContext context) {
+  private ByteBuf writeRequest(ByteBuf buffer, String type, Object request, ThreadContext context) {
+    byte[] bytes = type.getBytes(StandardCharsets.UTF_8);
+    buffer.writeShort(bytes.length);
+    buffer.writeBytes(bytes);
     context.serializer().writeObject(request, OUTPUT.get().setByteBuf(buffer));
     if (request instanceof ReferenceCounted) {
       ((ReferenceCounted) request).release();
@@ -245,6 +250,15 @@ public class NettyConnection implements Connection {
   private ByteBuf writeError(ByteBuf buffer, Throwable t, ThreadContext context) {
     context.serializer().writeObject(t, OUTPUT.get().setByteBuf(buffer));
     return buffer;
+  }
+
+  /**
+   * Reads a request type.
+   */
+  private String readType(ByteBuf buffer) {
+    byte[] bytes = new byte[buffer.readShort()];
+    buffer.readBytes(bytes);
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   /**
@@ -325,7 +339,8 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public CompletableFuture<Void> send(Object request) {
+  public CompletableFuture<Void> send(String type, Object request) {
+    Assert.notNull(type, "type");
     Assert.notNull(request, "request");
     ThreadContext context = ThreadContext.currentContextOrThrow();
     ContextualFuture<Void> future = new ContextualFuture<>(System.currentTimeMillis(), context);
@@ -337,7 +352,7 @@ public class NettyConnection implements Connection {
       .writeLong(requestId);
 
     try {
-      writeRequest(buffer, request, context);
+      writeRequest(buffer, type, request, context);
     } catch (SerializationException e) {
       future.completeExceptionally(e);
       return future;
@@ -356,7 +371,7 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public <T, U> CompletableFuture<U> sendAndReceive(T request) {
+  public <T, U> CompletableFuture<U> sendAndReceive(String type, T request) {
     Assert.notNull(request, "request");
     ThreadContext context = ThreadContext.currentContextOrThrow();
     ContextualFuture<U> future = new ContextualFuture<>(System.currentTimeMillis(), context);
@@ -368,7 +383,7 @@ public class NettyConnection implements Connection {
       .writeLong(requestId);
 
     try {
-      writeRequest(buffer, request, context);
+      writeRequest(buffer, type, request, context);
     } catch (SerializationException e) {
       future.completeExceptionally(e);
       return future;
@@ -392,15 +407,16 @@ public class NettyConnection implements Connection {
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, Consumer<T> handler) {
+  @SuppressWarnings("unchecked")
+  public <T> Connection handler(String type, Consumer<T> handler) {
     return handler(type, r -> {
-      handler.accept(r);
+      handler.accept((T) r);
       return null;
     });
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, Function<T, CompletableFuture<U>> handler) {
+  public <T, U> Connection handler(String type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;

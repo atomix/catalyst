@@ -42,7 +42,7 @@ public class LocalConnection implements Connection {
   private LocalConnection connection;
   private long requestId;
   private final Map<Long, ContextualFuture> futures = new ConcurrentHashMap<>();
-  private final Map<Class<?>, HandlerHolder> handlers = new ConcurrentHashMap<>();
+  private final Map<String, HandlerHolder> handlers = new ConcurrentHashMap<>();
   private final Listeners<Throwable> exceptionListeners = new Listeners<>();
   private final Listeners<Connection> closeListeners = new Listeners<>();
   volatile boolean open = true;
@@ -61,30 +61,30 @@ public class LocalConnection implements Connection {
   }
 
   @Override
-  public CompletableFuture<Void> send(Object message) {
-    return sendAndReceive(message);
+  public CompletableFuture<Void> send(String type, Object message) {
+    return sendAndReceive(type, message);
   }
 
   @Override
-  public <T, U> CompletableFuture<U> sendAndReceive(T request) {
+  public <T, U> CompletableFuture<U> sendAndReceive(String type, T request) {
     if (!open || !connection.open)
       return Futures.exceptionalFuture(new ConnectException("connection closed"));
 
     Assert.notNull(request, "request");
 
     ContextualFuture<U> future = new ContextualFuture<>(ThreadContext.currentContextOrThrow());
-    this.context.execute(() -> sendRequest(request, future));
+    this.context.execute(() -> sendRequest(type, request, future));
     return future;
   }
 
   /**
    * Sends a request.
    */
-  private void sendRequest(Object request, ContextualFuture future) {
+  private void sendRequest(String type, Object request, ContextualFuture future) {
     if (open && connection.open) {
       long requestId = ++this.requestId;
       futures.put(requestId, future);
-      connection.handleRequest(requestId, request);
+      connection.handleRequest(requestId, type, request);
     } else {
       future.context.executor().execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
     }
@@ -119,8 +119,8 @@ public class LocalConnection implements Connection {
    * Receives a message.
    */
   @SuppressWarnings("unchecked")
-  private void handleRequest(long requestId, Object request) {
-    HandlerHolder holder = handlers.get(request.getClass());
+  private void handleRequest(long requestId, String type, Object request) {
+    HandlerHolder holder = handlers.get(type);
     if (holder == null) {
       connection.handleResponseError(requestId, new ConnectException("no handler registered"));
       return;
@@ -153,15 +153,16 @@ public class LocalConnection implements Connection {
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, Consumer<T> handler) {
+  @SuppressWarnings("unchecked")
+  public <T> Connection handler(String type, Consumer<T> handler) {
     return handler(type, r -> {
-      handler.accept(r);
+      handler.accept((T) r);
       return ComposableFuture.completedFuture(null);
     });
   }
 
   @Override
-  public <T, U> Connection handler(Class<T> type, Function<T, CompletableFuture<U>> handler) {
+  public <T, U> Connection handler(String type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     if (handler != null) {
       handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
