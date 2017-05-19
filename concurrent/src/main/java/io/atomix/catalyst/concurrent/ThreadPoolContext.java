@@ -117,8 +117,8 @@ public class ThreadPoolContext implements ThreadContext {
   }
 
   @Override
-  public Executor executor() {
-    return executor;
+  public void execute(Runnable command) {
+    executor.execute(command);
   }
 
   @Override

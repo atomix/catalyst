@@ -96,7 +96,7 @@ public class NettyConnection implements Connection {
       Object request = readRequest(buffer);
       HandlerHolder handler = handlers.get(type);
       if (handler != null) {
-        handler.context.executor().execute(() -> handleRequest(requestId, request, handler));
+        handler.context.execute(() -> handleRequest(requestId, request, handler));
       } else {
         handleRequestFailure(requestId, new SerializationException("unknown message type: " + request.getClass()), this.context);
       }
@@ -117,7 +117,7 @@ public class NettyConnection implements Connection {
       responseFuture.whenComplete((response, error) -> {
         ThreadContext context = ThreadContext.currentContext();
         if (context == null) {
-          this.context.executor().execute(() -> {
+          this.context.execute(() -> {
             if (error == null) {
               handleRequestSuccess(requestId, response, this.context);
             } else {
@@ -208,7 +208,7 @@ public class NettyConnection implements Connection {
   private void handleResponseSuccess(long requestId, Object response) {
     ContextualFuture future = responseFutures.remove(requestId);
     if (future != null) {
-      future.context.executor().execute(() -> future.complete(response));
+      future.context.execute(() -> future.complete(response));
     }
   }
 
@@ -218,7 +218,7 @@ public class NettyConnection implements Connection {
   private void handleResponseFailure(long requestId, Throwable t) {
     ContextualFuture future = responseFutures.remove(requestId);
     if (future != null) {
-      future.context.executor().execute(() -> future.completeExceptionally(t));
+      future.context.execute(() -> future.completeExceptionally(t));
     }
   }
 
@@ -292,7 +292,7 @@ public class NettyConnection implements Connection {
       failure = t;
 
       for (ContextualFuture<?> responseFuture : responseFutures.values()) {
-        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(t));
+        responseFuture.context.execute(() -> responseFuture.completeExceptionally(t));
       }
       responseFutures.clear();
 
@@ -310,7 +310,7 @@ public class NettyConnection implements Connection {
       closed = true;
 
       for (ContextualFuture<?> responseFuture : responseFutures.values()) {
-        responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
+        responseFuture.context.execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
       }
       responseFutures.clear();
 
@@ -331,7 +331,7 @@ public class NettyConnection implements Connection {
       ContextualFuture future = iterator.next().getValue();
       if (future.time + requestTimeout < time) {
         iterator.remove();
-        future.context.executor().execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
+        future.context.execute(() -> future.completeExceptionally(new TimeoutException("request timed out")));
       } else {
         break;
       }
@@ -362,9 +362,9 @@ public class NettyConnection implements Connection {
 
     writeFuture = channel.writeAndFlush(buffer).addListener((channelFuture) -> {
       if (channelFuture.isSuccess()) {
-        future.context.executor().execute(() -> future.complete(null));
+        future.context.execute(() -> future.complete(null));
       } else {
-        future.context.executor().execute(() -> future.completeExceptionally(channelFuture.cause()));
+        future.context.execute(() -> future.completeExceptionally(channelFuture.cause()));
       }
     });
     return future;
@@ -396,11 +396,11 @@ public class NettyConnection implements Connection {
         if (closed) {
           ContextualFuture responseFuture = responseFutures.remove(requestId);
           if (responseFuture != null) {
-            responseFuture.context.executor().execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
+            responseFuture.context.execute(() -> responseFuture.completeExceptionally(new ConnectException("connection closed")));
           }
         }
       } else {
-        future.context.executor().execute(() -> future.completeExceptionally(channelFuture.cause()));
+        future.context.execute(() -> future.completeExceptionally(channelFuture.cause()));
       }
     });
     return future;
@@ -408,15 +408,15 @@ public class NettyConnection implements Connection {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> Connection handler(String type, Consumer<T> handler) {
-    return handler(type, r -> {
+  public <T> Connection registerHandler(String type, Consumer<T> handler) {
+    return registerHandler(type, r -> {
       handler.accept((T) r);
       return null;
     });
   }
 
   @Override
-  public <T, U> Connection handler(String type, Function<T, CompletableFuture<U>> handler) {
+  public <T, U> Connection registerHandler(String type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
     return null;
@@ -446,18 +446,18 @@ public class NettyConnection implements Connection {
       writeFuture.addListener(channelFuture -> {
         channel.close().addListener(closeFuture -> {
           if (closeFuture.isSuccess()) {
-            context.executor().execute(() -> future.complete(null));
+            context.execute(() -> future.complete(null));
           } else {
-            context.executor().execute(() -> future.completeExceptionally(closeFuture.cause()));
+            context.execute(() -> future.completeExceptionally(closeFuture.cause()));
           }
         });
       });
     } else {
       channel.close().addListener(closeFuture -> {
         if (closeFuture.isSuccess()) {
-          context.executor().execute(() -> future.complete(null));
+          context.execute(() -> future.complete(null));
         } else {
-          context.executor().execute(() -> future.completeExceptionally(closeFuture.cause()));
+          context.execute(() -> future.completeExceptionally(closeFuture.cause()));
         }
       });
     }

@@ -20,8 +20,6 @@ import io.atomix.catalyst.transport.Address;
 import io.atomix.catalyst.transport.Client;
 import io.atomix.catalyst.transport.Server;
 import io.atomix.catalyst.transport.Transport;
-import io.atomix.catalyst.transport.local.LocalServerRegistry;
-import io.atomix.catalyst.transport.local.LocalTransport;
 import io.atomix.catalyst.concurrent.SingleThreadContext;
 import io.atomix.catalyst.concurrent.ThreadContext;
 import net.jodah.concurrentunit.ConcurrentTestCase;
@@ -56,10 +54,10 @@ public class LocalTransportTest extends ConcurrentTestCase {
 
     ThreadContext context = new SingleThreadContext("test-thread-%d", new Serializer());
 
-    context.executor().execute(() -> {
+    context.execute(() -> {
       try {
         server.listen(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555)), connection -> {
-          connection.<String, String>handler("test", message -> {
+          connection.<String, String>registerHandler("test", message -> {
             threadAssertEquals("Hello world!", message);
             return CompletableFuture.completedFuture("Hello world back!");
           });
@@ -70,7 +68,7 @@ public class LocalTransportTest extends ConcurrentTestCase {
     });
     await();
 
-    context.executor().execute(() -> {
+    context.execute(() -> {
       try {
         client.connect(new Address(new InetSocketAddress(InetAddress.getByName("localhost"), 5555))).thenAccept(connection -> {
           connection.sendAndReceive("test", "Hello world!").thenAccept(response -> {

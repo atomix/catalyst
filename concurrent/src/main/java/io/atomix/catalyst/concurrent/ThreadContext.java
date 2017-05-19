@@ -20,9 +20,7 @@ import io.atomix.catalyst.util.Assert;
 import org.slf4j.Logger;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 /**
  * Thread context.
@@ -43,7 +41,7 @@ import java.util.function.Supplier;
  *
  * @author <a href="http://github.com/kuujo">Jordan Halterman</a>
  */
-public interface ThreadContext extends AutoCloseable {
+public interface ThreadContext extends AutoCloseable, Executor {
 
   /**
    * Returns the current thread context.
@@ -95,13 +93,6 @@ public interface ThreadContext extends AutoCloseable {
   Serializer serializer();
 
   /**
-   * Returns the underlying executor.
-   *
-   * @return The underlying executor.
-   */
-  Executor executor();
-
-  /**
    * Returns a boolean indicating whether the context state is blocked.
    *
    * @return Indicates whether the context state is blocked.
@@ -117,44 +108,6 @@ public interface ThreadContext extends AutoCloseable {
    * Sets the context state to unblocked.
    */
   void unblock();
-
-  /**
-   * Executes a callback on the context.
-   *
-   * @param callback The callback to execute.
-   * @return A completable future to be completed once the callback has been executed.
-   */
-  default CompletableFuture<Void> execute(Runnable callback) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    executor().execute(() -> {
-      try {
-        callback.run();
-        future.complete(null);
-      } catch (Throwable t) {
-        future.completeExceptionally(t);
-      }
-    });
-    return future;
-  }
-
-  /**
-   * Executes a callback on the context.
-   *
-   * @param callback The callback to execute.
-   * @param <T> The callback result type.
-   * @return A completable future to be completed with the callback result.
-   */
-  default <T> CompletableFuture<T> execute(Supplier<T> callback) {
-    CompletableFuture<T> future = new CompletableFuture<>();
-    executor().execute(() -> {
-      try {
-        future.complete(callback.get());
-      } catch (Throwable t) {
-        future.completeExceptionally(t);
-      }
-    });
-    return future;
-  }
 
   /**
    * Schedules a runnable on the context.

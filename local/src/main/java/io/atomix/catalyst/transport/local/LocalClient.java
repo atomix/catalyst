@@ -60,7 +60,7 @@ public class LocalClient implements Client {
     ThreadContext context = getContext();
     LocalServer server = registry.get(address);
     if (server == null) {
-      return Futures.exceptionalFutureAsync(new ConnectException("failed to connect"), context.executor());
+      return Futures.exceptionalFutureAsync(new ConnectException("failed to connect"), context);
     }
 
     LocalConnection connection = new LocalConnection(context, connections);
@@ -73,7 +73,7 @@ public class LocalClient implements Client {
       } else {
         future.completeExceptionally(error);
       }
-    }, context.executor());
+    }, context);
     return future;
   }
 
@@ -88,7 +88,7 @@ public class LocalClient implements Client {
       futures[i++] = connection.close();
     }
 
-    CompletableFuture.allOf(futures).whenCompleteAsync(future, context.executor());
+    CompletableFuture.allOf(futures).whenCompleteAsync(future, context);
     return future;
   }
 

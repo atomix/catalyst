@@ -108,7 +108,7 @@ public interface Connection {
    * @throws NullPointerException if {@code type} is null
    * @throws IllegalStateException if not called from a Catalyst thread
    */
-  <T> Connection handler(String type, Consumer<T> handler);
+  <T> Connection registerHandler(String type, Consumer<T> handler);
 
   /**
    * Sets a message handler on the connection.
@@ -130,7 +130,7 @@ public interface Connection {
    * @throws NullPointerException if {@code type} is null
    * @throws IllegalStateException if not called from a Catalyst thread
    */
-  <T, U> Connection handler(String type, Function<T, CompletableFuture<U>> handler);
+  <T, U> Connection registerHandler(String type, Function<T, CompletableFuture<U>> handler);
 
   /**
    * Sets an exception listener on the connection.
@@ -162,7 +162,7 @@ public interface Connection {
    * Closes the connection.
    * <p>
    * Once the connection is closed, no more messages can be {@link Connection#send(String, Object) sent} or
-   * {@link Connection#handler(String, Function) received} by the connection. Any
+   * {@link Connection#registerHandler(String, Function) received} by the connection. Any
    * {@link Connection#onClose(Consumer) close listeners} registered on the connection will be
    * invoked, and the returned {@link java.util.concurrent.CompletableFuture} will be completed once the connection has
    * been closed.

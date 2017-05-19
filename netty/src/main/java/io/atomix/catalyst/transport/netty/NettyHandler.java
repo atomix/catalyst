@@ -95,7 +95,7 @@ class NettyHandler extends ChannelInboundHandlerAdapter {
     setConnection(channel, connection);
     // synchronously notify listeners in order to ensure message handlers
     // are registered before messages are handled.
-    CompletableFuture.runAsync(() -> listener.accept(connection), this.context.executor()).join();
+    CompletableFuture.runAsync(() -> listener.accept(connection), this.context).join();
   }
 
   @Override

@@ -113,8 +113,8 @@ public class SingleThreadContext implements ThreadContext {
   }
 
   @Override
-  public Executor executor() {
-    return wrappedExecutor;
+  public void execute(Runnable command) {
+    wrappedExecutor.execute(command);
   }
 
   @Override

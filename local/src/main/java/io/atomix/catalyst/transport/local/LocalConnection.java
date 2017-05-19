@@ -86,7 +86,7 @@ public class LocalConnection implements Connection {
       futures.put(requestId, future);
       connection.handleRequest(requestId, type, request);
     } else {
-      future.context.executor().execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
+      future.context.execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
     }
 
     if (request instanceof ReferenceCounted) {
@@ -101,7 +101,7 @@ public class LocalConnection implements Connection {
   private void handleResponseOk(long requestId, Object response) {
     ContextualFuture future = futures.remove(requestId);
     if (future != null) {
-      future.context.executor().execute(() -> future.complete(response));
+      future.context.execute(() -> future.complete(response));
     }
   }
 
@@ -129,7 +129,7 @@ public class LocalConnection implements Connection {
     Function<Object, CompletableFuture<Object>> handler = (Function<Object, CompletableFuture<Object>>) holder.handler;
 
     try {
-      holder.context.executor().execute(() -> {
+      holder.context.execute(() -> {
         if (open && connection.open) {
           CompletableFuture<Object> responseFuture = handler.apply(request);
           if (responseFuture != null) {
@@ -154,15 +154,15 @@ public class LocalConnection implements Connection {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> Connection handler(String type, Consumer<T> handler) {
-    return handler(type, r -> {
+  public <T> Connection registerHandler(String type, Consumer<T> handler) {
+    return registerHandler(type, r -> {
       handler.accept((T) r);
       return ComposableFuture.completedFuture(null);
     });
   }
 
   @Override
-  public <T, U> Connection handler(String type, Function<T, CompletableFuture<U>> handler) {
+  public <T, U> Connection registerHandler(String type, Function<T, CompletableFuture<U>> handler) {
     Assert.notNull(type, "type");
     if (handler != null) {
       handlers.put(type, new HandlerHolder(handler, ThreadContext.currentContextOrThrow()));
@@ -188,7 +188,7 @@ public class LocalConnection implements Connection {
       return CompletableFuture.completedFuture(null);
     doClose();
     connection.doClose();
-    return ThreadContext.currentContextOrThrow().execute(() -> null);
+    return CompletableFuture.completedFuture(null);
   }
 
   /**
@@ -201,7 +201,7 @@ public class LocalConnection implements Connection {
     for (Map.Entry<Long, ContextualFuture> entry : futures.entrySet()) {
       ContextualFuture future = entry.getValue();
       try {
-        future.context.executor().execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
+        future.context.execute(() -> future.completeExceptionally(new ConnectException("connection closed")));
       } catch (RejectedExecutionException e) {
       }
     }
@@ -209,7 +209,7 @@ public class LocalConnection implements Connection {
 
     for (Consumer<Connection> closeListener : closeListeners) {
       try {
-        context.executor().execute(() -> closeListener.accept(this));
+        context.execute(() -> closeListener.accept(this));
       } catch (RejectedExecutionException e) {
       }
     }

@@ -124,7 +124,7 @@ public class NettyServer implements Server {
     bindFuture.addListener((ChannelFutureListener) channelFuture -> {
       if (channelFuture.isSuccess()) {
         listening = true;
-        context.executor().execute(() -> {
+        context.execute(() -> {
           LOGGER.info("Listening at {}", bindFuture.channel().localAddress());
           listenFuture.complete(null);
         });
