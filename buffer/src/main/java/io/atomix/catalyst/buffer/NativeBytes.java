@@ -19,7 +19,6 @@ import io.atomix.catalyst.buffer.util.HeapMemory;
 import io.atomix.catalyst.buffer.util.NativeMemory;
 
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Native bytes.
