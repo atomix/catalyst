@@ -40,6 +40,11 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   }
 
   @Override
+  public long position() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public long remaining() {
     try {
       return is.available();

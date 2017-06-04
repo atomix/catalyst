@@ -40,6 +40,11 @@ final class ByteBufInput implements BufferInput<ByteBufInput> {
   }
 
   @Override
+  public long position() {
+    return buffer.readerIndex();
+  }
+
+  @Override
   public long remaining() {
     return buffer.readableBytes();
   }

@@ -28,6 +28,16 @@ import java.nio.charset.Charset;
 public interface BufferInput<T extends BufferInput<?>> extends AutoCloseable {
 
   /**
+   * Returns the buffer's current read/write position.
+   * <p>
+   * The position is an internal cursor that tracks where to write/read bytes in the underlying storage implementation.
+   * As bytes are written to or read from the buffer, the position will advance based on the number of bytes read.
+   *
+   * @return The buffer's current position.
+   */
+  long position();
+
+  /**
    * Returns the number of bytes remaining in the input.
    *
    * @return The number of bytes remaining in the input.
