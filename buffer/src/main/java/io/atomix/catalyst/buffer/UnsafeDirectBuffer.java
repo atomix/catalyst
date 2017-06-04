@@ -94,4 +94,8 @@ public class UnsafeDirectBuffer extends NativeBuffer {
     super(bytes, referenceManager);
   }
 
+  @Override
+  public UnsafeDirectBuffer duplicate() {
+    return new UnsafeDirectBuffer((UnsafeDirectBytes) bytes, offset(), capacity(), maxCapacity());
+  }
 }

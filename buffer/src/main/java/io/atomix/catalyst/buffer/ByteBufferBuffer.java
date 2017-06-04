@@ -5,7 +5,7 @@ import io.atomix.catalyst.util.reference.ReferenceManager;
 /**
  * {@link java.nio.ByteBuffer} based buffer.
  */
-public class ByteBufferBuffer extends AbstractBuffer {
+public abstract class ByteBufferBuffer extends AbstractBuffer {
   protected final ByteBufferBytes bytes;
 
   public ByteBufferBuffer(ByteBufferBytes bytes, ReferenceManager<Buffer> referenceManager) {

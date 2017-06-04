@@ -143,4 +143,8 @@ public class UnsafeHeapBuffer extends AbstractBuffer {
     return this;
   }
 
+  @Override
+  public UnsafeHeapBuffer duplicate() {
+    return new UnsafeHeapBuffer(bytes, offset(), capacity(), maxCapacity());
+  }
 }

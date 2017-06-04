@@ -16,7 +16,6 @@
 package io.atomix.catalyst.buffer;
 
 import io.atomix.catalyst.buffer.util.Memory;
-import io.atomix.catalyst.util.reference.ReferenceManager;
 
 import java.io.File;
 import java.nio.channels.FileChannel;
@@ -109,12 +108,11 @@ public class FileBuffer extends AbstractBuffer {
     return new FileBuffer(new FileBytes(file, mode, Memory.Util.toPow2(initialCapacity)), 0, initialCapacity, maxCapacity);
   }
 
-  private FileBuffer(Bytes bytes, ReferenceManager<Buffer> referenceManager) {
-    super(bytes, referenceManager);
-  }
+  private final FileBytes bytes;
 
-  private FileBuffer(Bytes bytes, long offset, long initialCapacity, long maxCapacity) {
+  private FileBuffer(FileBytes bytes, long offset, long initialCapacity, long maxCapacity) {
     super(bytes, offset, initialCapacity, maxCapacity, null);
+    this.bytes = bytes;
   }
 
   /**
@@ -192,11 +190,25 @@ public class FileBuffer extends AbstractBuffer {
     }
   }
 
+  @Override
+  public FileBuffer duplicate() {
+    return new FileBuffer(new FileBytes(bytes.file(), bytes.mode(), bytes.size()), offset(), capacity(), maxCapacity());
+  }
+
+  /**
+   * Duplicates the buffer using the given mode.
+   *
+   * @return The mode with which to open the duplicate buffer.
+   */
+  public FileBuffer duplicate(String mode) {
+    return new FileBuffer(new FileBytes(bytes.file(), mode, bytes.size()), offset(), capacity(), maxCapacity());
+  }
+
   /**
    * Deletes the underlying file.
    */
   public void delete() {
-    ((FileBytes) bytes).delete();
+    bytes.delete();
   }
 
 }

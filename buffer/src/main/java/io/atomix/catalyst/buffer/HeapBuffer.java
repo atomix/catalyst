@@ -97,12 +97,20 @@ public class HeapBuffer extends ByteBufferBuffer {
     return new HeapBuffer(HeapBytes.wrap(bytes), 0, bytes.length, bytes.length);
   }
 
+  private final HeapBytes bytes;
+
   protected HeapBuffer(HeapBytes bytes, long offset, long initialCapacity, long maxCapacity) {
     super(bytes, offset, initialCapacity, maxCapacity, null);
+    this.bytes = bytes;
   }
 
   @Override
   public boolean hasArray() {
     return true;
+  }
+
+  @Override
+  public HeapBuffer duplicate() {
+    return new HeapBuffer(bytes, offset(), capacity(), maxCapacity());
   }
 }

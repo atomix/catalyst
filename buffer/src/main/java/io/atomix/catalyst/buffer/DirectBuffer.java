@@ -89,4 +89,8 @@ public class DirectBuffer extends ByteBufferBuffer {
     super(bytes, offset, initialCapacity, maxCapacity, null);
   }
 
+  @Override
+  public DirectBuffer duplicate() {
+    return new DirectBuffer((DirectBytes) bytes, offset(), capacity(), maxCapacity());
+  }
 }

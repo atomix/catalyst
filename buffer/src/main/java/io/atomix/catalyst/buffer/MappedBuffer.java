@@ -195,6 +195,11 @@ public class MappedBuffer extends ByteBufferBuffer {
     super(bytes, offset, initialCapacity, maxCapacity, null);
   }
 
+  @Override
+  public MappedBuffer duplicate() {
+    return new MappedBuffer((MappedBytes) bytes, offset(), capacity(), maxCapacity());
+  }
+
   /**
    * Deletes the underlying file.
    */

@@ -209,6 +209,11 @@ public class UnsafeMappedBuffer extends NativeBuffer {
     super(bytes, offset, initialCapacity, maxCapacity);
   }
 
+  @Override
+  public UnsafeMappedBuffer duplicate() {
+    return new UnsafeMappedBuffer((UnsafeMappedBytes) bytes, offset(), capacity(), maxCapacity());
+  }
+
   /**
    * Deletes the underlying file.
    */
