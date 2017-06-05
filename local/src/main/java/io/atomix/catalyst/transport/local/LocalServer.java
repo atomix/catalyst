@@ -55,7 +55,12 @@ public class LocalServer implements Server {
     connections.add(localConnection);
     connection.connect(localConnection);
     localConnection.connect(connection);
-    return CompletableFuture.runAsync(() -> listener.listener.accept(localConnection), listener.context);
+    return CompletableFuture.runAsync(() -> {
+      ListenerHolder listener = this.listener;
+      if (listener != null) {
+        listener.listener.accept(localConnection);
+      }
+    }, listener.context);
   }
 
   @Override
