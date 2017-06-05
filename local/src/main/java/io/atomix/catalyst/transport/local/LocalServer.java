@@ -15,12 +15,14 @@
  */
 package io.atomix.catalyst.transport.local;
 
+import io.atomix.catalyst.concurrent.Futures;
 import io.atomix.catalyst.transport.Address;
 import io.atomix.catalyst.transport.Connection;
 import io.atomix.catalyst.transport.Server;
 import io.atomix.catalyst.util.Assert;
 import io.atomix.catalyst.concurrent.ThreadContext;
 
+import java.net.ConnectException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -51,16 +53,16 @@ public class LocalServer implements Server {
    * Connects to the server.
    */
   CompletableFuture<Void> connect(LocalConnection connection) {
+    ListenerHolder listener = this.listener;
+    if (listener == null) {
+      return Futures.exceptionalFuture(new ConnectException());
+    }
+
     LocalConnection localConnection = new LocalConnection(listener.context, connections);
     connections.add(localConnection);
     connection.connect(localConnection);
     localConnection.connect(connection);
-    return CompletableFuture.runAsync(() -> {
-      ListenerHolder listener = this.listener;
-      if (listener != null) {
-        listener.listener.accept(localConnection);
-      }
-    }, listener.context);
+    return CompletableFuture.runAsync(() -> listener.listener.accept(localConnection), listener.context);
   }
 
   @Override
