@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import static io.atomix.catalyst.buffer.Bytes.*;
+
 /**
  * Input stream buffer input.
  *
@@ -28,6 +30,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   private final DataInputStream is;
+  private long position;
 
   public InputStreamBufferInput(InputStream is) {
     this(new DataInputStream(is));
@@ -41,7 +44,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public long position() {
-    throw new UnsupportedOperationException();
+    return position;
   }
 
   @Override
@@ -61,7 +64,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public BufferInput<?> skip(long bytes) {
     try {
-      is.skip(bytes);
+      position += is.skip(bytes);
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -72,7 +75,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   public BufferInput<?> read(Bytes bytes) {
     if (bytes instanceof UnsafeHeapBytes) {
       try {
-        is.read(((UnsafeHeapBytes) bytes).array());
+        position += is.read(bytes.array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -93,7 +96,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public BufferInput<?> read(byte[] bytes) {
     try {
-      is.read(bytes);
+      position += is.read(bytes);
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -104,7 +107,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   public BufferInput<?> read(Bytes bytes, long offset, long length) {
     if (bytes instanceof UnsafeHeapBytes) {
       try {
-        is.read(((UnsafeHeapBytes) bytes).array(), (int) offset, (int) length);
+        position += is.read(bytes.array(), (int) offset, (int) length);
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -129,7 +132,7 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public BufferInput<?> read(byte[] bytes, long offset, long length) {
     try {
-      is.read(bytes, (int) offset, (int) length);
+      position += is.read(bytes, (int) offset, (int) length);
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -138,9 +141,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
 
   @Override
   public BufferInput<?> read(Buffer buffer) {
-    if (buffer instanceof UnsafeHeapBuffer) {
+    if (buffer.hasArray()) {
       try {
-        is.read(((UnsafeHeapBuffer) buffer).array());
+        position += is.read(buffer.array());
       } catch (IOException e) {
         throw new CatalystIOException(e);
       }
@@ -161,7 +164,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readByte() {
     try {
-      return is.readByte();
+      int value = is.readByte();
+      position += BYTE;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -170,7 +175,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readUnsignedByte() {
     try {
-      return is.readUnsignedByte();
+      int value = is.readUnsignedByte();
+      position += BYTE;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -179,7 +186,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public char readChar() {
     try {
-      return is.readChar();
+      char value = is.readChar();
+      position += CHARACTER;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -188,7 +197,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public short readShort() {
     try {
-      return is.readShort();
+      short value = is.readShort();
+      position += SHORT;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -197,7 +208,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readUnsignedShort() {
     try {
-      return is.readUnsignedShort();
+      int value = is.readUnsignedShort();
+      position += SHORT;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -206,9 +219,11 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readMedium() {
     try {
-      return is.readByte() << 16
+      int value = is.readByte() << 16
         | (is.readByte() & 0xff) << 8
         | (is.readByte() & 0xff);
+      position += MEDIUM;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -217,9 +232,11 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readUnsignedMedium() {
     try {
-      return (is.readByte() & 0xff) << 16
+      int value = (is.readByte() & 0xff) << 16
         | (is.readByte() & 0xff) << 8
         | (is.readByte() & 0xff);
+      position += MEDIUM;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -228,7 +245,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public int readInt() {
     try {
-      return is.readInt();
+      int value = is.readInt();
+      position += INTEGER;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -237,7 +256,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public long readUnsignedInt() {
     try {
-      return is.readInt() & 0xFFFFFFFFL;
+      long value = is.readInt() & 0xFFFFFFFFL;
+      position += INTEGER;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -246,7 +267,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public long readLong() {
     try {
-      return is.readLong();
+      long value = is.readLong();
+      position += LONG;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -255,7 +278,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public float readFloat() {
     try {
-      return is.readFloat();
+      float value = is.readFloat();
+      position += FLOAT;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -264,7 +289,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public double readDouble() {
     try {
-      return is.readDouble();
+      double value = is.readDouble();
+      position += DOUBLE;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -273,7 +300,9 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   @Override
   public boolean readBoolean() {
     try {
-      return is.readBoolean();
+      boolean value = is.readBoolean();
+      position += BOOLEAN;
+      return value;
     } catch (IOException e) {
       throw new CatalystIOException(e);
     }
@@ -288,8 +317,14 @@ public class InputStreamBufferInput implements BufferInput<BufferInput<?>> {
   public String readString(Charset charset) {
     if (readBoolean()) {
       byte[] bytes = new byte[readUnsignedShort()];
-      read(bytes, 0, bytes.length);
-      return new String(bytes, charset);
+      try {
+        position += BOOLEAN + SHORT + is.read(bytes, 0, bytes.length);
+        return new String(bytes, charset);
+      } catch (IOException e) {
+        throw new CatalystIOException(e);
+      }
+    } else {
+      position += BOOLEAN;
     }
     return null;
   }
